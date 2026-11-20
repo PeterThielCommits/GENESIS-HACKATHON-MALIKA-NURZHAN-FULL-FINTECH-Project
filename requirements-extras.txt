@@ -1,0 +1,5 @@
+# Optional research extras (TZ 22.2). Core must run without them.
+gymnasium>=1
+numpy>=1.26
+scikit-learn>=1.4
+matplotlib>=3.8

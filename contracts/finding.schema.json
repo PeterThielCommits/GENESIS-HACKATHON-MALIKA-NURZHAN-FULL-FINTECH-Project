@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TwinLedger Finding",
+  "description": "Canonical agent finding submitted via submit. Provisional pending official organiser contract (A-003).",
+  "type": "object",
+  "required": ["schema_version", "type", "affected_ids", "claimed_amount", "currency", "evidence_ids"],
+  "additionalProperties": false,
+  "patternProperties": {"^x_twinledger_.*": {}},
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0.0"},
+    "type": {"type": "string", "enum": ["DUPLICATE_PAYMENT", "PARTIAL_PAYMENT_ALLOCATION", "FX_RATE_MISMATCH", "PERIOD_CUTOFF"]},
+    "affected_ids": {"type": "array", "minItems": 1, "maxItems": 20, "items": {"type": "string", "pattern": "^(JE|INV|CN|PAY|BANK|FX|CP):[A-Za-z0-9._/-]+$"}},
+    "claimed_amount": {"type": "integer"},
+    "currency": {"type": "string", "enum": ["KZT", "USD", "EUR", "JPY", "KWD"]},
+    "evidence_ids": {"type": "array", "minItems": 1, "maxItems": 20, "items": {"type": "string", "pattern": "^(JE|INV|CN|PAY|BANK|FX|CP):[A-Za-z0-9._/-]+$"}},
+    "explanation": {"type": "string", "maxLength": 4000},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+  }
+}

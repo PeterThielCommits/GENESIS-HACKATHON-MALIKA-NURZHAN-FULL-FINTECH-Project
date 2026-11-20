@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TwinLedger Trajectory Event",
+  "description": "Append-only trajectory event with hash chain (TZ 16.4). No wall-clock in replay-critical fields.",
+  "type": "object",
+  "required": ["schema_version", "event_index", "event_type", "action_digest", "response_digest", "protocol_version", "logical_step", "previous_hash"],
+  "additionalProperties": false,
+  "patternProperties": {"^x_twinledger_.*": {}},
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0.0"},
+    "event_index": {"type": "integer", "minimum": 0},
+    "event_type": {"type": "string", "enum": ["reset", "tool_call", "submit", "terminate", "truncate"]},
+    "action_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "response_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "protocol_version": {"type": "string", "const": "1.0"},
+    "logical_step": {"type": "integer", "minimum": 0},
+    "previous_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

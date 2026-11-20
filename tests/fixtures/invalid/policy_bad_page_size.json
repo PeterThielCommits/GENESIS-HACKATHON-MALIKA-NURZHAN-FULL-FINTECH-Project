@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "rounding_mode": "half_even",
+  "fx_policy": {"rate_date_rule": "document_date", "fallback_rule": "last_available", "source_codes": ["SYNTH-FX"], "quote_convention": "foreign_per_functional"},
+  "cutoff_policy": {"recognition_event": "service_date", "timezone_source": "company"},
+  "allocation_policy": {"allow_advances": false, "allow_multi_invoice_split": true},
+  "credit_note_cap_minor": 1000000,
+  "max_steps": 100,
+  "max_page_size": 999,
+  "max_findings": 20,
+  "max_evidence_ids": 20,
+  "eta": 0.05
+}

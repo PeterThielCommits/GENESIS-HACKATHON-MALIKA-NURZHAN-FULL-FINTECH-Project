@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TwinLedger Accounting Policy",
+  "description": "Public accounting policy of the synthetic company (TZ 8.1, 9.3).",
+  "type": "object",
+  "required": ["schema_version", "rounding_mode", "fx_policy", "cutoff_policy", "allocation_policy", "credit_note_cap_minor", "max_steps", "max_page_size", "max_findings", "max_evidence_ids", "eta"],
+  "additionalProperties": false,
+  "patternProperties": {"^x_twinledger_.*": {}},
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0.0"},
+    "rounding_mode": {"type": "string", "enum": ["half_even", "half_up"]},
+    "fx_policy": {
+      "type": "object",
+      "required": ["rate_date_rule", "fallback_rule", "source_codes", "quote_convention"],
+      "additionalProperties": false,
+      "properties": {
+        "rate_date_rule": {"type": "string", "enum": ["document_date", "operation_date", "payment_date"]},
+        "fallback_rule": {"type": "string", "enum": ["last_available", "none"]},
+        "source_codes": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1, "maxLength": 32}},
+        "quote_convention": {"type": "string", "enum": ["foreign_per_functional", "functional_per_foreign"]}
+      }
+    },
+    "cutoff_policy": {
+      "type": "object",
+      "required": ["recognition_event", "timezone_source"],
+      "additionalProperties": false,
+      "properties": {
+        "recognition_event": {"type": "string", "enum": ["service_date", "issue_date", "delivery_date"]},
+        "timezone_source": {"type": "string", "enum": ["company"]}
+      }
+    },
+    "allocation_policy": {
+      "type": "object",
+      "required": ["allow_advances", "allow_multi_invoice_split"],
+      "additionalProperties": false,
+      "properties": {
+        "allow_advances": {"type": "boolean"},
+        "allow_multi_invoice_split": {"type": "boolean"}
+      }
+    },
+    "credit_note_cap_minor": {"type": "integer", "minimum": 0},
+    "max_steps": {"type": "integer", "minimum": 1, "maximum": 10000},
+    "max_page_size": {"type": "integer", "minimum": 1, "maximum": 50},
+    "max_findings": {"type": "integer", "minimum": 1, "maximum": 100},
+    "max_evidence_ids": {"type": "integer", "minimum": 1, "maximum": 20},
+    "eta": {"type": "number", "minimum": 0, "maximum": 1}
+  }
+}

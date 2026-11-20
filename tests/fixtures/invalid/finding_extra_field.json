@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.0.0",
+  "type": "DUPLICATE_PAYMENT",
+  "affected_ids": ["JE:je_demo_001"],
+  "claimed_amount": 100,
+  "currency": "KZT",
+  "evidence_ids": ["JE:je_demo_001"],
+  "secret_truth_id": "should-be-rejected"
+}

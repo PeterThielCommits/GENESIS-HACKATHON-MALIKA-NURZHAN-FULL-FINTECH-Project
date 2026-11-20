@@ -1,0 +1,17 @@
+{
+  "rubric_version": "0.1.0",
+  "provisional": true,
+  "note": "Provisional map (TZ 0.3, 23.4). Official organiser rubric not yet published in this repo; weights/checks below are NOT official. Replace with official map when available.",
+  "blocks": [
+    {"block": "contract_isolation", "provisional_weight": 25, "provisional_checks": 20},
+    {"block": "data_truth", "provisional_weight": 25, "provisional_checks": 20},
+    {"block": "reward_robustness", "provisional_weight": 25, "provisional_checks": 20},
+    {"block": "reproducibility", "provisional_weight": 15, "provisional_checks": 20},
+    {"block": "engineering", "provisional_weight": 10, "provisional_checks": 5}
+  ],
+  "checks": [
+    {"check_id": "RC-001", "rubric_item": "contracts frozen and validated", "req_id": "REQ-CONTRACT-001", "test_id": "tests/contracts/test_contracts.py", "command": "make test", "evidence_artifact": "artifacts/reports/latest/verify_summary.json", "provisional": true},
+    {"check_id": "RC-002", "rubric_item": "canonical JSON determinism", "req_id": "REQ-CONTRACT-010", "test_id": "tests/unit/test_canonical.py", "command": "make test", "evidence_artifact": "artifacts/reports/latest/verify_summary.json", "provisional": true},
+    {"check_id": "RC-003", "rubric_item": "import boundary scan", "req_id": "REQ-ARC-001", "test_id": "tests/unit/test_import_boundaries.py", "command": "make lint", "evidence_artifact": "artifacts/reports/latest/verify_summary.json", "provisional": true}
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TwinLedger Receipt",
+  "description": "Offline-verifiable episode receipt (TZ 16.5).",
+  "type": "object",
+  "required": ["schema_version", "episode_id", "protocol_version", "code_version_hash", "config_hash", "public_manifest_hash", "truth_commitment", "trajectory_head", "merkle_leaf_index", "policy_identifier", "verification_status"],
+  "additionalProperties": false,
+  "patternProperties": {"^x_twinledger_.*": {}},
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0.0"},
+    "episode_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "protocol_version": {"type": "string", "const": "1.0"},
+    "code_version_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "config_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "public_manifest_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "truth_commitment": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "trajectory_head": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "merkle_leaf_index": {"type": "integer", "minimum": 0},
+    "policy_identifier": {"type": "string", "minLength": 1, "maxLength": 128},
+    "verification_status": {"type": "string", "enum": ["VERIFIED", "REJECTED", "PENDING"]}
+  }
+}

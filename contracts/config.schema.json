@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TwinLedger Config",
+  "description": "Versioned configuration envelope (REQ-CONTRACT-020..022). Area-specific fields are validated by the owning module.",
+  "type": "object",
+  "required": ["config_version"],
+  "additionalProperties": true,
+  "properties": {
+    "config_version": {"type": "string", "minLength": 1, "maxLength": 64}
+  }
+}

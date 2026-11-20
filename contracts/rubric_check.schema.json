@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TwinLedger Rubric Check",
+  "description": "Mapping from official rubric criterion to REQ-ID, test and evidence (TZ 23.4).",
+  "type": "object",
+  "required": ["schema_version", "check_id", "rubric_item", "req_id", "test_id", "command", "evidence_artifact", "provisional"],
+  "additionalProperties": false,
+  "patternProperties": {"^x_twinledger_.*": {}},
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0.0"},
+    "check_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "rubric_item": {"type": "string", "minLength": 1, "maxLength": 256},
+    "req_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "test_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "command": {"type": "string", "minLength": 1, "maxLength": 512},
+    "evidence_artifact": {"type": "string", "minLength": 1, "maxLength": 512},
+    "provisional": {"type": "boolean"}
+  }
+}

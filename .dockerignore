@@ -1,0 +1,10 @@
+.git
+__pycache__
+.venv
+artifacts/reports/latest/*.json
+artifacts/reports/latest/*.html
+episodes/*/sealed/
+episodes/hidden/
+.env
+*.pem
+*.key

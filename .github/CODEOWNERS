@@ -1,0 +1,18 @@
+# TwinLedger zone ownership (TZ 4). One owner per zone; cross-zone changes need approval.
+gen/            @twinledger-owner-a
+episodes/       @twinledger-owner-a
+verifier/       @twinledger-owner-c
+arena/          @twinledger-owner-c
+env/            @twinledger-owner-b
+adapter/        @twinledger-owner-b
+harness/        @twinledger-owner-b
+scoring/        @twinledger-owner-b
+seal/           @twinledger-owner-b
+judge/          @twinledger-owner-d
+docs/           @twinledger-owner-d
+contracts/      @twinledger-orchestrator
+spec/           @twinledger-orchestrator
+invariants/     @twinledger-orchestrator
+configs/        @twinledger-orchestrator
+tools/          @twinledger-owner-d
+tests/          @twinledger-owner-d

@@ -1,0 +1,18 @@
+{
+  "config_version": "1.0.0",
+  "train_seeds": [
+    1,
+    2,
+    3
+  ],
+  "dev_seeds": [
+    101,
+    102
+  ],
+  "heldout_seeds": [
+    9001,
+    9002
+  ],
+  "split_by": "base_history_group",
+  "config_hash": "6cab612a3cc1c32c62af77e97a4b6b014f2102380cf5c3582f644b7bcd05d8ab"
+}

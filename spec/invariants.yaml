@@ -1,0 +1,122 @@
+# TwinLedger invariant catalog (normative, TZ 12.1). Phase 1 skeleton.
+# Each invariant: id, name, scope, grouping_key, metric, tolerance, exceptions.
+invariants:
+  - id: INV-01
+    name: JE_BALANCE
+    scope: journal_entry
+    grouping_key: je_id
+    metric: debit_minor_minus_credit_minor
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-02
+    name: TRIAL_BALANCE
+    scope: trial_balance_slice
+    grouping_key: account_id
+    metric: debit_minus_credit
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-03
+    name: AP_SUBLEDGER_VS_DOCS
+    scope: counterparty
+    grouping_key: counterparty_id
+    metric: subledger_minus_documents
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-04
+    name: OPEN_BALANCE
+    scope: document
+    grouping_key: doc_id
+    metric: open_balance
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-05
+    name: AGING
+    scope: document
+    grouping_key: doc_id
+    metric: aging_bucket
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-06
+    name: BANK_MATCH
+    scope: bank_line
+    grouping_key: bank_line_id
+    metric: matched_payment
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-07
+    name: FX_POLICY
+    scope: journal_line
+    grouping_key: line_id
+    metric: selected_rate
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-08
+    name: FX_RECALC
+    scope: journal_line
+    grouping_key: line_id
+    metric: functional_amount
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-09
+    name: CUTOFF
+    scope: journal_entry
+    grouping_key: je_id
+    metric: posting_period
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-10
+    name: PERIOD_TOTALS
+    scope: period
+    grouping_key: posting_period
+    metric: period_total
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-11
+    name: ID_UNIQUENESS
+    scope: table
+    grouping_key: primary_key
+    metric: duplicate_count
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-12
+    name: REFERENTIAL
+    scope: reference
+    grouping_key: reference
+    metric: unresolved_count
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-13
+    name: CURRENCY_EXPONENT
+    scope: money_field
+    grouping_key: field
+    metric: scale
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-14
+    name: TIMEZONE_VALID
+    scope: timestamp
+    grouping_key: timestamp
+    metric: interpretability
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-15
+    name: ALLOCATION_CONSERVATION
+    scope: payment
+    grouping_key: pay_id
+    metric: allocations_minus_payment
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-16
+    name: CREDIT_NOTE_LIMIT
+    scope: invoice
+    grouping_key: invoice_id
+    metric: credit_notes_minus_cap
+    tolerance_minor: 0
+    exceptions: []
+  - id: INV-17
+    name: DOCUMENT_STATUS
+    scope: document
+    grouping_key: doc_id
+    metric: status_consistency
+    tolerance_minor: 0
+    exceptions: []

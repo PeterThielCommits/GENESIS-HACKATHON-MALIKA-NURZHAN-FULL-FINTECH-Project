@@ -1,0 +1,13 @@
+{
+  "contract_version": "1.0.0",
+  "schema_version": "1.0.0",
+  "protocol_version": "1.0",
+  "generator_version": "0.1.0",
+  "verifier_version": "0.1.0",
+  "scoring_version": "0.1.0",
+  "env_version": "0.1.0",
+  "harness_version": "0.1.0",
+  "frozen_for_mvp": true,
+  "freeze_date": "2026-11-20",
+  "note": "Phase 1 contract freeze. Further changes require an approved CR (docs/CR/)."
+}

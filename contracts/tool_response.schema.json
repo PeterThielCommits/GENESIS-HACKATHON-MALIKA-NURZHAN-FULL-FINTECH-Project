@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TwinLedger Tool Response",
+  "description": "Versioned JSONL tool response from environment to policy. Errors are bounded and contain no sealed data (TZ 14.6).",
+  "type": "object",
+  "required": ["protocol_version", "request_id", "ok"],
+  "additionalProperties": false,
+  "patternProperties": {"^x_twinledger_.*": {}},
+  "properties": {
+    "protocol_version": {"type": "string", "const": "1.0"},
+    "request_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "ok": {"type": "boolean"},
+    "result": {"type": ["object", "null"]},
+    "error": {
+      "type": ["object", "null"],
+      "required": ["code", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "code": {"type": "string", "enum": ["UNKNOWN_TOOL", "BAD_ARGS", "BAD_FILTER", "BAD_CURSOR", "NOT_FOUND", "BAD_FINDING", "CALC_ERROR", "LIMIT", "TERMINATED", "ALREADY_SUBMITTED", "INTERNAL"]},
+        "message": {"type": "string", "maxLength": 500}
+      }
+    }
+  }
+}
