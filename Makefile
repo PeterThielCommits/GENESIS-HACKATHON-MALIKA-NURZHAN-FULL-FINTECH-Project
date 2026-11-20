@@ -24,7 +24,7 @@ setup: ## Check Python version and optional extras; nothing is downloaded
 	@$(PYTHON) -c "import importlib.util as u; print('pytest:', 'present' if u.find_spec('pytest') else 'ABSENT (optional)'); print('hypothesis:', 'present' if u.find_spec('hypothesis') else 'ABSENT (optional)'); print('jsonschema:', 'present' if u.find_spec('jsonschema') else 'ABSENT (optional)')"
 
 lint: ## Compile check + import-boundary scan (REQ-ARC-001)
-	@$(PYTHON) -m compileall -q contracts adapter gen invariants verifier env harness scoring seal arena metamorphic judge tools tests
+	@$(PYTHON) -m compileall -q core contracts adapter gen invariants verifier env harness scoring seal arena metamorphic judge tools tests
 	@$(PYTHON) tools/check_import_boundaries.py
 
 test: ## Unit + contract tests (core, stdlib unittest)

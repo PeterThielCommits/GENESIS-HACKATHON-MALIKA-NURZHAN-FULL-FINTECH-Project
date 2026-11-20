@@ -56,3 +56,11 @@ Owner: A0/D.
 
 All UNRESOLVED pending D-00-01 closure. Isolated in `adapter/` +
 `configs/`; not baked into core logic. See `docs/QUESTIONS.md` Q-001…Q-014.
+
+## D-02-01 — local primitive conventions (provisional)
+FX rate input is positive fixed-point text in target/source direction. Conversion
+accepts signed int64 inputs/outputs and records one final rounding operation.
+Monthly and quarterly periods use month-aligned fiscal calendars; quarters are
+labelled by fiscal start year. Reject gaps; reject folds unless explicitly resolved.
+A date without time is a company business date, not a machine-local instant.
+Aging labels and open/partial/paid statuses are MVP group semantics, not organizer rules.

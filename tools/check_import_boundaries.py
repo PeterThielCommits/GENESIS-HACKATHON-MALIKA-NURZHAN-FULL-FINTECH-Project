@@ -28,6 +28,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # (directory prefix, forbidden top-level modules, description)
 RULES: list[tuple[str, tuple[str, ...], str]] = [
+    ("core", ("gen", "verifier", "scoring", "env", "invariants"), "primitives must be independent"),
+    ("invariants", ("gen", "verifier", "env", "scoring"), "group checks must not depend on producers"),
     ("env", ("gen", "verifier", "scoring", "seal"), "env must not import gen/verifier/scoring/seal (REQ-ARC-002)"),
     ("verifier", ("gen",), "verifier must not import gen (REQ-VER-002)"),
     ("arena/policies", ("gen", "verifier", "scoring", "seal", "truth", "provenance"), "policies must not import private internals (REQ-ARC-003)"),

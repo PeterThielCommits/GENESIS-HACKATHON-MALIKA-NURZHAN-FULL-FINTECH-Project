@@ -90,8 +90,8 @@ README/CLI, untested submission package — blocks release (TZ 29.6).
 ## Repository map
 
 See `docs/CONTEXT/ARCHITECTURE_SNAPSHOT.md` and Master TZ 6.
-Phase 1 (current): skeleton, contracts frozen v1.0.0, canonical JSON,
-models, boundary scan, CI, docs. Next: Phase 2 money/time/IDs/invariants.
+Phase 1: skeleton, contracts frozen v1.0.0, canonical JSON,
+models, boundary scan, CI, docs. Phase 2 adds core primitives and grouped checks (see PHASE_REPORTS/PHASE-02.md).
 
 ## Source-of-truth files
 

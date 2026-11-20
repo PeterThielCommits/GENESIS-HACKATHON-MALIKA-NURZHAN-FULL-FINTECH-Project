@@ -1,0 +1,1 @@
+{"phase":2,"local_gate":"PASS","python":"3.11.2","suite_methods":40,"invariants":17,"manual_group_cases":85,"command":"make setup lint test verify-core verify","owner_signoff":"pending"}

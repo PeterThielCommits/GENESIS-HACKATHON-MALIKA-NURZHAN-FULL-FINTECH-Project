@@ -1,0 +1,19 @@
+{
+ "INV-01":[[{"debits":[],"credits":[]},true],[{"debits":[101]},false]],
+ "INV-02":[[{"debits":[150]},true],[{"debits":[]},false]],
+ "INV-03":[[{"subledger":0,"documents":[]},true],[{"documents":[-120]},false]],
+ "INV-04":[[{"payments":[110],"open":0},true],[{"credit_notes":[]},false]],
+ "INV-05":[[{"open":0,"bucket":"closed"},true],[{"due":"2025-01-31","bucket":"current"},true]],
+ "INV-06":[[{"matched_payment_id":null,"unmatched_reason":"pending"},true],[{"matched_payment_id":"missing"},false]],
+ "INV-07":[[{"permitted_quotes":["other","2025-01-03:source1"]},true],[{"selected_quote":"2025-01-03:source2"},false]],
+ "INV-08":[[{"rounding_mode":"half_up","functional_minor":3},true],[{"source_minor":0},false]],
+ "INV-09":[[{"events":{"issue_date":"2025-02-28"}},true],[{"events":{"issue_date":"2025-02-28T16:00:00Z"}},false]],
+ "INV-10":[[{"lines":[],"reported":0},true],[{"lines":[-90]},false]],
+ "INV-11":[[{"ids":["x"]},true],[{"ids":["y"]},false]],
+ "INV-12":[[{"nullable":true,"reference":null},true],[{"reference":"q","nullable":true},false]],
+ "INV-13":[[{"currency":"JPY","scale":0},true],[{"currency":"ZZZ"},false]],
+ "INV-14":[[{"timestamp":"2025-01-01T00:00:00Z"},true],[{"timestamp":"2025-02-30T12:00:00Z"},false]],
+ "INV-15":[[{"payment":101,"allow_advances":true},true],[{"allocations":[110,-10]},false]],
+ "INV-16":[[{"credit_notes":[]},true],[{"credit_notes":[-1]},false]],
+ "INV-17":[[{"open":0,"status":"paid"},true],[{"open":100,"status":"open"},true]]
+}

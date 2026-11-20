@@ -4,7 +4,7 @@
 |---|---|---|
 | Phase 0 Discovery | PARTIAL (official TZ missing) | `docs/DECISIONS.md` D-00-01, `docs/QUESTIONS.md` |
 | Phase 1 Foundation + freeze | DONE (Exit Gate 1 PASS; remote branch protection follow-up) | `docs/PHASE_REPORTS/PHASE-01.md`, `make verify-core` + `make verify` PASS |
-| Phase 2 Money/time/IDs/invariants | NOT STARTED | `docs/TASKS/T-02-01.md` |
+| Phase 2 Money/time/IDs/invariants | Local gate PASS | `docs/PHASE_REPORTS/PHASE-02.md` |
 | Phase 3 Clean generator | NOT STARTED | — |
 | Phase 4 Operators + diff truth | NOT STARTED | — |
 | Phase 5 Env reset/step | NOT STARTED | — |

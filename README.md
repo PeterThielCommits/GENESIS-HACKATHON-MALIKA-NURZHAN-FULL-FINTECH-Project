@@ -101,3 +101,8 @@ env step p99 < 5 ms, one L4 episode < 50 MB, peak < 300 MB,
 - Process separation is planned, not yet implemented; no sandbox claims.
 
 See `docs/LIMITATIONS.md`, `docs/DESIGN.md`, `docs/PROJECT_CONTEXT.md`.
+
+## Phase 2: accounting primitives
+
+Run `make setup verify-core` with Python 3.11. See the [Phase 2 report](docs/PHASE_REPORTS/PHASE-02.md)
+for the implemented boundaries and the [manual accounting vectors](tests/fixtures/manual/).
