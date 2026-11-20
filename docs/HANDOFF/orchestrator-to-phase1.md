@@ -49,14 +49,18 @@ truth (REQ-JUDGE-002).
 - No CI workflow file yet (Phase 1 task).
 - Licence not chosen (Phase 16).
 
+## Status of this handoff
+Phase 1 (foundation) was executed in the same session and closed as `PASS_WITH_OPEN_ITEMS`
+(`docs/PHASE_REPORTS/PHASE-01.md`). This document therefore also serves as the Phase 1 → Phase 2
+handoff; the items below are done unless marked otherwise.
+
 ## Exact next steps
 1. `make verify-core` and confirm every status matches `docs/STATUS.md`.
-2. Execute `docs/TASKS/T-1-01-contracts-hardening.md` (contract set hardened against Phase 1
-   usage: add fixtures only where a real generator path needs them, never widen a schema
-   silently).
-3. Add CI (GitHub Actions) running `make lint` + `make test` + `make verify-core`, uploading
-   `artifacts/reports/latest/` as the build artifact.
-4. Start `docs/TASKS/T-2-01-*` only when the Phase 1 gate is written down in `docs/STATUS.md`.
+2. ~~Execute `docs/TASKS/T-1-01-contracts-hardening.md`~~ — done: CI, typed models, golden freeze.
+3. ~~Add CI~~ — done: `.github/workflows/verify.yml`, linted by `tools/check_ci.py`.
+4. Phase 2: `docs/TASKS/T-2-01-money-primitives.md` (money, time, IDs, invariants).
+5. Human: sign Reviewer 2, record the deadline, apply branch protection, replace the CODEOWNERS
+   placeholders.
 
 ## Do not repeat / do not change
 - Do not rebuild `tools/` or the contract set from scratch.

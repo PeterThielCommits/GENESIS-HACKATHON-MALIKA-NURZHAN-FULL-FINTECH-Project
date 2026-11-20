@@ -1,0 +1,19 @@
+{
+  "config_version": "1.0.0",
+  "status": "provisional",
+  "source": "TwinLedger master specification §24 task 0.7. No starter bundle exists yet, so this file only declares where one would be looked for and which commands would count as its smoke test.",
+  "assumption_ids": ["A-001"],
+  "provisional": true,
+  "values": {
+    "TIMEOUT_SECONDS": 120,
+    "EXECUTE_BY_DEFAULT": false
+  },
+  "smoke_commands": {},
+  "rules": [
+    "A bundle is only smoke-tested after `compileall` succeeds.",
+    "Commands run with the bundle directory as cwd, a hard timeout and no network assumption.",
+    "Nothing from a bundle is imported into this repository; only subprocess commands are used.",
+    "When a bundle appears, add its commands here in the same commit that archives it."
+  ],
+  "timeout_seconds": 120
+}

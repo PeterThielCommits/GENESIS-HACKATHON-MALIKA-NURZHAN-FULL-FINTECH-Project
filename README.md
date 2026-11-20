@@ -9,12 +9,14 @@ accounting anomaly. An agent explores only the public records through a small se
 tools and submits structured findings, which are scored against a sealed reference produced by
 a **counterfactual twin** and independently confirmed by a **separate verifier**.
 
-> **Current status: Phase 0 (discovery and contract freeze).**
+> **Current status: Phase 0 and Phase 1 complete (foundation and contract freeze).**
 > The environment, generator, verifier and scorer are **not implemented yet** — the Make
-> targets that would run them exit `5` and say so. What exists is the contract set, the
-> isolation boundary, the governance records and the verification harness that keeps the
-> project honest. See `docs/STATUS.md` for the gate table and `docs/PHASE_REPORTS/PHASE-00.md`
-> for executed commands and real results.
+> targets that would run them exit `5` and say so. What exists is a frozen, hashed contract set,
+> typed models that provably mirror it, the isolation boundary, the governance records, CI that
+> runs the same gate as your laptop, and the verification harness that keeps all of it honest.
+> See `docs/STATUS.md` for the gate table, `docs/PHASE_REPORTS/PHASE-00.md` and
+> `PHASE-01.md` for executed commands and real results, and `docs/PHASE0_CHECKLIST.md` for the
+> specification's Phase 0 tasks one by one.
 
 ## What is official and what is not
 
@@ -38,6 +40,9 @@ make lint           # compile, import boundaries, contract + registry freshness
 make test           # unit, contract and Phase 0 tests (stdlib unittest)
 make verify-core    # the Phase 0 gate: checks + artifacts + exit code
 make verify         # same runner, full profile (planned checks reported BLOCKED)
+make golden         # the contract set still matches its recorded freeze
+make models         # typed models still mirror the schemas (parity + round-trip)
+make probe          # look for official starter code; skips honestly when absent
 make help           # every command with a one-line description
 ```
 

@@ -39,6 +39,10 @@ FORBIDDEN: dict[str, frozenset[str]] = {
     "arena": frozenset({"gen", "verifier", "scoring", "seal", "env", "judge"}),
     "invariants": frozenset({"gen", "verifier", "env", "scoring", "harness", "arena", "adapter"}),
     "metamorphic": frozenset({"scoring", "seal", "harness", "adapter"}),
+    # `models/` is a typed mirror of contracts/: it may only depend on the contracts and on
+    # the stdlib, and no other zone may be re-implemented inside it.
+    "models": frozenset({"gen", "verifier", "env", "scoring", "seal", "harness", "arena",
+                         "policy", "judge", "adapter"}),
     "judge": frozenset(),
     "tools": frozenset({"env", "scoring", "seal", "harness", "arena", "gen", "verifier"}),
     "tests": frozenset(),
@@ -110,7 +114,7 @@ def scan() -> dict:
                     "file": rel, "line": line, "rule": "IMPORT_BOUNDARY",
                     "detail": f"zone '{zone}' must not import zone '{module}' (master spec §6)",
                 })
-            internal = module in FORBIDDEN or module in {"contracts"}
+            internal = module in FORBIDDEN or module in {"contracts", "models"}
             if module not in stdlib and not internal and module != "twinledger":
                 third_party.append({"file": rel, "line": line, "module": module,
                                     "detail": "non-stdlib import in the mandatory path (REQ-OPS-001)"})

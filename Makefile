@@ -7,7 +7,7 @@ PY_MIN := 3.11
 
 .DEFAULT_GOAL := help
 .PHONY: help setup lint test test-property build-episodes verify-core verify replay \
-        audit-shortcuts mutation-test report docker-check clean phase0
+        audit-shortcuts mutation-test report docker-check clean phase0 models golden ci probe traceability
 
 help: ## Show available commands and what they do
 	@echo "TwinLedger - available commands"
@@ -21,12 +21,31 @@ help: ## Show available commands and what they do
 setup: ## Check Python version and optional extras (downloads nothing)
 	@$(PY) -m tools.check_setup
 
-lint: ## Style-adjacent checks: compile, import boundaries, contract and registry freshness
-	@$(PY) -m compileall -q tools adapter tests > /dev/null
+lint: ## Style-adjacent checks: compile, boundaries, contracts, registry, models, freeze, CI
+	@$(PY) -m compileall -q tools adapter models tests > /dev/null
 	@$(PY) -m tools.check_import_boundaries
 	@$(PY) -m tools.extract_requirements --check
 	@$(PY) -m tools.validate_contracts
+	@$(PY) -m tools.check_models
+	@$(PY) -m tools.check_golden
+	@$(PY) -m tools.check_ci
+	@$(PY) -m tools.gen_traceability --check
 	@echo "lint: OK"
+
+models: ## Typed models must mirror the contract schemas exactly (parity + round-trip)
+	@$(PY) -m tools.check_models
+
+golden: ## Contract freeze: verify that no contract byte changed since GOLDEN.json
+	@$(PY) -m tools.check_golden
+
+ci: ## Lint the CI workflow: gate commands, pinned actions, artifact upload
+	@$(PY) -m tools.check_ci
+
+probe: ## Look for official starter code and smoke-test it if it exists (skips honestly)
+	@$(PY) -m tools.probe_starter
+
+traceability: ## Regenerate docs/RUBRIC_TRACEABILITY.md from the registries
+	@$(PY) -m tools.gen_traceability --write
 
 test: ## Unit, contract and Phase 0 tests (unittest, stdlib only)
 	@$(PY) -m unittest discover -s tests -t . -p 'test_*.py'

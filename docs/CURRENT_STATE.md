@@ -3,7 +3,7 @@
 One-screen orientation for the next agent or human. Update at the end of every phase.
 Length limit: this file stays under two screens; detail belongs in the linked documents.
 
-**Phase:** 0 complete (`PASS_WITH_OPEN_ITEMS`); Phase 1 not started.
+**Phase:** 0 and 1 complete (`PASS_WITH_OPEN_ITEMS`); Phase 2 not started.
 **Branch:** `arena/6e3d45bc-genesis-hackathon-malika-nurzh` (base `c961a00`).
 **Date:** 2026-11-20.
 
@@ -18,8 +18,11 @@ Length limit: this file stays under two screens; detail belongs in the linked do
 | Decisions / questions | 20 decisions, 14 questions + `OPEN-0` | `docs/DECISIONS.md`, `docs/QUESTIONS.md` |
 | Contracts v0.1 | 11 schemas + definitions, 35 fixtures, digest published | `contracts/` |
 | Configurations | limits, mode, cursor, resources, reward, match, tolerance, generator, rubric, arena | `configs/` |
-| Verification | 1 command, 40 mapped checks, artifacts, exit codes 0–5 | `tools/verify.py`, `artifacts/reports/latest/` |
-| Tests | 188 stdlib tests, 0 failures | `tests/` |
+| Verification | 1 command, 45 mapped checks, 12 artifacts, exit codes 0–5 | `tools/verify.py`, `artifacts/reports/latest/` |
+| Typed models | 11 dataclasses + parity tool | `models/`, `tools/check_models.py` |
+| Contract freeze | per-file golden hashes | `contracts/GOLDEN.json`, `tools/check_golden.py` |
+| CI + repo process | workflow, PR/issue templates, CODEOWNERS | `.github/`, `docs/BRANCH_PROTECTION.md` |
+| Tests | 231 stdlib tests, 0 failures | `tests/` |
 
 ## What does not exist yet (deliberately)
 
@@ -29,6 +32,8 @@ Length limit: this file stays under two screens; detail belongs in the linked do
 * No runtime sandbox: socket blocking, cgroups and process isolation are Phase 16 work
   (stated as "NOT ENABLED" in `docs/THREAT_MODEL.md`).
 * No official rubric: `judge/rubric_map.json` is internal, `official: false`.
+* Branch protection is not enabled and `.github/CODEOWNERS` holds placeholder handles — both are
+  human actions (`docs/BRANCH_PROTECTION.md`).
 
 ## Read in this order
 
@@ -50,10 +55,10 @@ Length limit: this file stays under two screens; detail belongs in the linked do
 ## Commands you will actually use
 
 ```bash
-python3 -m unittest discover -s tests -t . -p 'test_*.py'   # 188 tests
-python3 -m tools.verify --profile core                     # Phase 0 gate, exit 0-5
+python3 -m unittest discover -s tests -t . -p 'test_*.py'   # 231 tests
+python3 -m tools.verify --profile core                     # phase gate, exit 0-5
 python3 -m tools.validate_contracts                        # 35 fixtures
-python3 -m tools.check_governance                          # 13 consistency checks
+python3 -m tools.check_governance                          # 16 consistency checks
 python3 -m tools.check_import_boundaries                   # zone enforcement
 python3 -m tools.extract_requirements --check               # registry freshness
 make setup; make verify-core; make phase0                  # the same, wrapped

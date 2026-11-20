@@ -1,0 +1,39 @@
+name: Open question for the organizers
+description: Record a question that blocks a decision, then mirror it into docs/QUESTIONS.md.
+title: "[Q] "
+labels: ["question", "organizer"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The repository's source of truth for questions is `docs/QUESTIONS.md`; this issue is the
+        external-facing copy. Every question needs an owner, a closure condition and an impact
+        statement, otherwise "we will know later" becomes the plan.
+  - type: input
+    id: question_id
+    attributes:
+      label: Question id in docs/QUESTIONS.md
+      placeholder: Q-006
+    validations:
+      required: true
+  - type: textarea
+    id: body
+    attributes:
+      label: Question
+      description: Ask the organizers exactly one thing, in their language if possible.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact if unanswered
+      description: Which parameter, schema or phase is blocked, and what the fallback is.
+    validations:
+      required: true
+  - type: input
+    id: closure
+    attributes:
+      label: Closure condition
+      placeholder: A quote from the organizer channel that fixes the value.
+    validations:
+      required: true

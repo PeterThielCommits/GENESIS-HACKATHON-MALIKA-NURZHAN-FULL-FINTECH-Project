@@ -3,8 +3,8 @@
 | Field | Value |
 |-------|-------|
 | Phase | 1 |
-| Status | NOT STARTED |
-| Blocked by | the Phase 0 gate in `docs/STATUS.md` |
+| Status | DONE (2026-11-20) |
+| Blocked by | — (Phase 0 gate passed) |
 | Requirement ids | see the matching `PHASE-01` entries in `judge/rubric_map.json` |
 
 ## Goal
@@ -20,3 +20,18 @@ Do not widen any schema to make Phase 1 easier: open a CR (`docs/CR/CR-TEMPLATE.
 1. `make verify-core` is exit 0 and matches `docs/STATUS.md`.
 2. Read the assumptions that touch this phase in `docs/ASSUMPTIONS.json`.
 3. Open a CR for any schema change; never widen a contract to fit the code.
+
+## Outcome
+
+Delivered in one pass together with the Phase 1 gate:
+
+* CI: `.github/workflows/verify.yml`, linted locally by `python3 -m tools.check_ci` (every `run:`
+  command resolved against the Makefile; actions pinned; artifacts uploaded).
+* Golden hashes: `contracts/GOLDEN.json` + `python3 -m tools.check_golden` (per-file, payload and
+  fixture digests; refresh requires a CR).
+* Typed models: `models/` (11 dataclasses) + `python3 -m tools.check_models` (parity both ways,
+  fixture round-trip, unknown field rejected).
+* Process files: PR template, 4 issue forms, CODEOWNERS, `docs/BRANCH_PROTECTION.md`.
+* Generated traceability: `make traceability`, `GOV-RUBRIC-01` fails on staleness.
+
+Evidence: `docs/PHASE_REPORTS/PHASE-01.md` and `artifacts/reports/latest/`.

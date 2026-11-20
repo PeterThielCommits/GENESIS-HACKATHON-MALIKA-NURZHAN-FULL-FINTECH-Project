@@ -1,0 +1,30 @@
+{
+  "config_version": "1.0.0",
+  "status": "provisional",
+  "source": "TwinLedger master specification §24 tasks 0.3 and 0.8; no organizer deadline, channel or format has been published (docs/QUESTIONS.md OPEN-0).",
+  "assumption_ids": ["A-001", "A-002", "A-011"],
+  "provisional": true,
+  "values": {
+    "SUBMISSION_DEADLINE_UTC": null,
+    "SUBMISSION_DEADLINE_LOCAL": null,
+    "LOCAL_TIMEZONE": "Asia/Almaty",
+    "LOCAL_UTC_OFFSET_HOURS": 5,
+    "LOCAL_DST_OBSERVED": false,
+    "SUBMISSION_CHANNEL": "UNKNOWN",
+    "SUBMISSION_FORMAT": "UNKNOWN",
+    "MAX_SUBMISSION_BYTES": null,
+    "ALLOWED_REPOSITORY_VISIBILITY": "UNKNOWN",
+    "DEADLINE_CONFIRMED_BY": null,
+    "DEADLINE_CONFIRMED_AT": null
+  },
+  "semantics": {
+    "deadline": "A deadline may only be written here after a human quotes the organizer message (who, where, when). A guessed date is worse than an empty field: it silently destroys the schedule buffer.",
+    "timezone": "LOCAL_TIMEZONE is the team's working timezone used for all reporting. Kazakhstan moved to a single UTC+5 zone on 2024-03-01 (Asia/Almaty, Asia/Aqtobe, Asia/Atyrau) and no longer observes DST, so local = UTC+5 year round.",
+    "format": "SUBMISSION_FORMAT stays UNKNOWN until the organizers publish it; the repository format is then described in docs/official/SUBMISSION.md."
+  },
+  "consistency_rules": [
+    "If SUBMISSION_DEADLINE_UTC is null then DEADLINE_CONFIRMED_BY must be null.",
+    "If SUBMISSION_DEADLINE_UTC is set then DEADLINE_CONFIRMED_BY and DEADLINE_CONFIRMED_AT must both be set.",
+    "SUBMISSION_DEADLINE_LOCAL must equal SUBMISSION_DEADLINE_UTC shifted by LOCAL_UTC_OFFSET_HOURS."
+  ]
+}

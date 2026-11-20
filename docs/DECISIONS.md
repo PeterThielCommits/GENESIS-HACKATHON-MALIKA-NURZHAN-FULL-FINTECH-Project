@@ -331,6 +331,79 @@ is opened.
 
 ---
 
+## D-0021 — The CI workflow is linted by a stdlib tool, not by importing a YAML library
+
+- **Status:** Accepted
+- **Date:** 2026-11-20
+- **Owner:** A0 orchestrator
+- **Refs:** REQ-OPS-002, REQ-ARC-001, REQ-TEST-004, D-0003
+- **Context:** A workflow file is the one artefact whose correctness is normally checked only by
+  running it on the host. Adding PyYAML to check it would break the stdlib-only rule for the
+  mandatory path and would still not prove that the commands it calls exist.
+- **Decision:** `tools/check_ci.py` parses the small YAML subset a workflow needs and resolves
+  every `run:` command against the Makefile and the `tools/` modules, requires the four gate
+  commands, requires pinned action tags, an explicit `permissions:` block and an artifact upload.
+- **Alternatives:** (a) trust the workflow until it runs — rejected, a renamed Make target would
+  silently skip a gate; (b) vendor PyYAML — rejected, it is a dependency for a check that does not
+  need one; (c) validate with an external linter in CI only — rejected, it cannot fail locally.
+- **Consequences:** A renamed target fails `make lint` immediately. The parser understands only
+  the subset used here, so a structurally exotic workflow would need this tool extended.
+
+## D-0022 — The contract set is frozen with per-file golden hashes
+
+- **Status:** Accepted
+- **Date:** 2026-11-20
+- **Owner:** A0 orchestrator
+- **Refs:** REQ-CONTRACT-020, REQ-CONTRACT-021, REQ-GH-005, §24 Phase 1 exit gate
+- **Context:** A single digest proves "something changed" but not what, and the Phase 1 exit gate
+  requires the contracts to be frozen for the MVP. Reviewers need to see the diff *and* the intent.
+- **Decision:** `contracts/GOLDEN.json` records a SHA-256 and byte count per file, a payload digest
+  and a fixture digest. `check_golden` fails on any change; refreshing is `--write`, and the tool
+  prints the CR reminder it cannot itself enforce.
+- **Alternatives:** (a) rely on `git diff` — rejected, it does not cover generated fixtures and
+  gives no machine-checkable freeze; (b) sign the digest with a key — rejected until a human owns
+  a key (Phase 8 commit-reveal); (c) freeze nothing until the organizer contract arrives —
+  rejected, Phase 2 needs a stable base.
+- **Consequences:** Every intentional contract change is a slightly heavier commit. That cost is
+  the point. `GOLDEN.json` is metadata and is excluded from `contract_digest()`.
+
+## D-0023 — Typed models mirror the schemas; the schema stays the single authority
+
+- **Status:** Accepted
+- **Date:** 2026-11-20
+- **Owner:** A0 orchestrator
+- **Refs:** REQ-CONTRACT-002, REQ-ARC-001, D-0019
+- **Context:** Phase 1 asks for typed domain models. Hand-written models drift: a field is added
+  to a schema, the dataclass keeps validating nothing, and the drop is silent.
+- **Decision:** `models/` holds one dataclass per schema; `tools/check_models.py` enforces parity
+  of field names *and* of the required set in both directions, and round-trips every valid fixture
+  while rejecting every invalid one. `from_dict` validates before constructing, unknown fields are
+  rejected, and contract-permitted `x_` extensions are preserved.
+- **Alternatives:** (a) generate models from schemas at build time — rejected for now, generated
+  code is harder to annotate with domain meaning and would need its own tests; (b) skip models
+  until Phase 2 — rejected, the exit gate asks for them; (c) use `TypedDict` — rejected, no
+  construction-time validation and no `canonical()` hinge.
+- **Consequences:** Nested objects stay `dict` until the schemas pin them further; that limit is
+  stated in `PHASE-01.json` rather than hidden. Adding a schema field without a model field now
+  fails the build.
+
+## D-0024 — The deadline stays empty; the timezone is answered
+
+- **Status:** Accepted
+- **Date:** 2026-11-20
+- **Owner:** A0 orchestrator
+- **Refs:** REQ-GH-001, REQ-OPS-003, §24 tasks 0.3 and 0.8, OPEN-0, A-001
+- **Context:** Task 0.8 asks for the submission deadline and local timezone. Only half of it can be
+  answered: no organizer has published a deadline or a submission format.
+- **Decision:** `configs/submission/submission.json` holds `SUBMISSION_DEADLINE_UTC: null` with
+  `DEADLINE_CONFIRMED_BY: null`, records `Asia/Almaty` (UTC+5, no DST) as the working timezone, and
+  `GOV-DEADLINE-01` refuses a deadline that has no human confirmation behind it. `OPEN-0` stays open.
+- **Alternatives:** (a) assume a typical hackathon window — rejected, a wrong date either wastes
+  days or causes a panic rewrite; (b) omit the file — rejected, then the gap is invisible; (c) ask
+  an agent to infer it from the TZ — rejected, the TZ does not state one.
+- **Consequences:** The schedule is expressed as a phase order, not a countdown. The first human
+  who learns the date fills four fields and re-runs the gate.
+
 ## Assumption status register (mirror of `docs/ASSUMPTIONS.json`)
 
 Phase 0 requires an explicit `CONFIRMED / CHANGED / OPEN` status for every `A-*`. This

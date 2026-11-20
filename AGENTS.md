@@ -91,3 +91,19 @@ official compatibility** until `adapter/` is bound to a real organizer contract.
 Two items cannot be closed by an agent: the human second signature in
 `docs/official/CONTRACT_SIGNOFF.md` and the submission deadline (`docs/QUESTIONS.md` OPEN-0).
 Do not fabricate either.
+
+## Phase 1 additions to the hard rules
+
+15. **Never edit `contracts/` without a CR.** The set is frozen by `contracts/GOLDEN.json`; a
+    change means: `docs/CR/` entry → schema + fixtures → `python3 -m tools.check_golden --write`
+    → tests, in one commit. `make lint` fails otherwise.
+16. **Never add a model field without a schema field, or the reverse.** `tools/check_models.py`
+    enforces parity in both directions and rejects an unknown field instead of dropping it.
+17. **Never weaken the CI gate to get a green run.** `tools/check_ci.py` resolves every `run:`
+    command against the Makefile and `tools/`, so a deleted or renamed step fails locally.
+18. **Never invent a deadline.** `configs/submission/submission.json` keeps
+    `SUBMISSION_DEADLINE_UTC: null` until a human quotes the organizer message; `GOV-DEADLINE-01`
+    refuses a date without `DEADLINE_CONFIRMED_BY`/`AT`.
+19. **Regenerate, do not hand-edit, generated files.** `docs/RUBRIC_TRACEABILITY.md` and
+    `docs/PHASE_REPORTS/PHASE-*.json` are produced by tools; `make lint` / `GOV-RUBRIC-01` fail
+    when they are stale.

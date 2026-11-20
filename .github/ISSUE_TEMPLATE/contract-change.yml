@@ -1,0 +1,46 @@
+name: Contract change (CR)
+description: Propose a change to anything under contracts/. Requires a CR entry before code.
+title: "[CR] "
+labels: ["contract-change"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        `contracts/` is frozen at a golden digest. Changes follow `docs/CR/CR-TEMPLATE.md`:
+        decision → CR file → schema + fixtures → golden refresh → tests, in one PR.
+  - type: input
+    id: targets
+    attributes:
+      label: Schemas or files affected
+      placeholder: contracts/finding.schema.json, contracts/fixtures/index.json
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Why the current contract is wrong or insufficient
+    validations:
+      required: true
+  - type: textarea
+    id: compat
+    attributes:
+      label: Compatibility
+      description: Does this break existing fixtures, the adapter, or a stored artifact? Version bump?
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Tests to add
+      description: The valid case, the invalid case with its expected JSON pointer, and the doc row.
+    validations:
+      required: true
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Rules
+      options:
+        - label: No provisional value is being relabelled as official.
+          required: true
+        - label: I will refresh contracts/GOLDEN.json in the same PR and note it here.
+          required: true

@@ -1,0 +1,62 @@
+{
+  "phase": "PHASE-01",
+  "title": "Phase 1 - repository foundation and contract freeze",
+  "date": "2026-11-20",
+  "exit_gate": {
+    "mandatory_interfaces_known": true,
+    "unknowns_isolated": true,
+    "blocking_risks_resolved_or_documented": true,
+    "human_actions_open": 2
+  },
+  "requirements": {
+    "registry_total": 186,
+    "assumptions_total": 16,
+    "questions_total": 14,
+    "open_zero_items": 1
+  },
+  "artifacts": [
+    "artifacts/reports/latest/ci_report.json",
+    "artifacts/reports/latest/contracts_report.json",
+    "artifacts/reports/latest/dependency_report.json",
+    "artifacts/reports/latest/golden_report.json",
+    "artifacts/reports/latest/governance_report.json",
+    "artifacts/reports/latest/import_boundaries_report.json",
+    "artifacts/reports/latest/limitations_snapshot.md",
+    "artifacts/reports/latest/models_report.json",
+    "artifacts/reports/latest/rubric_matrix.csv",
+    "artifacts/reports/latest/schema_self_consistency_report.json",
+    "artifacts/reports/latest/starter_probe_report.json",
+    "artifacts/reports/latest/test_report.json",
+    "artifacts/reports/latest/verify_summary.json",
+    "artifacts/reports/latest/verify_summary.txt"
+  ],
+  "known_limitations": [
+    "Branch protection and CODEOWNERS handles are repository settings a human must apply; docs/BRANCH_PROTECTION.md lists them and .github/CODEOWNERS still holds placeholders.",
+    "CI runs on GitHub-hosted runners only; the workflow proves the gate on Linux + Python 3.11, not on the organizers' machine (Q-010).",
+    "The contract set is frozen at a golden digest, but the freeze is provisional: when the organizer contract appears, the freeze is re-taken under a CR (D-0022).",
+    "Typed models mirror the schemas; nested objects stay dictionaries until the schemas pin them down further, so nested typing is not enforced beyond the schema.",
+    "No episodes, generator, scorer or environment exist yet; 28 planned rubric checks stay BLOCKED (Phases 2-17)."
+  ],
+  "generated_from": "artifacts/reports/latest/verify_summary.json",
+  "generated_at_utc": "2026-11-20T16:54:05Z",
+  "status": "PASS_WITH_OPEN_ITEMS",
+  "human_actions_required": [
+    "Reviewer 2 signature on docs/official/CONTRACT_SIGNOFF.md is PENDING (a human must sign).",
+    "Submission deadline is unknown (docs/QUESTIONS.md OPEN-0)."
+  ],
+  "verification": {
+    "command": "python3 -m tools.verify --profile core",
+    "exit_code": 0,
+    "status": "PASS_WITH_PLANNED_CHECKS_BLOCKED",
+    "checks_total": 45,
+    "passed": 16,
+    "failed": 0,
+    "planned_blocked": 28,
+    "tests_run": 231,
+    "tests_failed": 0,
+    "tests_skipped": 0,
+    "contract_fixtures": "see contracts_report.json",
+    "contract_digest": "d9b438cc58bdbb40317ee49024cdfa1fe1ccf56e4ab09cdc752093155f0016bc",
+    "config_digest": "027d3e7a8089791196c211c46452d69042180dc88939f699c10e0b3ef775fcba"
+  }
+}

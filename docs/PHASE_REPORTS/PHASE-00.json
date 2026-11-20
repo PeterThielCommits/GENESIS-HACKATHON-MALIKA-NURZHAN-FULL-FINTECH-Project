@@ -23,16 +23,16 @@
     "command": "python3 -m tools.verify --profile core",
     "exit_code": 0,
     "status": "PASS_WITH_PLANNED_CHECKS_BLOCKED",
-    "checks_total": 40,
-    "passed": 12,
+    "checks_total": 45,
+    "passed": 16,
     "failed": 0,
     "planned_blocked": 28,
-    "tests_run": 188,
+    "tests_run": 231,
     "tests_failed": 0,
     "tests_skipped": 0,
     "contract_fixtures": "see contracts_report.json",
     "contract_digest": "d9b438cc58bdbb40317ee49024cdfa1fe1ccf56e4ab09cdc752093155f0016bc",
-    "config_digest": "5d0d39dea31ce4a5a2cbc319e99bc79171982370564f3b0a6d3ab4e18655d518"
+    "config_digest": "027d3e7a8089791196c211c46452d69042180dc88939f699c10e0b3ef775fcba"
   },
   "artifacts": [
     "artifacts/reports/latest/verify_summary.json",
@@ -44,7 +44,11 @@
     "artifacts/reports/latest/import_boundaries_report.json",
     "artifacts/reports/latest/schema_self_consistency_report.json",
     "artifacts/reports/latest/dependency_report.json",
-    "artifacts/reports/latest/limitations_snapshot.md"
+    "artifacts/reports/latest/limitations_snapshot.md",
+    "artifacts/reports/latest/ci_report.json",
+    "artifacts/reports/latest/golden_report.json",
+    "artifacts/reports/latest/models_report.json",
+    "artifacts/reports/latest/starter_probe_report.json"
   ],
   "known_limitations": [
     "No organizer contract, rubric, samples or starter code exists in any accessible channel; every external parameter stays provisional (D-0001, Q-001).",
@@ -60,5 +64,5 @@
     "Submission deadline is unknown (docs/QUESTIONS.md OPEN-0)."
   ],
   "generated_from": "artifacts/reports/latest/verify_summary.json",
-  "generated_at_utc": "2026-11-20T16:47:50Z"
+  "generated_at_utc": "2026-11-20T16:54:05Z"
 }

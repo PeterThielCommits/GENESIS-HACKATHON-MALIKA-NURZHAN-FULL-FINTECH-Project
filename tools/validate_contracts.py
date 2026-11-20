@@ -119,6 +119,8 @@ def contract_digest() -> str:
     """Digest of the frozen contract set (schema files only, canonical text)."""
     payload = {}
     for path in sorted(CONTRACTS.glob("*.json")):
+        if path.name == "GOLDEN.json":
+            continue  # freeze metadata, not part of the contract payload
         payload[path.name] = json.loads(path.read_text(encoding="utf-8"))
     return canonical_digest(payload)
 

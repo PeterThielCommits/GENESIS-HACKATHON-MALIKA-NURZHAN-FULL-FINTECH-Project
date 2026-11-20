@@ -48,6 +48,11 @@ REQUIRED_DOCS = [
     "docs/official/README.md", "docs/official/MANIFEST.json", "docs/official/CONTRACT_SUMMARY.md",
     "docs/official/CONTRACT_SIGNOFF.md", "docs/official/SOURCE_SEARCH_LOG.md",
     "contracts/CONTRACT.md", "judge/rubric_map.json",
+    # Phase 1 additions: process, freeze and submission records must not disappear silently.
+    "docs/PHASE0_CHECKLIST.md", "docs/BRANCH_PROTECTION.md",
+    "docs/official/SUBMISSION_DEADLINE.md", "docs/PHASE_REPORTS/PHASE-01.md",
+    "contracts/GOLDEN.json", "configs/submission/submission.json",
+    ".github/workflows/verify.yml", ".github/pull_request_template.md", ".github/CODEOWNERS",
 ]
 
 # A forbidden claim is only a violation when the same line does not negate it.
@@ -326,6 +331,17 @@ def check_rubric_map() -> Check:
     ids = [c["check_id"] for c in rubric["internal_checks"]]
     if len(ids) != len(set(ids)):
         check.fail("duplicate internal check ids")
+    from tools import gen_traceability
+
+    try:
+        current = DOCS.joinpath("RUBRIC_TRACEABILITY.md").read_text(encoding="utf-8")
+    except OSError:
+        current = ""
+    if current != gen_traceability.build():
+        check.fail("docs/RUBRIC_TRACEABILITY.md is stale "
+                   "(run `python3 -m tools.gen_traceability --write`)")
+    else:
+        check.note("RUBRIC_TRACEABILITY.md is generated and current")
     for item in rubric["internal_checks"]:
         cid = item["check_id"]
         if item.get("official") is not False:
@@ -527,6 +543,93 @@ def check_status_doc() -> Check:
     return check
 
 
+def check_ci_workflow() -> Check:
+    """The workflow must execute the same gate a human runs (task 1.5)."""
+    from tools import check_ci
+
+    check = Check("GOV-CI-01", ["EN-CI-01"], "CI workflow runs the same gate as a local checkout")
+    result = check_ci.run()
+    if result["status"] != "PASS":
+        for problem in result["problems"]:
+            check.fail(problem)
+    else:
+        check.note(f"{len(result['workflows'])} workflow(s): {', '.join(result['workflows'])}")
+    for note in result["notes"]:
+        check.note(note)
+    if not (ROOT / ".github" / "pull_request_template.md").is_file():
+        check.fail("no .github/pull_request_template.md")
+    else:
+        check.note(".github/pull_request_template.md present")
+    templates = sorted((ROOT / ".github" / "ISSUE_TEMPLATE").glob("*.yml"))
+    if len(templates) < 3:
+        check.fail(f"expected at least 3 issue templates, found {len(templates)}")
+    else:
+        check.note(f"{len(templates)} issue form(s)")
+    return check
+
+
+def check_submission_config() -> Check:
+    """Task 0.8: the deadline is either confirmed by a human or explicitly unknown."""
+    check = Check("GOV-DEADLINE-01", ["EN-SUBMIT-01"],
+                  "Submission deadline and timezone are recorded honestly")
+    path = ROOT / "configs" / "submission" / "submission.json"
+    if not path.is_file():
+        check.fail("configs/submission/submission.json missing")
+        return check
+    try:
+        config = read_json(path)
+    except json.JSONDecodeError as exc:
+        check.fail(f"configs/submission/submission.json is invalid JSON: {exc}")
+        return check
+    values = config.get("values", {})
+    deadline = values.get("SUBMISSION_DEADLINE_UTC")
+    confirmed_by = values.get("DEADLINE_CONFIRMED_BY")
+    confirmed_at = values.get("DEADLINE_CONFIRMED_AT")
+    if deadline is None:
+        if confirmed_by or confirmed_at:
+            check.fail("deadline is empty but DEADLINE_CONFIRMED_BY/AT is filled")
+        if "OPEN-0" not in (DOCS / "QUESTIONS.md").read_text(encoding="utf-8"):
+            check.fail("deadline is unknown but docs/QUESTIONS.md has no OPEN-0 entry")
+        check.note("deadline UNKNOWN and recorded as OPEN-0 - never guessed")
+    else:
+        if not confirmed_by or not confirmed_at:
+            check.fail("deadline is set without a human confirmation (who/when)")
+        local = values.get("SUBMISSION_DEADLINE_LOCAL")
+        offset = values.get("LOCAL_UTC_OFFSET_HOURS")
+        if not local or offset is None:
+            check.fail("deadline is set without a matching local time")
+        else:
+            check.note(f"deadline confirmed: {deadline} (local {local}, UTC{offset:+d})")
+    if values.get("LOCAL_TIMEZONE") != "Asia/Almaty":
+        check.fail("LOCAL_TIMEZONE is not the team timezone Asia/Almaty")
+    if values.get("LOCAL_DST_OBSERVED") is not False:
+        check.fail("Asia/Almaty does not observe DST; LOCAL_DST_OBSERVED must be false")
+    if not (DOCS / "official" / "SUBMISSION_DEADLINE.md").is_file():
+        check.fail("docs/official/SUBMISSION_DEADLINE.md missing")
+    return check
+
+
+def check_models_and_freeze() -> Check:
+    """Typed models must mirror the schemas, and the contract set must still match its freeze."""
+    from tools import check_golden, check_models
+
+    check = Check("GOV-MODELS-01", ["EN-MODELS-01", "CT-GOLDEN-01"],
+                  "Typed models mirror the schemas and the contract freeze is intact")
+    models = check_models.run()
+    if models["status"] != "PASS":
+        for problem in models["problems"]:
+            check.fail(problem)
+    else:
+        check.note(f"{models['models']} typed models, parity and round-trip verified")
+    golden = check_golden.run()
+    if golden["status"] != "PASS":
+        for problem in golden["problems"]:
+            check.fail(problem)
+    else:
+        check.note(f"{golden['files_checked']} contract files match the recorded freeze")
+    return check
+
+
 def run() -> list[Check]:
     checks = [
         check_docs_present(),
@@ -542,6 +645,9 @@ def run() -> list[Check]:
         check_phase_reports(),
         check_signoff(),
         check_status_doc(),
+        check_ci_workflow(),
+        check_submission_config(),
+        check_models_and_freeze(),
     ]
     return checks
 

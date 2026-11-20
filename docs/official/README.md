@@ -37,6 +37,20 @@ Consequences, stated plainly:
    and classification `OFFICIAL_ORGANIZER`, and every affected decision is superseded by a
    new one — files in this directory are never edited in place.
 
+## Executable checks for "we could not find it"
+
+Two claims in this directory would otherwise be unfalsifiable. Both now have a command:
+
+| Claim | Command | Result today |
+|-------|---------|--------------|
+| no organizer starter code or samples exist | `python3 -m tools.probe_starter` | `SKIPPED`, with the seven scanned paths and the manifest entry as evidence |
+| the submission deadline is unknown | `configs/submission/submission.json`, `GOV-DEADLINE-01` | deadline `null`, `OPEN-0` open, never guessed |
+
+The probe compiles any bundle it finds before running anything, executes only commands a human
+has listed in `configs/submission/starter_probe.json`, and never imports organizer code into this
+repository. `SUBMISSION_DEADLINE.md` records the timezone half of task 0.8 (Asia/Almaty, UTC+5,
+no DST) even though the date half cannot be answered yet.
+
 ## Classification rules
 
 * `OFFICIAL_ORGANIZER` — published by the hackathon organizers. A requirement derived from

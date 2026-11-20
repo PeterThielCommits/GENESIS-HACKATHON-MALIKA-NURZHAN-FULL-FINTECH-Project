@@ -1,0 +1,52 @@
+name: Bug / defect
+description: Something that should work does not, or a check lies about its result.
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A bug report is only actionable if the command and its output are included.
+        Never paste a salt, seed or sealed truth into an issue.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Observed behaviour, in one paragraph.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Exact commands from a clean checkout, plus the exit code.
+      render: shell
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - contracts / schemas / fixtures
+        - adapter and isolation
+        - governance and documentation
+        - verification harness and CI
+        - data generator (Phase 3+)
+        - reward and scoring (Phase 9+)
+        - other
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety
+      options:
+        - label: This report contains no secret, salt, seed or sealed truth.
+          required: true

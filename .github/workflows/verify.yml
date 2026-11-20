@@ -1,0 +1,81 @@
+# TwinLedger continuous verification (Phase 1 task 1.5).
+#
+# Mirrors `make verify-core` exactly: the same commands a human runs locally, so a green CI run
+# and a green laptop run mean the same thing. No network install happens: the mandatory core is
+# stdlib-only by design (D-0003), so a failure here is a real failure, not a mirror outage.
+name: verify
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Phase gate (python ${{ matrix.python-version }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Environment check (no installs, no network)
+        run: make setup
+
+      - name: Compile, import boundaries, contract + registry freshness, golden hashes
+        run: |
+          make lint
+          python3 -m tools.check_models
+          python3 -m tools.check_golden
+
+      - name: Unit, contract and phase tests
+        run: make test
+
+      - name: Governance consistency
+        run: python3 -m tools.check_governance
+
+      - name: Starter probe (skips honestly when no organizer starter exists)
+        run: python3 -m tools.probe_starter
+
+      - name: Phase gate (exit codes 0-5)
+        run: make verify-core
+
+      - name: Upload verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-${{ matrix.python-version }}
+          path: artifacts/reports/latest/
+          if-no-files-found: warn
+
+      - name: Summarise the gate in the run page
+        if: always()
+        run: |
+          if [ -f artifacts/reports/latest/verify_summary.txt ]; then
+            {
+              echo '### Verification summary'
+              echo '```'
+              cat artifacts/reports/latest/verify_summary.txt
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'No verification summary was produced — treat this run as failed.' >> "$GITHUB_STEP_SUMMARY"
+          fi

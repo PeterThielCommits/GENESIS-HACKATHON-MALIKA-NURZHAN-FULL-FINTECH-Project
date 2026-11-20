@@ -17,7 +17,8 @@ Vocabulary (master spec §23.3, D-0015) — used strictly, never as synonyms:
 | `NOT RUN` | the check was never executed — never to be read as a pass |
 | `PASS_WITH_OPEN_ITEMS` | the phase gate is satisfied, with items only a human can close |
 
-Overall state: **PHASE-00 gate = `PASS_WITH_OPEN_ITEMS`** (see the gate table).
+Overall state: **PHASE-00 = `PASS_WITH_OPEN_ITEMS`**, **PHASE-01 = `PASS_WITH_OPEN_ITEMS`**
+(see the gate table).
 No official organizer contract is archived, so no statement here describes the jury score.
 
 ## Gate table
@@ -34,18 +35,37 @@ No official organizer contract is archived, so no statement here describes the j
 | Verification harness | PHASE-00 | `PASS` | `tools/verify.py`, `make verify-core`, exit codes 0/1/2/3/4/5 | later-phase checks reported as `BLOCKED` |
 | Two-person review | PHASE-00 | `BLOCKED` | `docs/official/CONTRACT_SIGNOFF.md` — Reviewer 1 `SIGNED` | **HUMAN_ACTION_REQUIRED**: Reviewer 2 signature (D-0017) |
 | Submission deadline recorded | PHASE-00 | `NOT RUN` | `docs/QUESTIONS.md` `OPEN-0` | deadline unknown; no local timezone commitment can be made yet |
-| Starter smoke test | PHASE-00 | `SKIPPED` | no official starter code exists (`docs/official/MANIFEST.json` `absent[]`) | runs when organizers publish starter code (Q-001) |
-| Phase 1 — data generator | PHASE-01 | `NOT RUN` | — | not started (correct for a Phase 0 hand-off) |
+| Starter smoke test | PHASE-00 | `SKIPPED` | `python3 -m tools.probe_starter` scans 7 paths and reports the manifest entry | runs automatically when organizers publish starter code (Q-001) |
+| Deadline + timezone (0.8) | PHASE-00 | `PASS_WITH_OPEN_ITEMS` | `docs/official/SUBMISSION_DEADLINE.md`, `configs/submission/submission.json`, `GOV-DEADLINE-01` | timezone answered (`Asia/Almaty`, UTC+5, no DST); the date is `null` + `OPEN-0` |
+| Task-by-task checklist | PHASE-00 | `PASS` | `docs/PHASE0_CHECKLIST.md` (all 8 tasks, 3 tests, 3 exit-gate criteria) | — |
+| Foundation: pyproject, Makefile, gitignore | PHASE-01 | `PASS` | `make setup`, `make help` (19 targets), `.gitignore` | — |
+| Typed domain models | PHASE-01 | `PASS` | `models/` (11 dataclasses), `python3 -m tools.check_models`, `EN-MODELS-01` | nested objects stay `dict` (declared limitation) |
+| Contract freeze | PHASE-01 | `PASS` | `contracts/GOLDEN.json`, `python3 -m tools.check_golden`, `CT-GOLDEN-01` | freeze is provisional; a CR retakes it (D-0022) |
+| CI: tests, lint, boundary scan | PHASE-01 | `PASS` | `.github/workflows/verify.yml`, `python3 -m tools.check_ci`, `GOV-CI-01` | proven on Linux + Python 3.11 only (Q-010) |
+| PR/issue templates, CODEOWNERS | PHASE-01 | `PASS` | `.github/pull_request_template.md`, 4 issue forms, `.github/CODEOWNERS` | handles are placeholders |
+| Branch protection | PHASE-01 | `BLOCKED` | `docs/BRANCH_PROTECTION.md` lists the exact settings | **HUMAN_ACTION_REQUIRED**: only a repository admin can apply them |
+| Data generator | PHASE-02/03 | `NOT RUN` | — | next work; see `docs/TASKS/T-3-01-*` |
 | Phases 2–17 | PHASE-02…17 | `NOT RUN` | — | see `judge/rubric_map.json` `PLANNED` checks |
 
 ## What is proven right now
 
-* `python -m unittest discover -s tests -t . -p 'test_*.py'` — **188 tests, 0 failures, 0 errors,
-  0 skips**.
-* `python -m tools.validate_contracts` — 35/35 fixtures, digest `d9b438cc58bdbb40317ee49024cdfa1fe1ccf56e4ab09cdc752093155f0016bc`.
-* `python -m tools.check_import_boundaries` — PASS, 34 files, no third-party imports, no
-  forbidden cross-zone import.
-* `python -m tools.check_governance` — 13/13 checks PASS (see caveat in the next section).
+* `python3 -m unittest discover -s tests -t . -p 'test_*.py'` — **231 tests, 0 failures, 0 errors,
+  0 skips** (`artifacts/reports/latest/test_report.json`).
+* `python3 -m tools.validate_contracts` — 35/35 fixtures, digest
+  `d9b438cc58bdbb40317ee49024cdfa1fe1ccf56e4ab09cdc752093155f0016bc`.
+* `python3 -m tools.check_import_boundaries` — PASS, 48 files, 0 third-party
+  imports, 0 forbidden cross-zone imports.
+* `python3 -m tools.check_models` — 11 typed models, parity in both directions, 14 valid fixtures
+  round-trip, 21 invalid fixtures rejected.
+* `python3 -m tools.check_golden` — 50 contract files match the freeze
+  (`contract_set_digest` in the summary).
+* `python3 -m tools.check_ci` — 1 workflow, every `run:` command resolves, actions pinned.
+* `python3 -m tools.check_governance` — 16/16 checks PASS.
+* `python3 -m tools.verify --profile core` — 45 checks:
+  17 executed (16 pass, 1 `SKIPPED`),
+  28 `BLOCKED`, exit code 0.
+* `make lint` — OK (compile, boundaries, contracts, registry freshness, models, freeze, CI,
+  traceability freshness).
 * `make setup` — PASS (Python 3.11.2; optional extras absent → reported `SKIPPED`, never
   silently installed).
 
@@ -53,9 +73,12 @@ No official organizer contract is archived, so no statement here describes the j
 
 1. Sign Reviewer 2 in `docs/official/CONTRACT_SIGNOFF.md` after checking
    `docs/official/CONTRACT_SUMMARY.md` against whatever the organizers publish.
-2. Record the real submission deadline (date, time, timezone) and replace `OPEN-0`.
+2. Record the real submission deadline (date, time, timezone) and replace `OPEN-0`; then fill
+   the four fields in `configs/submission/submission.json`.
 3. Forward the organizer contract if it exists (any format) — then
    `docs/CR/CR-TEMPLATE.md` drives the diff, no silent edits.
+4. Apply branch protection and replace the five placeholder handles in `.github/CODEOWNERS`
+   (`docs/BRANCH_PROTECTION.md` has the checklist).
 
 ## Honest limitations
 
@@ -64,3 +87,7 @@ No official organizer contract is archived, so no statement here describes the j
   score (D-0002).
 * Process separation is not a sandbox and the current adapter cannot enforce it at all
   (D-0012, `docs/THREAT_MODEL.md`).
+* CI runs on GitHub-hosted Linux with Python 3.11 only; the organizers' machine is unverified
+  (Q-010), so the stdlib-only, offline-by-default rule is the mitigation, not a proof.
+* The freeze protects intent, not correctness: a wrong provisional schema is still wrong after
+  it is hashed (D-0022).

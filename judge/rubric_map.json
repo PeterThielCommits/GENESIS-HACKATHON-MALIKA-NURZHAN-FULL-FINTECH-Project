@@ -225,6 +225,22 @@
       "note": "Depends on the platform security profile; unenforced controls must be listed in LIMITATIONS."
     },
     {
+      "check_id": "CT-GOLDEN-01",
+      "block": "contract_isolation",
+      "title": "The frozen contract set matches its recorded golden hashes",
+      "req_ids": [
+        "REQ-CONTRACT-021",
+        "REQ-GH-005"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-01",
+      "declared_state": "IMPLEMENTED",
+      "command": "python3 -m tools.check_golden",
+      "artifact": "artifacts/reports/latest/golden_report.json",
+      "note": "Per-file sha256 plus a set digest; refreshing requires a docs/CR/ entry."
+    },
+    {
       "check_id": "DT-MONEY-01",
       "block": "data_truth",
       "title": "Currency exponents, minor-unit conversion and rounding are exact and hand-verified (KZT/USD/JPY/KWD)",
@@ -746,6 +762,70 @@
       "command": "python -m unittest tests.phase0.test_phase_report",
       "artifact": "artifacts/reports/latest/verify_summary.json",
       "note": "Applies to PHASE-00 now and to every later phase."
+    },
+    {
+      "check_id": "EN-MODELS-01",
+      "block": "engineering",
+      "title": "Typed models mirror every schema property, and fixtures round-trip through them",
+      "req_ids": [
+        "REQ-ARC-001",
+        "REQ-CONTRACT-021"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-01",
+      "declared_state": "IMPLEMENTED",
+      "command": "python3 -m tools.check_models",
+      "artifact": "artifacts/reports/latest/models_report.json",
+      "note": "11 models; parity, required-set parity and fixture round-trip."
+    },
+    {
+      "check_id": "EN-CI-01",
+      "block": "engineering",
+      "title": "CI runs the same gate as a local checkout, with pinned actions and artifact upload",
+      "req_ids": [
+        "REQ-ARC-001",
+        "REQ-TEST-004"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-01",
+      "declared_state": "IMPLEMENTED",
+      "command": "python3 -m tools.check_ci",
+      "artifact": "artifacts/reports/latest/ci_report.json",
+      "note": "stdlib workflow lint: renamed target cannot silently skip a CI step."
+    },
+    {
+      "check_id": "EN-SUBMIT-01",
+      "block": "engineering",
+      "title": "Submission deadline, timezone and format are recorded honestly (unknown stays unknown)",
+      "req_ids": [
+        "REQ-GH-001",
+        "REQ-OPS-003"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-00",
+      "declared_state": "IMPLEMENTED",
+      "command": "python3 -m unittest tests.phase0.test_deadline",
+      "artifact": "artifacts/reports/latest/verify_summary.json",
+      "note": "Asia/Almaty = UTC+5, no DST; the config lives at configs/submission/submission.json and a guessed deadline fails GOV-DEADLINE-01."
+    },
+    {
+      "check_id": "EN-PROBE-01",
+      "block": "engineering",
+      "title": "Official starter code is probed, and its smoke test would run if it appeared",
+      "req_ids": [
+        "REQ-ADAPTER-001",
+        "REQ-TEST-004"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-00",
+      "declared_state": "IMPLEMENTED",
+      "command": "python3 -m tools.probe_starter",
+      "artifact": "artifacts/reports/latest/starter_probe_report.json",
+      "note": "Reports SKIPPED with the scanned paths when no starter bundle exists."
     }
   ],
   "check_states": [
@@ -755,6 +835,7 @@
   "notes": [
     "Provisional check counts are our own internal split and are not an official mapping.",
     "When the official rubric is published, each official check gets a mirrored internal test and this file gains `official: true` entries with a quoted source.",
-    "PLANNED checks appear in `make verify` as BLOCKED with a reason, never as PASS."
+    "PLANNED checks appear in `make verify` as BLOCKED with a reason, never as PASS.",
+    "Phase 1 added CT-GOLDEN-01, EN-MODELS-01, EN-CI-01, EN-SUBMIT-01 and EN-PROBE-01."
   ]
 }

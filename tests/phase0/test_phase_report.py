@@ -21,6 +21,20 @@ class PhaseReportStructureTests(unittest.TestCase):
         cls.md = REPORT_MD.read_text(encoding="utf-8")
         cls.payload = load_json(REPORT_JSON)
 
+    def test_every_phase_report_has_both_forms(self) -> None:
+        reports = sorted((DOCS / "PHASE_REPORTS").glob("PHASE-*.md"))
+        self.assertGreaterEqual(len(reports), 2)
+        for report in reports:
+            self.assertTrue(report.with_suffix(".json").is_file(),
+                            f"{report.name} has no machine companion")
+            body = report.read_text(encoding="utf-8")
+            for heading in REQUIRED_HEADINGS:
+                self.assertIn(heading, body, f"{report.name} lacks {heading}")
+            payload = load_json(report.with_suffix(".json"))
+            for key in REQUIRED_KEYS:
+                self.assertIn(key, payload, f"{report.stem}.json lacks {key}")
+            self.assertTrue(payload["known_limitations"], f"{report.stem}.json has no limitations")
+
     def test_both_files_exist(self) -> None:
         self.assertTrue(REPORT_MD.is_file())
         self.assertTrue(REPORT_JSON.is_file())

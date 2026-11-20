@@ -62,7 +62,7 @@ class RubricMapTests(unittest.TestCase):
                 continue
             command = check["command"]
             make_targets = [token for token in command.split() if token in targets]
-            module_match = re.search(r"python -m ([\w.]+)", command)
+            module_match = re.search(r"python3? -m ([\w.]+)", command)
             self.assertTrue(make_targets or module_match, f"{check['check_id']}: {command}")
             if module_match:
                 path = ROOT / (module_match.group(1).replace(".", "/") + ".py")
@@ -87,6 +87,12 @@ class RubricMapTests(unittest.TestCase):
         doc = (ROOT / "docs" / "RUBRIC_TRACEABILITY.md").read_text(encoding="utf-8")
         for check in self.map["internal_checks"]:
             self.assertIn(check["check_id"], doc, f"{check['check_id']} is missing from RUBRIC_TRACEABILITY.md")
+
+    def test_traceability_document_is_generated_and_current(self) -> None:
+        from tools import gen_traceability
+        doc = (ROOT / "docs" / "RUBRIC_TRACEABILITY.md").read_text(encoding="utf-8")
+        self.assertEqual(doc, gen_traceability.build(),
+                         "RUBRIC_TRACEABILITY.md is stale: run `make traceability`")
 
     def test_requirement_coverage_is_reported_honestly(self) -> None:
         # Not every requirement can be covered in Phase 0; the document must state the number.

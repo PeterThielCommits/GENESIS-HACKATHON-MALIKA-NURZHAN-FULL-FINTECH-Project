@@ -46,13 +46,13 @@ Every number below is copied from a run performed while writing this report.
 
 | Command | Result |
 |---------|--------|
-| `python3 -m unittest discover -s tests -t . -p 'test_*.py'` | **188 tests, 0 FAIL, 0 ERROR, 0 SKIPPED** (0.1 s) |
+| `python3 -m unittest discover -s tests -t . -p 'test_*.py'` | **231 tests, 0 FAIL, 0 ERROR, 0 SKIPPED** (0.1 s) |
 | `python3 -m tools.validate_contracts` | **35/35** fixtures; every invalid case asserts its JSON pointer + keyword |
 | `python3 -m tools.validate_contracts --hash` | `d9b438cc58bdbb40317ee49024cdfa1fe1ccf56e4ab09cdc752093155f0016bc` |
-| `python3 -m tools.check_governance` | **13/13** checks pass |
-| `python3 -m tools.check_import_boundaries` | PASS — 34 files, 0 third-party imports, 0 forbidden edges |
+| `python3 -m tools.check_governance` | **16/16** checks pass |
+| `python3 -m tools.check_import_boundaries` | PASS — 48 files, 0 third-party imports, 0 forbidden edges |
 | `python3 -m tools.extract_requirements --check` | PASS — 186 requirements reproduce byte-identically |
-| `python3 -m tools.verify --profile core` | 40 checks: **12 executed** (12 pass) + **28 `BLOCKED`** with reasons; exit code **0**, status `PASS_WITH_PLANNED_CHECKS_BLOCKED` |
+| `python3 -m tools.verify --profile core` | 45 checks: **17 executed** (16 pass, 1 `SKIPPED`) + **28 `BLOCKED`** with reasons; exit code **0**, status `PASS_WITH_PLANNED_CHECKS_BLOCKED` |
 | `make setup` | PASS — Python 3.11.2; optional extras absent → `SKIPPED` |
 
 Check map state: 40 internal checks, `official: false` on every one; 12 `IMPLEMENTED`, 28

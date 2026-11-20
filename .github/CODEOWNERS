@@ -1,0 +1,37 @@
+# Ownership map (Phase 1 task 1.6). Mirrors docs/OWNERSHIP.md.
+#
+# These are GitHub handles, which a human must fill in: an agent cannot know them and must not
+# invent them. Until they are filled in this file grants nobody anything - which is honest, and
+# is why branch protection is documented as a human action in docs/BRANCH_PROTECTION.md.
+
+# Default: the human orchestrator owns everything nobody else claims.
+*                           @OWNER_A0_ORCHESTRATOR
+
+# Contracts are frozen; changes need the contract owner plus a CR.
+/contracts/                 @OWNER_CONTRACTS
+/contracts/GOLDEN.json      @OWNER_CONTRACTS
+/judge/rubric_map.json      @OWNER_CONTRACTS
+
+# Isolation boundary: nobody edits the adapter without the contract owner.
+/adapter/                   @OWNER_CONTRACTS
+/configs/                   @OWNER_CONTRACTS
+
+# Governance records: the orchestrator signs these, no one else.
+/docs/DECISIONS.md          @OWNER_A0_ORCHESTRATOR
+/docs/QUESTIONS.md          @OWNER_A0_ORCHESTRATOR
+/docs/STATUS.md             @OWNER_A0_ORCHESTRATOR
+/docs/official/             @OWNER_A0_ORCHESTRATOR
+
+# Data policy and seal: the seal owner can refuse any change here.
+/docs/GIT_AND_DATA_POLICY.md @OWNER_SEAL
+/docs/THREAT_MODEL.md        @OWNER_SEAL
+/sealed/                     @OWNER_SEAL
+/episodes/hidden/            @OWNER_SEAL
+
+# Verification harness and CI.
+/tools/verify.py            @OWNER_A0_ORCHESTRATOR
+/tools/check_governance.py  @OWNER_A0_ORCHESTRATOR
+/.github/                   @OWNER_CI
+
+# Tests are never weakened to make CI green: the test owner reviews test changes.
+/tests/                     @OWNER_TESTS

@@ -9,8 +9,8 @@ Written: 2026-11-20, end of Phase 0. Read `AGENTS.md` first, then
 |-------|-------|
 | Branch | `arena/6e3d45bc-genesis-hackathon-malika-nurzh` |
 | Base commit | `c961a009611e1711463f5116b2df926bb4726de8` (branch point, only `README.md` existed) |
-| Phase | `PHASE-00` — closed as `PASS_WITH_OPEN_ITEMS` (see `docs/PHASE_REPORTS/PHASE-00.md`) |
-| Last verified command | `make verify-core` → exit `0`, `PASS_WITH_PLANNED_CHECKS_BLOCKED`, 188 tests |
+| Phase | `PHASE-00` and `PHASE-01` closed as `PASS_WITH_OPEN_ITEMS` (see `docs/PHASE_REPORTS/`) |
+| Last verified command | `make verify-core` → exit `0`, `PASS_WITH_PLANNED_CHECKS_BLOCKED`, 231 tests |
 | Working tree | committed, see `git status` |
 | Blockers | none technical; two human items (second signature, deadline) |
 
@@ -22,7 +22,7 @@ Written: 2026-11-20, end of Phase 0. Read `AGENTS.md` first, then
 
 ## What exists (do not rebuild)
 
-* `contracts/` — 11 typed schemas + shared definitions, 35 fixtures, `CONTRACT.md`, `version.json`, `currency.json`.
+* `contracts/` — 11 typed schemas + shared definitions, 35 fixtures, frozen by `GOLDEN.json`, `CONTRACT.md`, `version.json`, `currency.json`.
   Changing any schema needs a CR plus a decision.
 * `tools/` — canonical JSON, stdlib schema validator, contract validator, requirement
   extractor, import-boundary scan, governance check, verify runner, setup check.
@@ -30,11 +30,19 @@ Written: 2026-11-20, end of Phase 0. Read `AGENTS.md` first, then
   to a guessed contract.
 * `configs/`, `spec/`, `judge/`, `docs/`, `tests/`.
 
+## What was added in Phase 1 (do not rebuild)
+
+* `models/` — 11 dataclasses mirroring the schemas, checked by `tools/check_models.py`.
+* `contracts/GOLDEN.json` — per-file freeze; refresh only via a CR.
+* `.github/` — workflow, PR template, 4 issue forms, CODEOWNERS (placeholders).
+* `docs/BRANCH_PROTECTION.md`, `docs/PHASE0_CHECKLIST.md`, `docs/PHASE_REPORTS/PHASE-01.md`.
+* `configs/submission/` — deadline (null, honest) and starter-probe configuration.
+
 ## What does not exist yet (build in this order)
 
 | Phase | Deliverable | Suggested first ticket |
 |-------|-------------|-----------------------|
-| 1 | foundation hardening: CI config, typed models, golden hashes | `T-1-01-contracts-hardening` |
+| 1 | foundation hardening: CI, typed models, golden freeze — **DONE** | `docs/PHASE_REPORTS/PHASE-01.md` |
 | 2 | money, time, ID factory, invariant checks | `T-2-01-money-primitives` |
 | 3 | deterministic clean generator | `T-3-01-rng-service` |
 | 4 | mutation operators + diff truth | `T-4-01-duplicate-payment-operator` |

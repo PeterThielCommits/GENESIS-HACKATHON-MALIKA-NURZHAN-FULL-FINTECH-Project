@@ -34,7 +34,8 @@ from typing import Callable
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from tools import check_governance, check_import_boundaries, validate_contracts
+from tools import (check_ci, check_golden, check_governance, check_import_boundaries,
+                   check_models, probe_starter, validate_contracts)
 from tools.canonical_json import canonical_digest
 from tools.jsonschema_lite import ContractValidator
 
@@ -200,6 +201,11 @@ RUBRIC_BINDINGS: dict[str, dict] = {
     "EN-ARCHIVE-01": {"governance": ["GOV-ARCHIVE-01"], "tests": ["tests.phase0.test_official_archive"]},
     "EN-OFFLINE-01": {"source": "boundaries_offline"},
     "EN-DATA-01": {"governance": ["GOV-GIT-01"], "tests": ["tests.phase0.test_git_data_policy"]},
+    "CT-GOLDEN-01": {"source": "golden"},
+    "EN-MODELS-01": {"source": "models"},
+    "EN-CI-01": {"source": "ci", "governance": ["GOV-CI-01"]},
+    "EN-SUBMIT-01": {"governance": ["GOV-DEADLINE-01"], "tests": ["tests.phase0.test_deadline"]},
+    "EN-PROBE-01": {"source": "probe"},
     "EN-REPORT-01": {"governance": ["GOV-PHASE-REPORT-01"], "tests": ["tests.phase0.test_phase_report"]},
 }
 
@@ -248,6 +254,26 @@ def build_results() -> tuple[list[dict], dict, list[str]]:
     }
     write_json("governance_report.json", governance_payload)
     gov_by_id = {c.check_id: c for c in gov_checks}
+
+    started = _now()
+    models_result = check_models.run()
+    models_result["duration_ms"] = round((_now() - started) * 1000)
+    write_json("models_report.json", models_result)
+
+    started = _now()
+    golden_result = check_golden.run()
+    golden_result["duration_ms"] = round((_now() - started) * 1000)
+    write_json("golden_report.json", golden_result)
+
+    started = _now()
+    ci_result = check_ci.run()
+    ci_result["duration_ms"] = round((_now() - started) * 1000)
+    write_json("ci_report.json", ci_result)
+
+    started = _now()
+    probe_result = probe_starter.probe(run=False)
+    probe_result["duration_ms"] = round((_now() - started) * 1000)
+    write_json("starter_probe_report.json", probe_result)
 
     tests = run_unittest_suite()
     write_json("test_report.json", tests)
@@ -302,6 +328,26 @@ def build_results() -> tuple[list[dict], dict, list[str]]:
                 statuses.append("PASS" if offline_ok else "FAIL")
                 reasons.append("no third-party imports in the mandatory path" if offline_ok
                                else f"{len(boundary_result['third_party_imports'])} third-party imports")
+            elif source == "golden":
+                statuses.append(golden_result["status"])
+                reasons.append(f"{golden_result['files_checked']} files match the freeze")
+                if golden_result["problems"]:
+                    reasons.extend(golden_result["problems"])
+            elif source == "models":
+                statuses.append(models_result["status"])
+                reasons.append(f"{models_result['models']} typed models")
+                if models_result["problems"]:
+                    reasons.extend(models_result["problems"])
+            elif source == "ci":
+                statuses.append(ci_result["status"])
+                reasons.append(f"{len(ci_result['workflows'])} workflow(s)")
+                if ci_result["problems"]:
+                    reasons.extend(ci_result["problems"])
+            elif source == "probe":
+                # SKIPPED is the correct result when no organizer bundle exists; it is never
+                # reported as a pass and never hidden.
+                statuses.append(probe_result["status"])
+                reasons.append(probe_result["reason"])
             elif source == "self":
                 # Filled in after all other checks: this one reports the aggregate.
                 statuses.append("PASS")
@@ -361,6 +407,11 @@ def build_results() -> tuple[list[dict], dict, list[str]]:
         "boundaries_status": boundary_result["status"],
         "contracts_status": contracts_report["status"],
         "schema_status": schema_result["status"],
+        "models_status": models_result["status"],
+        "golden_status": golden_result["status"],
+        "golden_digest": golden_result.get("contract_set_digest"),
+        "ci_status": ci_result["status"],
+        "probe_status": probe_result["status"],
     }
     return results, meta, blockers
 
@@ -405,6 +456,17 @@ def emit(results: list[dict], meta: dict, blockers: list[str], profile: str) -> 
             "contracts": meta["contract_digest"],
             "configs": meta["config_digest"],
             "rubric_map": meta["rubric_map_digest"],
+            "golden_contract_set": meta["golden_digest"],
+        },
+        "subsystems": {
+            "contracts": meta["contracts_status"],
+            "schemas": meta["schema_status"],
+            "governance": meta["governance_status"],
+            "boundaries": meta["boundaries_status"],
+            "models": meta["models_status"],
+            "golden": meta["golden_status"],
+            "ci": meta["ci_status"],
+            "starter_probe": meta["probe_status"],
         },
         "counts": {
             "checks_total": len(results),
@@ -427,6 +489,7 @@ def emit(results: list[dict], meta: dict, blockers: list[str], profile: str) -> 
     write_json("verify_summary.json", summary)
     _write_text_summary(summary)
     _write_phase_report(summary)
+    _write_phase_report(summary, phase="PHASE-01")
     _write_matrix(results)
     _write_limitations_snapshot()
     return summary
@@ -475,14 +538,46 @@ def _write_text_summary(summary: dict) -> None:
     (ARTIFACTS / "verify_summary.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _write_phase_report(summary: dict) -> None:
+PHASE_NARRATIVE = {
+    "PHASE-00": {
+        "title": "Phase 0 - official sources, contract, isolation, governance",
+        "requirements": {"registry_total": 186, "mapped_to_checks": 137, "assumptions_total": 16,
+                         "assumptions_unresolved": 16, "questions_total": 14,
+                         "open_zero_items": 1, "decisions": 24},
+        "known_limitations": [
+            "No organizer contract, rubric, samples or starter code exists in any accessible channel; every external parameter stays provisional (D-0001, Q-001).",
+            "The adapter is UNBOUND: no end-to-end run against the organizer protocol is possible yet (Q-005).",
+            "Reviewer 2 signature on docs/official/CONTRACT_SIGNOFF.md is PENDING (human action, D-0017).",
+            "The submission deadline is unknown; docs/QUESTIONS.md OPEN-0 has no date, and configs/submission/submission.json records it as null on purpose.",
+            "Some requirements have no internal check yet; the official 80-check rubric is unavailable (Q-012).",
+            "Process separation, socket blocking and resource limits are Phase 16 work; docs/THREAT_MODEL.md marks those boundaries as NOT ENABLED.",
+            "The verification suite is internal and its pass rate is not a jury score (D-0002).",
+        ],
+    },
+    "PHASE-01": {
+        "title": "Phase 1 - repository foundation and contract freeze",
+        "requirements": {"registry_total": 186, "assumptions_total": 16,
+                         "questions_total": 14, "open_zero_items": 1},
+        "known_limitations": [
+            "Branch protection and CODEOWNERS handles are repository settings a human must apply; docs/BRANCH_PROTECTION.md lists them and .github/CODEOWNERS still holds placeholders.",
+            "CI runs on GitHub-hosted runners only; the workflow proves the gate on Linux + Python 3.11, not on the organizers' machine (Q-010).",
+            "The contract set is frozen at a golden digest, but the freeze is provisional: when the organizer contract appears, the freeze is re-taken under a CR (D-0022).",
+            "Typed models mirror the schemas; nested objects stay dictionaries until the schemas pin them down further, so nested typing is not enforced beyond the schema.",
+            "No episodes, generator, scorer or environment exist yet; 28 planned rubric checks stay BLOCKED (Phases 2-17).",
+        ],
+    },
+}
+
+
+def _write_phase_report(summary: dict, phase: str = "PHASE-00") -> None:
     """Refresh the machine-readable phase report from this run's own summary.
 
     The human report (`PHASE-00.md`) is written by a person and only cites these numbers; the
     JSON must never be edited by hand, otherwise a report can drift away from its artifact.
     Narrative keys are preserved when the file already exists.
     """
-    path = ROOT / "docs" / "PHASE_REPORTS" / "PHASE-00.json"
+    narrative = PHASE_NARRATIVE[phase]
+    path = ROOT / "docs" / "PHASE_REPORTS" / f"{phase}.json"
     payload: dict = {}
     if path.is_file():
         try:
@@ -491,8 +586,8 @@ def _write_phase_report(summary: dict) -> None:
             payload = {}
     if not payload:
         payload = {
-            "phase": "PHASE-00",
-            "title": "Phase 0 - official sources, contract, isolation, governance",
+            "phase": phase,
+            "title": narrative["title"],
             "date": time.strftime("%Y-%m-%d", time.gmtime()),
             "exit_gate": {
                 "mandatory_interfaces_known": True,
@@ -500,13 +595,9 @@ def _write_phase_report(summary: dict) -> None:
                 "blocking_risks_resolved_or_documented": True,
                 "human_actions_open": 2,
             },
-            "requirements": {
-                "registry_total": 186, "mapped_to_checks": 118, "unmapped": 68,
-                "assumptions_total": 16, "assumptions_unresolved": 16,
-                "questions_total": 14, "open_zero_items": 1, "decisions": 20,
-            },
+            "requirements": dict(narrative["requirements"]),
             "artifacts": [],
-            "known_limitations": [],
+            "known_limitations": list(narrative["known_limitations"]),
         }
     counts = summary["counts"]
     tests = summary["tests"]

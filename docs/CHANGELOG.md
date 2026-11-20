@@ -3,6 +3,28 @@
 Format: [Keep a Changelog](https://keepachangelog.com/) style, versions follow
 `contracts/version.json` for contracts and an independent repository version for code.
 
+## [Unreleased] — 2026-11-20 — Phase 1 foundation
+
+### Added
+- `models/` — 11 typed dataclasses mirroring the schemas, with construction-time validation,
+  `x_` extension preservation and `canonical()` as the only serialisation hinge.
+- `tools/check_models.py`, `tools/check_golden.py`, `tools/check_ci.py`, `tools/probe_starter.py`.
+- `contracts/GOLDEN.json` — per-file freeze hashes plus payload and fixture digests.
+- `.github/workflows/verify.yml`, `pull_request_template.md`, 4 issue forms, `CODEOWNERS`.
+- `docs/BRANCH_PROTECTION.md`, `docs/PHASE0_CHECKLIST.md`, `docs/PHASE_REPORTS/PHASE-01.md`.
+- `configs/submission/{submission,starter_probe}.json`, `docs/official/SUBMISSION_DEADLINE.md`.
+- 5 rubric checks: `CT-GOLDEN-01`, `EN-MODELS-01`, `EN-CI-01`, `EN-SUBMIT-01`, `EN-PROBE-01`
+  (45 internal checks total, 17 implemented).
+- 3 governance checks: `GOV-CI-01`, `GOV-DEADLINE-01`, `GOV-MODELS-01` (16 total).
+- Decisions D-0021…D-0024; tests under `tests/phase1/`.
+
+### Changed
+- `tools/verify.py` runs models/golden/CI/probe, emits 12 artifacts and generates both
+  `PHASE-00.json` and `PHASE-01.json` from its own summary.
+- `tools/check_import_boundaries.py` understands the new `models/` zone.
+- `tools/validate_contracts.contract_digest()` excludes the freeze metadata, so the schema payload
+  digest is stable across a golden refresh.
+
 ## [Unreleased]
 
 ### Added
