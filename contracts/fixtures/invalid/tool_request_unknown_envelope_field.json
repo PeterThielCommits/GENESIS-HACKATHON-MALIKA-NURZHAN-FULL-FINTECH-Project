@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "requester": "policy-a",
+  "request_id": "req-0005",
+  "action": {
+    "tool": "calc",
+    "args": {
+      "expression": "1+1"
+    }
+  }
+}

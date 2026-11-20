@@ -1,0 +1,26 @@
+{
+  "registry_version": "1.0.0",
+  "status": "provisional",
+  "source": "TwinLedger master specification §9.1. This table is configuration data, not a runtime lookup of an external ISO table.",
+  "money_model": "integer_minor_units",
+  "default_rounding_mode": "ROUND_HALF_EVEN",
+  "allowed_rounding_modes": ["ROUND_HALF_EVEN", "ROUND_HALF_UP"],
+  "currencies": {
+    "KZT": { "exponent": 2, "symbol_shape": "synthetic", "test_priority": "primary" },
+    "USD": { "exponent": 2, "symbol_shape": "synthetic", "test_priority": "primary" },
+    "EUR": { "exponent": 2, "symbol_shape": "synthetic", "test_priority": "secondary" },
+    "GBP": { "exponent": 2, "symbol_shape": "synthetic", "test_priority": "secondary" },
+    "CNY": { "exponent": 2, "symbol_shape": "synthetic", "test_priority": "secondary" },
+    "RUB": { "exponent": 2, "symbol_shape": "synthetic", "test_priority": "secondary" },
+    "TRY": { "exponent": 2, "symbol_shape": "synthetic", "test_priority": "secondary" },
+    "AED": { "exponent": 2, "symbol_shape": "synthetic", "test_priority": "secondary" },
+    "JPY": { "exponent": 0, "symbol_shape": "synthetic", "test_priority": "primary" },
+    "KWD": { "exponent": 3, "symbol_shape": "synthetic", "test_priority": "primary" }
+  },
+  "constraints": {
+    "unknown_currency": "bounded_error",
+    "mixed_currency_arithmetic": "forbidden",
+    "float_in_money": "forbidden",
+    "rate_representation": "decimal_string"
+  }
+}

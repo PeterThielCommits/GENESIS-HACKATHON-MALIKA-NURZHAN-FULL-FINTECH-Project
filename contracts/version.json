@@ -1,0 +1,34 @@
+{
+  "contract_version": "0.1.0",
+  "protocol_version": "1.0.0",
+  "schema_payload_version": "1.0.0",
+  "status": "provisional",
+  "status_reason": "Phase 0 could not archive an organizer-published contract. Every schema is provisional and isolated behind adapter/ until Q-001..Q-014 are answered.",
+  "created_utc": "2026-11-20",
+  "owner": "A0 orchestrator",
+  "schemas": [
+    { "file": "common.defs.json", "kind": "definitions", "schema_version": "1.0.0" },
+    { "file": "episode_manifest.schema.json", "kind": "data", "schema_version": "1.0.0" },
+    { "file": "company.schema.json", "kind": "data", "schema_version": "1.0.0" },
+    { "file": "policy.schema.json", "kind": "data", "schema_version": "1.0.0" },
+    { "file": "finding.schema.json", "kind": "finding", "schema_version": "1.0.0" },
+    { "file": "truth.schema.json", "kind": "truth", "schema_version": "1.0.0" },
+    { "file": "tool_request.schema.json", "kind": "protocol", "schema_version": "1.0.0" },
+    { "file": "tool_response.schema.json", "kind": "protocol", "schema_version": "1.0.0" },
+    { "file": "trajectory_event.schema.json", "kind": "protocol", "schema_version": "1.0.0" },
+    { "file": "receipt.schema.json", "kind": "receipt", "schema_version": "1.0.0" },
+    { "file": "verifier_report.schema.json", "kind": "verifier", "schema_version": "1.0.0" },
+    { "file": "rubric_check.schema.json", "kind": "judge", "schema_version": "1.0.0" }
+  ],
+  "versioning_rules": {
+    "major": "Incompatible change: removed field, changed meaning, changed ID namespace, changed reward semantics.",
+    "minor": "Backward-compatible addition: optional field, new enum member, new extension namespace.",
+    "patch": "Description/typo fix with no behavioral change.",
+    "change_control": "Any change requires a CR in docs/CR/ and a DECISIONS.md entry (REQ-CONTRACT-004)."
+  },
+  "unknown_field_policy": {
+    "default": "reject",
+    "extension_namespace": "x_twinledger_*",
+    "note": "REQ-CONTRACT-003. The organizer adapter may relax this only if the official contract requires it, and the relaxation must be recorded in docs/DECISIONS.md."
+  }
+}

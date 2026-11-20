@@ -1,0 +1,30 @@
+{
+  "config_version": "1.0.0",
+  "status": "provisional",
+  "provisional": true,
+  "profile_status": "UNBOUND",
+  "profile_id": "twinledger-internal-v0",
+  "profile_version": "1.0.0",
+  "supported_profile_versions": ["1.0.0"],
+  "source": "Master specification §7.3 and Appendix H. Appendix H is explicitly illustrative, not official.",
+  "assumption_ids": ["A-001", "A-002", "A-003", "A-004", "A-006", "A-007", "A-008", "A-009", "A-010"],
+  "candidate_tool_aliases": {
+    "list_records": ["list_records"],
+    "get_record": ["get_record"],
+    "get_document": ["get_document"],
+    "calc": ["calc"],
+    "submit": ["submit"]
+  },
+  "candidate_field_aliases": {
+    "finding.type": ["type"],
+    "finding.affected_ids": ["affected_ids"],
+    "finding.claimed_amount": ["claimed_amount"],
+    "finding.currency": ["currency"],
+    "finding.evidence_ids": ["evidence_ids"],
+    "finding.explanation": ["explanation"],
+    "finding.confidence": ["confidence"]
+  },
+  "unknown_field_policy": "reject",
+  "relaxation_allowed_only_with": "docs/CR entry and docs/DECISIONS.md record",
+  "binding_rule": "Every external name that differs from the internal model is mapped here or in adapter/organizer.py. No other module may branch on organizer field names (REQ-ADAPTER-002)."
+}

@@ -1,0 +1,49 @@
+{
+  "manifest_version": "1.0.0",
+  "created": "2026-11-20",
+  "owner": "A0 orchestrator",
+  "rules": {
+    "immutability": "Archived documents are never edited. A new version is added as a new file with a new hash.",
+    "classification_meaning": {
+      "OFFICIAL_ORGANIZER": "Published by the hackathon organizers. None exists in this repository yet.",
+      "DERIVED_INTERNAL": "Produced by the team. Citable, but not an organizer statement and never presented as one."
+    },
+    "hash_algorithm": "sha256 over the exact bytes of the file"
+  },
+  "documents": [
+    {
+      "path": "docs/official/master_tz/TwinLedger_v3_Master_TZ_AI_Agents.txt",
+      "title": "TwinLedger v3.0 — Master technical specification for AI agents",
+      "classification": "DERIVED_INTERNAL",
+      "version": "3.0.0",
+      "sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36",
+      "bytes": 237211,
+      "lines": 4062,
+      "received_from": "User attachment TwinLedger_v3_Master_TZ_AI_Agents.txt (this session)",
+      "received_date": "2026-11-20",
+      "note": "Self-described as a unified master specification, explicitly not the organizer contract. Every requirement derived from it stays provisional (docs/DECISIONS.md D-0018)."
+    }
+  ],
+  "absent": [
+    {
+      "document": "Official organizer technical specification",
+      "status": "NOT_RECEIVED",
+      "question": "OPEN-0/Q-001..Q-014"
+    },
+    {
+      "document": "Official rubric with 80 checks and weights",
+      "status": "NOT_RECEIVED",
+      "question": "Q-012"
+    },
+    {
+      "document": "Official starter code / environment adapter",
+      "status": "NOT_RECEIVED",
+      "question": "Q-001/Q-007"
+    },
+    {
+      "document": "Official sample inputs and outputs",
+      "status": "NOT_RECEIVED",
+      "question": "Q-001/Q-003"
+    }
+  ]
+}

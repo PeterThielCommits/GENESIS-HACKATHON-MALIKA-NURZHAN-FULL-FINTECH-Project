@@ -1,0 +1,495 @@
+{
+  "fixtures_index_version": "1.0.0",
+  "note": "Every contract schema must have at least one valid and one invalid fixture; tests/contracts enforces this.",
+  "cases": [
+    {
+      "case_id": "finding/valid/finding_duplicate_payment",
+      "schema": "finding.schema.json",
+      "file": "valid/finding_duplicate_payment.json",
+      "expect": "valid",
+      "covers": [
+        "A-003",
+        "REQ-CONTRACT-002"
+      ],
+      "why": "Minimal admissible finding with two affected IDs and a complete evidence set."
+    },
+    {
+      "case_id": "finding/invalid/finding_unknown_type",
+      "schema": "finding.schema.json",
+      "file": "invalid/finding_unknown_type.json",
+      "expect": "invalid",
+      "covers": [
+        "A-002"
+      ],
+      "why": "Type outside the four-item taxonomy must be rejected.",
+      "expect_errors": [
+        {
+          "path": "$/type",
+          "keyword": "enum"
+        }
+      ]
+    },
+    {
+      "case_id": "finding/invalid/finding_unqualified_id",
+      "schema": "finding.schema.json",
+      "file": "invalid/finding_unqualified_id.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-SCORE-002"
+      ],
+      "why": "IDs must be namespaced TYPE:raw so canonicalization cannot collide.",
+      "expect_errors": [
+        {
+          "path": "$/affected_ids/0",
+          "keyword": "pattern"
+        }
+      ]
+    },
+    {
+      "case_id": "finding/invalid/finding_float_amount",
+      "schema": "finding.schema.json",
+      "file": "invalid/finding_float_amount.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-MONEY-001"
+      ],
+      "why": "Floating point money is forbidden; amounts are integer minor units.",
+      "expect_errors": [
+        {
+          "path": "$/claimed_amount",
+          "keyword": "type"
+        }
+      ]
+    },
+    {
+      "case_id": "finding/invalid/finding_missing_evidence",
+      "schema": "finding.schema.json",
+      "file": "invalid/finding_missing_evidence.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-VER-003"
+      ],
+      "why": "A finding without evidence cannot be proven and is rejected by the contract.",
+      "expect_errors": [
+        {
+          "path": "$",
+          "keyword": "required"
+        }
+      ]
+    },
+    {
+      "case_id": "finding/valid/finding_with_extension",
+      "schema": "finding.schema.json",
+      "file": "valid/finding_with_extension.json",
+      "expect": "valid",
+      "covers": [
+        "REQ-CONTRACT-003"
+      ],
+      "why": "Only the x_twinledger_ namespace may extend a public contract object."
+    },
+    {
+      "case_id": "finding/invalid/finding_unknown_field",
+      "schema": "finding.schema.json",
+      "file": "invalid/finding_unknown_field.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-CONTRACT-003"
+      ],
+      "why": "Unnamespaced unknown field must be rejected instead of ignored.",
+      "expect_errors": [
+        {
+          "path": "$/debug_hint",
+          "keyword": "additionalProperties"
+        }
+      ]
+    },
+    {
+      "case_id": "tool_request/valid/tool_request_list_records",
+      "schema": "tool_request.schema.json",
+      "file": "valid/tool_request_list_records.json",
+      "expect": "valid",
+      "covers": [
+        "A-001",
+        "A-004",
+        "REQ-ENV-002"
+      ],
+      "why": "Paged listing with allowlisted filter fields."
+    },
+    {
+      "case_id": "tool_request/valid/tool_request_submit",
+      "schema": "tool_request.schema.json",
+      "file": "valid/tool_request_submit.json",
+      "expect": "valid",
+      "covers": [
+        "A-003",
+        "A-006"
+      ],
+      "why": "Submit carries a findings array and is validated structurally before scoring."
+    },
+    {
+      "case_id": "tool_request/invalid/tool_request_unknown_tool",
+      "schema": "tool_request.schema.json",
+      "file": "invalid/tool_request_unknown_tool.json",
+      "expect": "invalid",
+      "covers": [
+        "A-001",
+        "REQ-ENV-001"
+      ],
+      "why": "Tools outside the allowlist must be rejected.",
+      "expect_errors": [
+        {
+          "path": "$/action/tool",
+          "keyword": "enum"
+        }
+      ]
+    },
+    {
+      "case_id": "tool_request/invalid/tool_request_page_too_large",
+      "schema": "tool_request.schema.json",
+      "file": "invalid/tool_request_page_too_large.json",
+      "expect": "invalid",
+      "covers": [
+        "A-004",
+        "REQ-ENV-004"
+      ],
+      "why": "Page limit above MAX_PAGE_SIZE is a contract violation.",
+      "expect_errors": [
+        {
+          "path": "$/action/args/limit",
+          "keyword": "maximum"
+        }
+      ]
+    },
+    {
+      "case_id": "tool_request/invalid/tool_request_missing_table",
+      "schema": "tool_request.schema.json",
+      "file": "invalid/tool_request_missing_table.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-ENV-003"
+      ],
+      "why": "list_records without a table is malformed.",
+      "expect_errors": [
+        {
+          "path": "$/action/args",
+          "keyword": "required"
+        }
+      ]
+    },
+    {
+      "case_id": "tool_request/invalid/tool_request_unknown_envelope_field",
+      "schema": "tool_request.schema.json",
+      "file": "invalid/tool_request_unknown_envelope_field.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-CONTRACT-002"
+      ],
+      "why": "Unknown envelope fields are rejected, not silently ignored.",
+      "expect_errors": [
+        {
+          "path": "$/requester",
+          "keyword": "additionalProperties"
+        }
+      ]
+    },
+    {
+      "case_id": "tool_response/valid/tool_response_rows",
+      "schema": "tool_response.schema.json",
+      "file": "valid/tool_response_rows.json",
+      "expect": "valid",
+      "covers": [
+        "A-009",
+        "REQ-ENV-010"
+      ],
+      "why": "Neutral paged response with opaque cursor field."
+    },
+    {
+      "case_id": "tool_response/valid/tool_response_error",
+      "schema": "tool_response.schema.json",
+      "file": "valid/tool_response_error.json",
+      "expect": "valid",
+      "covers": [
+        "A-010",
+        "REQ-ENV-012"
+      ],
+      "why": "Bounded error format with a fixed code and no diagnostics."
+    },
+    {
+      "case_id": "tool_response/invalid/tool_response_ok_without_result",
+      "schema": "tool_response.schema.json",
+      "file": "invalid/tool_response_ok_without_result.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-ENV-002"
+      ],
+      "why": "ok=true without a result is ambiguous and forbidden.",
+      "expect_errors": [
+        {
+          "path": "$",
+          "keyword": "required"
+        }
+      ]
+    },
+    {
+      "case_id": "tool_response/invalid/tool_response_ok_and_error",
+      "schema": "tool_response.schema.json",
+      "file": "invalid/tool_response_ok_and_error.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-ENV-002"
+      ],
+      "why": "A response cannot be simultaneously successful and failed.",
+      "expect_errors": [
+        {
+          "path": "$",
+          "keyword": "not"
+        }
+      ]
+    },
+    {
+      "case_id": "company/valid/company_l1",
+      "schema": "company.schema.json",
+      "file": "valid/company_l1.json",
+      "expect": "valid",
+      "covers": [
+        "REQ-DATA-005"
+      ],
+      "why": "Fictional company with reserved synthetic jurisdiction code XK (documented as non-ISO)."
+    },
+    {
+      "case_id": "company/invalid/company_real_country_code",
+      "schema": "company.schema.json",
+      "file": "invalid/company_real_country_code.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-DATA-005"
+      ],
+      "why": "Real ISO country codes are not part of the synthetic universe.",
+      "expect_errors": [
+        {
+          "path": "$/jurisdiction_code",
+          "keyword": "pattern"
+        }
+      ]
+    },
+    {
+      "case_id": "company/invalid/company_ambiguous_timezone",
+      "schema": "company.schema.json",
+      "file": "invalid/company_ambiguous_timezone.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-TIME-004"
+      ],
+      "why": "Offsets without an IANA zone are ambiguous across DST rules.",
+      "expect_errors": [
+        {
+          "path": "$/timezone",
+          "keyword": "pattern"
+        }
+      ]
+    },
+    {
+      "case_id": "policy/valid/policy_default",
+      "schema": "policy.schema.json",
+      "file": "valid/policy_default.json",
+      "expect": "valid",
+      "covers": [
+        "REQ-MONEY-003",
+        "REQ-TIME-002"
+      ],
+      "why": "Explicit rounding, rate-date and recognition rules; nothing is left to hidden defaults."
+    },
+    {
+      "case_id": "policy/invalid/policy_unknown_rounding",
+      "schema": "policy.schema.json",
+      "file": "invalid/policy_unknown_rounding.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-MONEY-003"
+      ],
+      "why": "Rounding mode must be one of the reviewed Decimal modes.",
+      "expect_errors": [
+        {
+          "path": "$/rounding_mode",
+          "keyword": "enum"
+        }
+      ]
+    },
+    {
+      "case_id": "episode_manifest/valid/episode_manifest_l1",
+      "schema": "episode_manifest.schema.json",
+      "file": "valid/episode_manifest_l1.json",
+      "expect": "valid",
+      "covers": [
+        "REQ-DATA-021",
+        "REQ-SEAL-010"
+      ],
+      "why": "Manifest with per-file hashes and a sealed salt reference (never the salt value)."
+    },
+    {
+      "case_id": "episode_manifest/invalid/episode_manifest_leaks_count",
+      "schema": "episode_manifest.schema.json",
+      "file": "invalid/episode_manifest_leaks_count.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-DATA-020"
+      ],
+      "why": "Publishing a finding count would leak the answer; the schema forbids it.",
+      "expect_errors": [
+        {
+          "path": "$/findings_count",
+          "keyword": "additionalProperties"
+        }
+      ]
+    },
+    {
+      "case_id": "truth/valid/truth_single_finding",
+      "schema": "truth.schema.json",
+      "file": "valid/truth_single_finding.json",
+      "expect": "valid",
+      "covers": [
+        "A-003",
+        "REQ-VER-013"
+      ],
+      "why": "Sealed truth with two alternative evidence sets and an invariant signature."
+    },
+    {
+      "case_id": "truth/invalid/truth_duplicate_affected_id",
+      "schema": "truth.schema.json",
+      "file": "invalid/truth_duplicate_affected_id.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-DATA-001"
+      ],
+      "why": "Affected IDs are a set; duplicates indicate a broken canonicalization.",
+      "expect_errors": [
+        {
+          "path": "$/findings/0/affected_ids",
+          "keyword": "uniqueItems"
+        }
+      ]
+    },
+    {
+      "case_id": "truth/invalid/truth_float_amount",
+      "schema": "truth.schema.json",
+      "file": "invalid/truth_float_amount.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-MONEY-001"
+      ],
+      "why": "Sealed truth must obey the same money rules as public data.",
+      "expect_errors": [
+        {
+          "path": "$/findings/0/amount_minor",
+          "keyword": "type"
+        }
+      ]
+    },
+    {
+      "case_id": "trajectory_event/valid/trajectory_event_action",
+      "schema": "trajectory_event.schema.json",
+      "file": "valid/trajectory_event_action.json",
+      "expect": "valid",
+      "covers": [
+        "REQ-SEAL-021"
+      ],
+      "why": "One hash-chain link with no wall-clock field, so replay stays deterministic."
+    },
+    {
+      "case_id": "trajectory_event/invalid/trajectory_event_missing_hash",
+      "schema": "trajectory_event.schema.json",
+      "file": "invalid/trajectory_event_missing_hash.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-SEAL-021"
+      ],
+      "why": "A chain link without its hash cannot be verified.",
+      "expect_errors": [
+        {
+          "path": "$",
+          "keyword": "required"
+        }
+      ]
+    },
+    {
+      "case_id": "receipt/valid/receipt_pass",
+      "schema": "receipt.schema.json",
+      "file": "valid/receipt_pass.json",
+      "expect": "valid",
+      "covers": [
+        "REQ-SEAL-020"
+      ],
+      "why": "Receipt is offline verifiable and references sealed material without embedding it."
+    },
+    {
+      "case_id": "receipt/invalid/receipt_unknown_status",
+      "schema": "receipt.schema.json",
+      "file": "invalid/receipt_unknown_status.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-JUDGE-001"
+      ],
+      "why": "Statuses outside the documented vocabulary are rejected.",
+      "expect_errors": [
+        {
+          "path": "$/verification_status",
+          "keyword": "enum"
+        }
+      ]
+    },
+    {
+      "case_id": "verifier_report/valid/verifier_report_fx",
+      "schema": "verifier_report.schema.json",
+      "file": "valid/verifier_report_fx.json",
+      "expect": "valid",
+      "covers": [
+        "REQ-VER-003",
+        "REQ-VER-004"
+      ],
+      "why": "Verifier output cites public records and uses a machine-readable reason code."
+    },
+    {
+      "case_id": "verifier_report/invalid/verifier_report_free_text_code",
+      "schema": "verifier_report.schema.json",
+      "file": "invalid/verifier_report_free_text_code.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-VER-003"
+      ],
+      "why": "Free text is not a reason code and cannot be machine-checked.",
+      "expect_errors": [
+        {
+          "path": "$/findings/0/explanation_code",
+          "keyword": "pattern"
+        }
+      ]
+    },
+    {
+      "case_id": "rubric_check/valid/rubric_check_internal",
+      "schema": "rubric_check.schema.json",
+      "file": "valid/rubric_check_internal.json",
+      "expect": "valid",
+      "covers": [
+        "REQ-JUDGE-002",
+        "REQ-JUDGE-003"
+      ],
+      "why": "Internal checks are explicitly marked official=false."
+    },
+    {
+      "case_id": "rubric_check/invalid/rubric_check_claims_official",
+      "schema": "rubric_check.schema.json",
+      "file": "invalid/rubric_check_claims_official.json",
+      "expect": "invalid",
+      "covers": [
+        "REQ-JUDGE-003"
+      ],
+      "why": "No internal check may be presented as an official rubric item.",
+      "expect_errors": [
+        {
+          "path": "$/official",
+          "keyword": "const"
+        }
+      ]
+    }
+  ]
+}

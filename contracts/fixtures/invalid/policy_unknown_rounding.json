@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "policy_version": "1.0.0",
+  "functional_currency": "KZT",
+  "timezone": "Asia/Almaty",
+  "rounding_mode": "ROUND_FLOOR",
+  "fx": {
+    "rate_date_basis": "DOCUMENT_DATE",
+    "non_business_day_rule": "LAST_AVAILABLE_PRIOR",
+    "allowed_sources": [
+      "NBK"
+    ],
+    "inverse_quote_allowed": true,
+    "rate_decimal_places": 6
+  },
+  "recognition": {
+    "revenue_basis": "SERVICE_DATE",
+    "expense_basis": "SERVICE_COMPLETION",
+    "cutoff_timezone": "COMPANY_LOCAL",
+    "prepayment_allowed": true
+  },
+  "allocation": {
+    "max_allocation_basis": "DOCUMENT_TOTAL_MINUS_CREDITS",
+    "advance_accounting": "SEPARATE_LIABILITY",
+    "allow_multi_invoice_allocation": true,
+    "overpayment_tolerance_minor": 0
+  },
+  "credit_notes": {
+    "cap_basis": "DOCUMENT_TOTAL",
+    "cap_ratio_decimal": "1.0"
+  },
+  "tolerance": {
+    "rule_id": "ROUNDING_OPERATIONS_V1",
+    "per_rounding_op_minor": 1
+  }
+}

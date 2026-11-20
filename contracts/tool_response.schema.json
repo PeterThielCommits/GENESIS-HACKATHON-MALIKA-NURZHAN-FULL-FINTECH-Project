@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinledger://contracts/tool_response.schema.json",
+  "title": "Tool response",
+  "description": "Bounded response of the public environment (§14.5, §14.6). Never contains truth, seeds or provenance.",
+  "schema_version": "1.0.0",
+  "status": "provisional",
+  "provisional_reason": "Derived from the TwinLedger v3.0 master technical specification. The organizer contract is not archived in this repository, therefore this schema is PROVISIONAL and isolated behind adapter/ (see docs/ASSUMPTIONS.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "protocol_version",
+    "request_id",
+    "ok"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "common.defs.json#/$defs/schema_version"
+    },
+    "protocol_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "result": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "rows",
+            "next_cursor"
+          ],
+          "properties": {
+            "rows": {
+              "type": "array",
+              "maxItems": 50,
+              "items": {
+                "type": "object"
+              }
+            },
+            "next_cursor": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 512
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "record"
+          ],
+          "properties": {
+            "record": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "document"
+          ],
+          "properties": {
+            "document": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value"
+          ],
+          "properties": {
+            "value": {
+              "type": "string",
+              "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "accepted"
+          ],
+          "properties": {
+            "accepted": {
+              "type": "boolean"
+            }
+          }
+        }
+      ]
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "UNKNOWN_TOOL",
+            "BAD_ARGS",
+            "BAD_FILTER",
+            "BAD_CURSOR",
+            "NOT_FOUND",
+            "BAD_FINDING",
+            "CALC_ERROR",
+            "LIMIT",
+            "TERMINATED",
+            "ALREADY_SUBMITTED",
+            "INTERNAL"
+          ]
+        },
+        "message": {
+          "$ref": "common.defs.json#/$defs/bounded_message"
+        }
+      }
+    },
+    "info": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "steps_used": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "steps_remaining": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "result"
+        ],
+        "not": {
+          "required": [
+            "error"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "const": false
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "error"
+        ],
+        "not": {
+          "required": [
+            "result"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinledger://contracts/common.defs.json",
+  "title": "TwinLedger shared contract definitions",
+  "description": "Shared definitions for every TwinLedger contract: version, ID namespaces, money, timestamps and evidence shapes. PROVISIONAL until the organizer contract is archived.",
+  "schema_version": "1.0.0",
+  "status": "provisional",
+  "provisional_reason": "Derived from the master technical specification; the organizer contract has not been published to this repository (see docs/QUESTIONS.md Q-001..Q-014).",
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Payload contract version. Bumped with contracts/version.json."
+    },
+    "id_namespace": {
+      "type": "string",
+      "enum": [
+        "JE",
+        "INV",
+        "CN",
+        "PAY",
+        "BANK",
+        "FX",
+        "CP"
+      ],
+      "description": "Canonical ID namespaces. Adding a namespace is a minor contract change."
+    },
+    "raw_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_./-]*$",
+      "description": "Opaque record identifier inside its table namespace. Must not encode mutation type, seed or anomaly position (REQ-DATA-002, §8.4)."
+    },
+    "namespaced_id": {
+      "type": "string",
+      "pattern": "^(JE|INV|CN|PAY|BANK|FX|CP):[A-Za-z0-9][A-Za-z0-9_./-]*$",
+      "maxLength": 72,
+      "description": "TYPE:raw-id as canonicalized by scoring/canon.py (§15.1)."
+    },
+    "currency_code": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "Synthetic or reserved ISO-4217 shaped code; exponent must exist in contracts/currency.json (REQ-MONEY-004)."
+    },
+    "minor_amount": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991,
+      "description": "Money in integer minor units. Floats are forbidden (REQ-MONEY-001)."
+    },
+    "timestamp_iso8601": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$",
+      "description": "ISO-8601 with explicit offset (REQ-TIME-001)."
+    },
+    "date_iso8601": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "period_key": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$",
+      "description": "Accounting period key YYYY-MM in the company timezone (REQ-TIME-002)."
+    },
+    "sha256_hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "bounded_message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "Bounded, non-diagnostic text: no stack traces, absolute paths, seeds or sealed content (§14.6)."
+    },
+    "id_list": {
+      "type": "array",
+      "items": {
+        "$ref": "common.defs.json#/$defs/namespaced_id"
+      },
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true
+    },
+    "evidence_sets": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 32,
+        "uniqueItems": true,
+        "items": {
+          "$ref": "common.defs.json#/$defs/namespaced_id"
+        }
+      }
+    },
+    "anomaly_type": {
+      "type": "string",
+      "enum": [
+        "DUPLICATE_PAYMENT",
+        "PARTIAL_PAYMENT_ALLOCATION",
+        "FX_RATE_MISMATCH",
+        "PERIOD_CUTOFF"
+      ],
+      "description": "Anomaly taxonomy. Provisional: Q-004 has not been answered (docs/ASSUMPTIONS.json A-002)."
+    },
+    "invariant_signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invariant_id",
+        "entity_key",
+        "direction",
+        "tolerance_minor"
+      ],
+      "properties": {
+        "invariant_id": {
+          "type": "string",
+          "pattern": "^INV-[0-9]{2}$"
+        },
+        "entity_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "expected_delta_minor": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "currency": {
+          "oneOf": [
+            {
+              "$ref": "common.defs.json#/$defs/currency_code"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "over",
+            "under",
+            "mismatch",
+            "invalid"
+          ]
+        },
+        "tolerance_minor": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "side_effect_class": {
+          "type": "string",
+          "enum": [
+            "primary",
+            "allowed",
+            "forbidden"
+          ]
+        }
+      }
+    },
+    "extension_properties": {
+      "type": "object",
+      "description": "Namespaced extension anchor. Only keys matching ^x_twinledger_ are permitted by the owning schema (REQ-CONTRACT-003).",
+      "propertyNames": {
+        "pattern": "^x_twinledger_"
+      }
+    }
+  }
+}

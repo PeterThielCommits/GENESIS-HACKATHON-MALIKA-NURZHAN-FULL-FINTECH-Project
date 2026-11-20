@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinledger://contracts/verifier_report.schema.json",
+  "title": "Verifier report",
+  "description": "Independent discovery output computed from public data only (REQ-VER-001).",
+  "schema_version": "1.0.0",
+  "status": "provisional",
+  "provisional_reason": "Derived from the TwinLedger v3.0 master technical specification. The organizer contract is not archived in this repository, therefore this schema is PROVISIONAL and isolated behind adapter/ (see docs/ASSUMPTIONS.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "verifier_version",
+    "episode_public_hash",
+    "findings",
+    "examined_public_sources"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "common.defs.json#/$defs/schema_version"
+    },
+    "verifier_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "episode_public_hash": {
+      "$ref": "common.defs.json#/$defs/sha256_hex"
+    },
+    "examined_public_sources": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      }
+    },
+    "findings": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "affected_ids",
+          "claimed_amount_minor",
+          "currency",
+          "evidence_sets",
+          "explanation_code"
+        ],
+        "properties": {
+          "type": {
+            "$ref": "common.defs.json#/$defs/anomaly_type"
+          },
+          "affected_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 32,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "common.defs.json#/$defs/namespaced_id"
+            }
+          },
+          "claimed_amount_minor": {
+            "$ref": "common.defs.json#/$defs/minor_amount"
+          },
+          "currency": {
+            "$ref": "common.defs.json#/$defs/currency_code"
+          },
+          "evidence_sets": {
+            "$ref": "common.defs.json#/$defs/evidence_sets"
+          },
+          "proof_graph_ref": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 64
+          },
+          "explanation_code": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]{2,63}$",
+            "description": "Machine-readable reason code, not free text."
+          }
+        }
+      }
+    },
+    "proof_graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nodes"
+      ],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "maxItems": 5000,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "node_id",
+              "node_type",
+              "source_ids",
+              "rule_id",
+              "value_digest",
+              "parent_node_ids"
+            ],
+            "properties": {
+              "node_id": {
+                "type": "string",
+                "maxLength": 64
+              },
+              "node_type": {
+                "type": "string",
+                "enum": [
+                  "RecordNode",
+                  "FactNode",
+                  "RuleNode",
+                  "CalculationNode",
+                  "FindingNode"
+                ]
+              },
+              "source_ids": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "$ref": "common.defs.json#/$defs/namespaced_id"
+                }
+              },
+              "rule_id": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 64
+              },
+              "value_digest": {
+                "$ref": "common.defs.json#/$defs/sha256_hex"
+              },
+              "parent_node_ids": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "string",
+                  "maxLength": 64
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "unresolved_ambiguities": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      }
+    },
+    "deterministic_diagnostics": {
+      "type": "object"
+    }
+  }
+}

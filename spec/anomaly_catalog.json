@@ -1,0 +1,168 @@
+{
+  "catalog_version": "0.1.0",
+  "status": "provisional",
+  "official": false,
+  "source": "TwinLedger master specification §11. The organizer taxonomy is unknown (Q-004).",
+  "assumption_ids": [
+    "A-002"
+  ],
+  "types": [
+    {
+      "type": "DUPLICATE_PAYMENT",
+      "operator_id": "duplicate_payment",
+      "operator_version": "0.0.0",
+      "definition": "The same obligation is settled more than once with no credit note, refund, reversal or void event that explains the excess.",
+      "intended_invariants": [
+        "INV-04",
+        "INV-03",
+        "INV-15"
+      ],
+      "allowed_side_effects": [
+        "INV-05",
+        "INV-17"
+      ],
+      "forbidden_side_effects": [
+        "INV-01",
+        "INV-11",
+        "INV-12",
+        "INV-13"
+      ],
+      "affected_ids_rule_candidate": [
+        "new PAY record",
+        "JE that posts the duplicate payment"
+      ],
+      "evidence_requirements_candidate": [
+        "both payments",
+        "the invoice",
+        "the allocation records"
+      ],
+      "distractors": [
+        "D-DUP-01",
+        "D-DUP-02",
+        "D-DUP-03",
+        "D-DUP-04"
+      ],
+      "status": "NOT_IMPLEMENTED_PHASE_4"
+    },
+    {
+      "type": "PARTIAL_PAYMENT_ALLOCATION",
+      "operator_id": "partial_payment_allocation",
+      "operator_version": "0.0.0",
+      "definition": "A partial payment is allocated inconsistently with the paid amount and the remaining obligation of the documents.",
+      "intended_invariants": [
+        "INV-15",
+        "INV-04"
+      ],
+      "allowed_side_effects": [
+        "INV-05",
+        "INV-17"
+      ],
+      "forbidden_side_effects": [
+        "INV-01",
+        "INV-11",
+        "INV-12",
+        "INV-13"
+      ],
+      "affected_ids_rule_candidate": [
+        "PAY with the faulty allocation",
+        "the invoices whose remaining balance is affected"
+      ],
+      "evidence_requirements_candidate": [
+        "payment",
+        "allocations",
+        "the invoices and their credit notes"
+      ],
+      "distractors": [
+        "D-PART-01",
+        "D-PART-02",
+        "D-PART-03",
+        "D-PART-04"
+      ],
+      "subtypes": [
+        "ALLOCATED_FULL_BUT_PAYMENT_SMALLER",
+        "WRONG_INVOICE",
+        "REMAINDER_MISCALCULATED",
+        "ALLOCATIONS_EXCEED_PAYMENT"
+      ],
+      "generator_rule": "Exactly one subtype must be chosen per mutation and declared in sealed provenance.",
+      "status": "NOT_IMPLEMENTED_PHASE_4"
+    },
+    {
+      "type": "FX_RATE_MISMATCH",
+      "operator_id": "fx_rate_mismatch",
+      "operator_version": "0.0.0",
+      "definition": "A posting uses a rate that differs from the rate required by policy for that date, event and source.",
+      "intended_invariants": [
+        "INV-07",
+        "INV-08"
+      ],
+      "allowed_side_effects": [],
+      "forbidden_side_effects": [
+        "INV-01",
+        "INV-11",
+        "INV-12",
+        "INV-13"
+      ],
+      "affected_ids_rule_candidate": [
+        "the JE records that use the wrong rate"
+      ],
+      "evidence_requirements_candidate": [
+        "the JE",
+        "the published rate row that policy requires",
+        "the policy rule"
+      ],
+      "distractors": [
+        "D-FX-01",
+        "D-FX-02",
+        "D-FX-03",
+        "D-FX-04"
+      ],
+      "generator_rule": "Total debits must still equal total credits; the functional amount is recomputed with the wrong rate.",
+      "status": "NOT_IMPLEMENTED_PHASE_4"
+    },
+    {
+      "type": "PERIOD_CUTOFF",
+      "operator_id": "period_cutoff",
+      "operator_version": "0.0.0",
+      "definition": "Revenue, expense or a related posting is recognised in a period that does not match the policy recognition event, evaluated in the company timezone.",
+      "intended_invariants": [
+        "INV-09",
+        "INV-10"
+      ],
+      "allowed_side_effects": [
+        "INV-05"
+      ],
+      "forbidden_side_effects": [
+        "INV-01",
+        "INV-11",
+        "INV-12",
+        "INV-13",
+        "INV-14"
+      ],
+      "affected_ids_rule_candidate": [
+        "the JE records posted in the wrong period"
+      ],
+      "evidence_requirements_candidate": [
+        "the JE",
+        "the source document with service dates",
+        "period calendar / policy"
+      ],
+      "distractors": [
+        "D-CUT-01",
+        "D-CUT-02",
+        "D-CUT-03",
+        "D-CUT-04"
+      ],
+      "status": "NOT_IMPLEMENTED_PHASE_4"
+    }
+  ],
+  "distractor_rule": {
+    "definition": "For every type there are clean cases that differ from the faulty case by exactly one accessible fact.",
+    "distinguishing_fact_visibility": "must be reachable through a public tool, otherwise the distractor is invalid",
+    "provenance_only_fields": [
+      "distractor_of",
+      "distinguishing_fact"
+    ]
+  },
+  "rejection_rule": "An episode is rejected if any invariant outside `allowed_side_effects` is violated in the mutated twin (§11.8)."
+}

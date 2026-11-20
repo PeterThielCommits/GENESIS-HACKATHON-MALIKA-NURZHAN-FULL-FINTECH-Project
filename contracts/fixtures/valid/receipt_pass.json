@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "episode_id": "EP-X7K2M9",
+  "protocol_version": "1.0.0",
+  "code_version_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "config_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "public_manifest_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "truth_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "salt_reveal_ref": "sealed/salt.hex",
+  "trajectory_head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "merkle_leaf_index": 0,
+  "policy_identifier": "baseline/silent_policy@0.0.0",
+  "reward_breakdown_ref": "artifacts/breakdown/EP-X7K2M9.json",
+  "verification_status": "PASS"
+}

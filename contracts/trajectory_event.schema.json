@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinledger://contracts/trajectory_event.schema.json",
+  "title": "Trajectory event",
+  "description": "One link of the append-only hash chain (§16.4). Wall-clock time is excluded from the deterministic chain.",
+  "schema_version": "1.0.0",
+  "status": "provisional",
+  "provisional_reason": "Derived from the TwinLedger v3.0 master technical specification. The organizer contract is not archived in this repository, therefore this schema is PROVISIONAL and isolated behind adapter/ (see docs/ASSUMPTIONS.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "protocol_version",
+    "episode_id",
+    "event_index",
+    "logical_step",
+    "kind",
+    "action_digest",
+    "response_digest",
+    "previous_hash",
+    "event_hash"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "common.defs.json#/$defs/schema_version"
+    },
+    "protocol_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "episode_id": {
+      "type": "string",
+      "pattern": "^EP-[A-Z0-9]{4,16}$"
+    },
+    "event_index": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "logical_step": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "reset",
+        "action",
+        "submit",
+        "terminate"
+      ]
+    },
+    "action_digest": {
+      "$ref": "common.defs.json#/$defs/sha256_hex"
+    },
+    "response_digest": {
+      "$ref": "common.defs.json#/$defs/sha256_hex"
+    },
+    "previous_hash": {
+      "$ref": "common.defs.json#/$defs/sha256_hex"
+    },
+    "event_hash": {
+      "$ref": "common.defs.json#/$defs/sha256_hex"
+    }
+  }
+}

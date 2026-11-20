@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinledger://contracts/episode_manifest.schema.json",
+  "title": "Episode manifest",
+  "description": "Public manifest of one episode (§8.6). Must not reveal finding counts, mutation counts or affected IDs (REQ-DATA-020).",
+  "schema_version": "1.0.0",
+  "status": "provisional",
+  "provisional_reason": "Derived from the TwinLedger v3.0 master technical specification. The organizer contract is not archived in this repository, therefore this schema is PROVISIONAL and isolated behind adapter/ (see docs/ASSUMPTIONS.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "episode_id",
+    "episode_level",
+    "generator_version",
+    "contract_version",
+    "config_hash",
+    "config_refs",
+    "public_files",
+    "public_manifest_hash",
+    "truth_commitment"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "common.defs.json#/$defs/schema_version"
+    },
+    "episode_id": {
+      "type": "string",
+      "pattern": "^EP-[A-Z0-9]{4,16}$"
+    },
+    "episode_level": {
+      "type": "string",
+      "enum": [
+        "L1",
+        "L2",
+        "L3",
+        "L4"
+      ]
+    },
+    "split": {
+      "type": "string",
+      "enum": [
+        "train",
+        "dev",
+        "heldout"
+      ]
+    },
+    "generator_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "contract_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "config_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      }
+    },
+    "config_hash": {
+      "$ref": "common.defs.json#/$defs/sha256_hex"
+    },
+    "public_files": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "sha256",
+          "bytes"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "^(public/)?[A-Za-z0-9_./-]+$"
+          },
+          "sha256": {
+            "$ref": "common.defs.json#/$defs/sha256_hex"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "public_manifest_hash": {
+      "$ref": "common.defs.json#/$defs/sha256_hex"
+    },
+    "truth_commitment": {
+      "$ref": "common.defs.json#/$defs/sha256_hex",
+      "description": "SHA256(canonical_truth_bytes || salt). Published before the policy runs (§16.3)."
+    },
+    "salt_ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 200,
+      "description": "Sealed reference only. The salt value itself must never appear in a public manifest (REQ-SEAL-012)."
+    },
+    "created_utc": {
+      "type": "string",
+      "description": "Diagnostic human timestamp; excluded from all deterministic hashes."
+    }
+  },
+  "not": {
+    "required": [
+      "findings_count"
+    ]
+  }
+}

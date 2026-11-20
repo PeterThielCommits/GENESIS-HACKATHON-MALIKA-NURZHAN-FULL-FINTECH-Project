@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinledger://contracts/policy.schema.json",
+  "title": "Accounting policy",
+  "description": "Company accounting policy that both generator and verifier read (§9, §11). Normative, public, never contains truth.",
+  "schema_version": "1.0.0",
+  "status": "provisional",
+  "provisional_reason": "Derived from the TwinLedger v3.0 master technical specification. The organizer contract is not archived in this repository, therefore this schema is PROVISIONAL and isolated behind adapter/ (see docs/ASSUMPTIONS.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_version",
+    "functional_currency",
+    "timezone",
+    "rounding_mode",
+    "fx",
+    "recognition",
+    "allocation",
+    "credit_notes",
+    "tolerance"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "common.defs.json#/$defs/schema_version"
+    },
+    "policy_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "functional_currency": {
+      "$ref": "common.defs.json#/$defs/currency_code"
+    },
+    "timezone": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64
+    },
+    "rounding_mode": {
+      "type": "string",
+      "enum": [
+        "ROUND_HALF_EVEN",
+        "ROUND_HALF_UP"
+      ],
+      "description": "Decimal rounding mode for conversions (REQ-MONEY-003)."
+    },
+    "fx": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rate_date_basis",
+        "non_business_day_rule",
+        "allowed_sources",
+        "inverse_quote_allowed"
+      ],
+      "properties": {
+        "rate_date_basis": {
+          "type": "string",
+          "enum": [
+            "DOCUMENT_DATE",
+            "PAYMENT_DATE",
+            "POSTING_DATE"
+          ]
+        },
+        "non_business_day_rule": {
+          "type": "string",
+          "enum": [
+            "LAST_AVAILABLE_PRIOR",
+            "NEXT_AVAILABLE"
+          ]
+        },
+        "allowed_sources": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z]{2,8}$"
+          }
+        },
+        "inverse_quote_allowed": {
+          "type": "boolean"
+        },
+        "rate_decimal_places": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        }
+      }
+    },
+    "recognition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revenue_basis",
+        "expense_basis",
+        "cutoff_timezone"
+      ],
+      "properties": {
+        "revenue_basis": {
+          "type": "string",
+          "enum": [
+            "SERVICE_DATE",
+            "INVOICE_DATE"
+          ]
+        },
+        "expense_basis": {
+          "type": "string",
+          "enum": [
+            "SERVICE_COMPLETION",
+            "INVOICE_DATE"
+          ]
+        },
+        "cutoff_timezone": {
+          "type": "string",
+          "enum": [
+            "COMPANY_LOCAL"
+          ]
+        },
+        "prepayment_allowed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "allocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_allocation_basis",
+        "advance_accounting",
+        "allow_multi_invoice_allocation"
+      ],
+      "properties": {
+        "max_allocation_basis": {
+          "type": "string",
+          "enum": [
+            "DOCUMENT_TOTAL_MINUS_CREDITS"
+          ]
+        },
+        "advance_accounting": {
+          "type": "string",
+          "enum": [
+            "SEPARATE_LIABILITY",
+            "DIRECT_ALLOCATION"
+          ]
+        },
+        "allow_multi_invoice_allocation": {
+          "type": "boolean"
+        },
+        "overpayment_tolerance_minor": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "credit_notes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cap_basis"
+      ],
+      "properties": {
+        "cap_basis": {
+          "type": "string",
+          "enum": [
+            "DOCUMENT_TOTAL",
+            "NONE"
+          ]
+        },
+        "cap_ratio_decimal": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9]+(\\.[0-9]+)?$"
+        }
+      }
+    },
+    "tolerance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "enum": [
+            "ROUNDING_OPERATIONS_V1"
+          ]
+        },
+        "per_rounding_op_minor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Provisional model tolerance = n_round * 1 minor unit (§9.2). Isolated in configs/scoring/tolerance.json."
+        }
+      }
+    }
+  }
+}

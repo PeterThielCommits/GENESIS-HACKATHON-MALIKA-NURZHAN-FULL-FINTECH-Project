@@ -1,0 +1,42 @@
+{
+  "config_version": "1.0.0",
+  "status": "provisional",
+  "source": "Master specification §14.9. Mode is selected explicitly by the harness, never by an ambient env var.",
+  "assumption_ids": [
+    "A-008",
+    "A-010"
+  ],
+  "provisional": true,
+  "default_mode": "CLOSED_EVAL",
+  "modes": {
+    "CLOSED_EVAL": {
+      "reward_visible_to_policy": false,
+      "step_reward_value": 0,
+      "info_fields_allowed": [
+        "steps_used",
+        "steps_remaining"
+      ],
+      "scorer_process": "separate_process_after_env_close",
+      "diagnostics_visible_to_policy": false,
+      "used_by_make_verify": true
+    },
+    "OPEN_DEV": {
+      "reward_visible_to_policy": true,
+      "step_reward_value": null,
+      "info_fields_allowed": [
+        "steps_used",
+        "steps_remaining",
+        "dev_diagnostics"
+      ],
+      "scorer_process": "in_process_allowed",
+      "diagnostics_visible_to_policy": true,
+      "used_by_make_verify": false,
+      "warning": "OPEN_DEV is a developer convenience and is never evidence of isolation (REQ-ENV-031)."
+    }
+  },
+  "forbidden": {
+    "mode_from_environment_variable": true,
+    "reward_in_step_when_closed": true,
+    "truth_fields_in_info": true
+  }
+}

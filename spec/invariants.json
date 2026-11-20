@@ -1,0 +1,203 @@
+{
+  "catalog_version": "0.1.0",
+  "status": "provisional",
+  "official": false,
+  "source": "TwinLedger master specification §12.1.",
+  "assumption_ids": [
+    "A-002",
+    "A-014"
+  ],
+  "implementation_phase": "PHASE 2 (catalog only in Phase 0)",
+  "scope_definition": {
+    "record_context_always_available": [
+      "company.json",
+      "policy.json",
+      "period_calendar.json",
+      "accounts.json"
+    ],
+    "evidence_slots": "Context files never consume evidence_id slots (they are always available to the verifier).",
+    "null_semantics": "An explicit null means unknown or not applicable; it never licenses guessing a link."
+  },
+  "invariants": [
+    {
+      "id": "INV-01",
+      "name": "JE_BALANCE",
+      "scope": "journal_entry",
+      "grouping_key": "je_id",
+      "metric": "sum(debit_minor) - sum(credit_minor)",
+      "tolerance_minor": 0,
+      "exceptions": [],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-02",
+      "name": "TRIAL_BALANCE",
+      "scope": "period_slice",
+      "grouping_key": "posting_period",
+      "metric": "sum(debits) - sum(credits) over the slice",
+      "tolerance_minor": 0,
+      "exceptions": [],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-03",
+      "name": "AP_SUBLEDGER_VS_DOCS",
+      "scope": "counterparty",
+      "grouping_key": "counterparty_id",
+      "metric": "ap_subledger - open_document_total",
+      "tolerance_minor": 0,
+      "exceptions": [
+        "advance_accounting=SEPARATE_LIABILITY"
+      ],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-04",
+      "name": "OPEN_BALANCE",
+      "scope": "invoice",
+      "grouping_key": "doc_id",
+      "metric": "total_minor - credit_notes - allocated_payments",
+      "tolerance_minor": 0,
+      "exceptions": [],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-05",
+      "name": "AGING",
+      "scope": "invoice",
+      "grouping_key": "doc_id",
+      "metric": "aging_bucket(open_balance, due_timestamp, as_of)",
+      "tolerance_minor": 0,
+      "exceptions": [],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-06",
+      "name": "BANK_MATCH",
+      "scope": "bank_line",
+      "grouping_key": "bank_line_id",
+      "metric": "matched_payment_id consistency or justified unmatched status",
+      "tolerance_minor": 0,
+      "exceptions": [
+        "unmatched_with_documented_reason"
+      ],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-07",
+      "name": "FX_POLICY",
+      "scope": "journal_entry_line",
+      "grouping_key": "line_id",
+      "metric": "chosen_rate - policy_required_rate",
+      "tolerance_minor": 0,
+      "exceptions": [],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-08",
+      "name": "FX_RECALC",
+      "scope": "journal_entry_line",
+      "grouping_key": "line_id",
+      "metric": "functional_amount - convert(amount, rate, mode)",
+      "tolerance_minor": "rule:ROUNDING_OPERATIONS_V1",
+      "exceptions": [],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-09",
+      "name": "CUTOFF",
+      "scope": "journal_entry",
+      "grouping_key": "je_id",
+      "metric": "posting_period - policy_period(recognition_event, company_tz)",
+      "tolerance_minor": 0,
+      "exceptions": [
+        "documented_prepayment"
+      ],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-10",
+      "name": "PERIOD_TOTALS",
+      "scope": "period",
+      "grouping_key": "posting_period",
+      "metric": "reported_totals - recomputed_totals",
+      "tolerance_minor": 0,
+      "exceptions": [],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-11",
+      "name": "ID_UNIQUENESS",
+      "scope": "table",
+      "grouping_key": "primary_key",
+      "metric": "duplicate_count",
+      "tolerance_minor": 0,
+      "exceptions": [],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-12",
+      "name": "REFERENTIAL",
+      "scope": "table",
+      "grouping_key": "foreign_key",
+      "metric": "unresolved_reference_count",
+      "tolerance_minor": 0,
+      "exceptions": [
+        "explicit_null"
+      ],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-13",
+      "name": "CURRENCY_EXPONENT",
+      "scope": "money_field",
+      "grouping_key": "field",
+      "metric": "scale(amount) - exponent(currency)",
+      "tolerance_minor": 0,
+      "exceptions": [],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-14",
+      "name": "TIMEZONE_VALID",
+      "scope": "timestamp",
+      "grouping_key": "record_id",
+      "metric": "offset consistency and IANA resolvability",
+      "tolerance_minor": 0,
+      "exceptions": [],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-15",
+      "name": "ALLOCATION_CONSERVATION",
+      "scope": "payment",
+      "grouping_key": "pay_id",
+      "metric": "sum(allocations) - payment_amount",
+      "tolerance_minor": 0,
+      "exceptions": [
+        "advance_accounting=SEPARATE_LIABILITY"
+      ],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-16",
+      "name": "CREDIT_NOTE_LIMIT",
+      "scope": "documents",
+      "grouping_key": "doc_id",
+      "metric": "sum(credit_notes) - policy_cap(document_total)",
+      "tolerance_minor": 0,
+      "exceptions": [],
+      "status": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "INV-17",
+      "name": "DOCUMENT_STATUS",
+      "scope": "document",
+      "grouping_key": "doc_id",
+      "metric": "declared_status vs derived_status(open_balance, events)",
+      "tolerance_minor": 0,
+      "exceptions": [],
+      "status": "NOT_IMPLEMENTED"
+    }
+  ]
+}

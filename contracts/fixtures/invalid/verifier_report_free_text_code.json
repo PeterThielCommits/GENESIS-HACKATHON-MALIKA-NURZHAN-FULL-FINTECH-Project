@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "verifier_version": "0.0.0",
+  "episode_public_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "examined_public_sources": [
+    "company.json",
+    "policy.json",
+    "payments.jsonl",
+    "invoices.jsonl",
+    "bank_lines.jsonl",
+    "fx_rates.jsonl"
+  ],
+  "findings": [
+    {
+      "type": "FX_RATE_MISMATCH",
+      "affected_ids": [
+        "JE:JE-000201"
+      ],
+      "claimed_amount_minor": 125000,
+      "currency": "KZT",
+      "evidence_sets": [
+        [
+          "JE:JE-000201",
+          "FX:FX-2026-03-14",
+          "INV:INV-2025-0088"
+        ]
+      ],
+      "proof_graph_ref": "FG-0007",
+      "explanation_code": "rate mismatch because policy"
+    }
+  ],
+  "proof_graph": {
+    "nodes": [
+      {
+        "node_id": "N0001",
+        "node_type": "RecordNode",
+        "source_ids": [
+          "FX:FX-2026-03-14"
+        ],
+        "rule_id": null,
+        "value_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "parent_node_ids": []
+      }
+    ]
+  }
+}

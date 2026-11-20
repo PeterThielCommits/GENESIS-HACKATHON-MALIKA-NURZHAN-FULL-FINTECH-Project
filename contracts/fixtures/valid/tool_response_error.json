@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "protocol_version": "1.0.0",
+  "request_id": "req-0002",
+  "ok": false,
+  "error": {
+    "code": "BAD_CURSOR",
+    "message": "cursor rejected"
+  },
+  "info": {
+    "steps_used": 2,
+    "steps_remaining": 98
+  }
+}

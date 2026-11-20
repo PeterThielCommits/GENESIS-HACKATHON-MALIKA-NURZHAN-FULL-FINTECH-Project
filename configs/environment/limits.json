@@ -1,0 +1,26 @@
+{
+  "config_version": "1.0.0",
+  "status": "provisional",
+  "source": "TwinLedger master specification §14.4; organizer limits unpublished (Q-009).",
+  "assumption_ids": ["A-004", "A-006", "A-011", "A-013"],
+  "provisional": true,
+  "values": {
+    "MAX_STEPS": 100,
+    "MAX_PAGE_SIZE": 50,
+    "MAX_FINDINGS": 64,
+    "MAX_EVIDENCE_IDS": 32,
+    "MAX_REQUEST_BYTES": 65536,
+    "MAX_CALC_EXPRESSION_LENGTH": 512,
+    "MAX_CALC_AST_NODES": 64,
+    "MAX_FINDING_EXPLANATION_LENGTH": 2000,
+    "MAX_ERROR_MESSAGE_LENGTH": 512,
+    "WATCHDOG_SECONDS": 60,
+    "SUBMIT_COUNTS_AS_INSPECTION_STEP": false,
+    "FAILED_CALL_COSTS_A_STEP": true
+  },
+  "semantics": {
+    "budget": "Deterministic inspection steps, not wall clock. Wall clock is only a watchdog and never truncates an episode silently (§14.8).",
+    "truncated": "Produced only by exhausting the deterministic budget, never by a timeout.",
+    "notes": "If organizers publish different limits, only this file and adapter/compatibility.py change; env code reads the values from here."
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "config_version": "1.0.0",
+  "status": "provisional",
+  "provisional": true,
+  "source": "Master specification §15.2, §15.3.",
+  "assumption_ids": ["A-003", "A-014"],
+  "match_rules": {
+    "require_type_equal": true,
+    "require_affected_ids_exact": true,
+    "require_currency_equal": true,
+    "amount_comparison": "absolute_difference_leq_tolerance_minor",
+    "require_complete_evidence_set": true,
+    "max_evidence_ids_per_finding": 32,
+    "explanation_influences_reward": false,
+    "confidence_influences_reward": false
+  },
+  "matching_algorithm": {
+    "primary": "maximize_matched_pair_count",
+    "secondary": "minimize_total_absolute_amount_error",
+    "tertiary": "deterministic_lexicographic_tiebreak",
+    "final_tiebreak": "prediction_input_index",
+    "implementation": "stdlib_maximum_matching_with_formalized_tiebreak",
+    "reference_oracle": "exhaustive_reference_matcher_7x7"
+  },
+  "duplicate_policy": {
+    "one_truth_matched_at_most_once": true,
+    "one_finding_matched_at_most_once": true,
+    "duplicate_findings_count_as_false_positives": true
+  }
+}

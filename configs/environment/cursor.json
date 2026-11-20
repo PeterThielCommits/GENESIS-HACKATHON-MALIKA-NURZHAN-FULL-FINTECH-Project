@@ -1,0 +1,25 @@
+{
+  "config_version": "1.0.0",
+  "status": "provisional",
+  "provisional": true,
+  "source": "Master specification §14.5.",
+  "assumption_ids": ["A-009", "A-010"],
+  "token": {
+    "format": "urlsafe_base64(canonical_payload || checksum)",
+    "payload_fields": ["cursor_version", "table", "snapshot_digest", "last_sort_key"],
+    "authenticated": false,
+    "integrity": "checksum_only",
+    "honest_description": "Without a secret key unavailable to the policy, the cursor is an error-detecting checksum, not a forgery-proof token. This is documented instead of claiming authentication.",
+    "secret_source_if_authenticated": "sealed/episode secret, never exposed to the policy process"
+  },
+  "reject_rules": {
+    "wrong_table": "BAD_CURSOR",
+    "wrong_snapshot": "BAD_CURSOR",
+    "malformed": "BAD_CURSOR",
+    "expired_by_episode_end": "TERMINATED"
+  },
+  "leakage_rules": {
+    "must_not_encode": ["seed", "mutation_index", "operator_name", "anomaly_position", "record_row_number_bias"],
+    "same_structure_for_mutated_and_clean_rows": true
+  }
+}

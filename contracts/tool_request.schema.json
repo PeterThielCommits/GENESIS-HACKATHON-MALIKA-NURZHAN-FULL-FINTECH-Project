@@ -1,0 +1,322 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinledger://contracts/tool_request.schema.json",
+  "title": "Tool request",
+  "description": "One inspection action sent to the environment (§14.2, §14.3). The external organizer envelope is produced only by adapter/. Exactly one tool shape must match; ambiguity is a contract error.",
+  "schema_version": "1.0.0",
+  "status": "provisional",
+  "provisional_reason": "Derived from the TwinLedger v3.0 master technical specification. The organizer contract is not archived in this repository, therefore this schema is PROVISIONAL and isolated behind adapter/ (see docs/ASSUMPTIONS.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "action"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "common.defs.json#/$defs/schema_version"
+    },
+    "protocol_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_.:-]+$"
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool",
+        "args"
+      ],
+      "properties": {
+        "tool": {
+          "type": "string",
+          "enum": [
+            "list_records",
+            "get_record",
+            "get_document",
+            "calc",
+            "submit"
+          ]
+        },
+        "args": {
+          "type": "object"
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "action"
+      ],
+      "properties": {
+        "action": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tool",
+            "args"
+          ],
+          "properties": {
+            "tool": {
+              "const": "list_records"
+            },
+            "args": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "table"
+              ],
+              "properties": {
+                "table": {
+                  "type": "string",
+                  "enum": [
+                    "company",
+                    "policy",
+                    "accounts",
+                    "counterparties",
+                    "journal_entries",
+                    "invoices",
+                    "credit_notes",
+                    "payments",
+                    "bank_lines",
+                    "fx_rates",
+                    "opening_balances",
+                    "period_calendar",
+                    "document_links"
+                  ]
+                },
+                "cursor": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 512
+                },
+                "limit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 50,
+                  "description": "Provisional page limit constant MAX_PAGE_SIZE=50 (A-004)."
+                },
+                "filters": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "counterparty_id": {
+                      "type": "string",
+                      "maxLength": 64
+                    },
+                    "currency": {
+                      "type": "string",
+                      "maxLength": 64
+                    },
+                    "period": {
+                      "type": "string",
+                      "maxLength": 64
+                    },
+                    "date_from": {
+                      "type": "string",
+                      "maxLength": 64
+                    },
+                    "date_to": {
+                      "type": "string",
+                      "maxLength": 64
+                    },
+                    "status": {
+                      "type": "string",
+                      "maxLength": 64
+                    },
+                    "doc_id": {
+                      "type": "string",
+                      "maxLength": 64
+                    },
+                    "account_id": {
+                      "type": "string",
+                      "maxLength": 64
+                    },
+                    "direction": {
+                      "type": "string",
+                      "maxLength": 64
+                    },
+                    "pair": {
+                      "type": "string",
+                      "maxLength": 64
+                    },
+                    "source_document_id": {
+                      "type": "string",
+                      "maxLength": 64
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "required": [
+        "action"
+      ],
+      "properties": {
+        "action": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tool",
+            "args"
+          ],
+          "properties": {
+            "tool": {
+              "const": "get_record"
+            },
+            "args": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "table",
+                "id"
+              ],
+              "properties": {
+                "table": {
+                  "type": "string",
+                  "enum": [
+                    "company",
+                    "policy",
+                    "accounts",
+                    "counterparties",
+                    "journal_entries",
+                    "invoices",
+                    "credit_notes",
+                    "payments",
+                    "bank_lines",
+                    "fx_rates",
+                    "opening_balances",
+                    "period_calendar",
+                    "document_links"
+                  ]
+                },
+                "id": {
+                  "$ref": "common.defs.json#/$defs/namespaced_id"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "required": [
+        "action"
+      ],
+      "properties": {
+        "action": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tool",
+            "args"
+          ],
+          "properties": {
+            "tool": {
+              "const": "get_document"
+            },
+            "args": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "doc_id"
+              ],
+              "properties": {
+                "doc_id": {
+                  "$ref": "common.defs.json#/$defs/namespaced_id"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "required": [
+        "action"
+      ],
+      "properties": {
+        "action": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tool",
+            "args"
+          ],
+          "properties": {
+            "tool": {
+              "const": "calc"
+            },
+            "args": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "expression"
+              ],
+              "properties": {
+                "expression": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512,
+                  "description": "Provisional length limit MAX_CALC_EXPRESSION_LENGTH=512 (§14.7)."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "required": [
+        "action"
+      ],
+      "properties": {
+        "action": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tool",
+            "args"
+          ],
+          "properties": {
+            "tool": {
+              "const": "submit"
+            },
+            "args": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "findings"
+              ],
+              "properties": {
+                "findings": {
+                  "type": "array",
+                  "minItems": 0,
+                  "maxItems": 64,
+                  "uniqueItems": true,
+                  "items": {
+                    "$ref": "finding.schema.json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

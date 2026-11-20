@@ -1,0 +1,40 @@
+# TwinLedger - deterministic synthetic audit environment.
+# The mandatory path is Python 3.11 + standard library only (decision D-0003).
+# This file declares metadata and quality tooling; it deliberately does not install
+# runtime dependencies, because a required dependency would break the offline run.
+
+[project]
+name = "twinledger"
+version = "0.1.0"
+description = "Proof-carrying, deterministic benchmark environment for AI accounting auditors"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+license = { text = "Proprietary - hackathon submission, licence review pending (docs/STATUS.md)" }
+authors = [{ name = "TwinLedger team" }]
+keywords = ["benchmark", "audit", "deterministic", "rl-environment", "proof-carrying"]
+dependencies = []
+
+[project.optional-dependencies]
+# Optional extras (master spec 22.2). None of them may be imported by the mandatory path.
+dev = ["pytest>=8,<9", "hypothesis>=6,<7", "jsonschema>=4,<5"]
+rl = ["gymnasium>=0.29,<1"]
+analysis = ["numpy>=1.26,<3", "scikit-learn>=1.4,<2"]
+
+[project.urls]
+Documentation = "docs/PROJECT_CONTEXT.md"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+# The mandatory suite is unittest-based; pytest is an optional convenience runner.
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.unittest]
+start-directory = "tests"

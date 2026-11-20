@@ -1,0 +1,511 @@
+{
+  "registry_version": "1.0.0",
+  "status_vocabulary": [
+    "UNRESOLVED",
+    "CONFIRMED",
+    "MODIFIED"
+  ],
+  "status_rules": {
+    "CONFIRMED": "An official source (file, section, hash) is archived under docs/official/ and cited.",
+    "MODIFIED": "An official variant exists and the exact adaptation is recorded together with a CR.",
+    "UNRESOLVED": "No official statement available; the assumption is isolated in adapter/ and configs/ and must not leak into core logic."
+  },
+  "source": "docs/official/master_tz/TwinLedger_v3_Master_TZ_AI_Agents.txt §2.2",
+  "created": "2026-11-20",
+  "assumptions": [
+    {
+      "id": "A-001",
+      "title_ru": "Инструменты могут называться list_records, get_record, get_document, calc, submit",
+      "title_en": "Tool names may be list_records / get_record / get_document / calc / submit",
+      "spec_ref": "§2.2 A-001, §14.2",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "tools": [
+          "list_records",
+          "get_record",
+          "get_document",
+          "calc",
+          "submit"
+        ],
+        "external_aliases": {
+          "list_records": [
+            "list_records"
+          ],
+          "get_record": [
+            "get_record"
+          ],
+          "get_document": [
+            "get_document"
+          ],
+          "calc": [
+            "calc"
+          ],
+          "submit": [
+            "submit"
+          ]
+        }
+      },
+      "isolation_points": [
+        "configs/adapter/compatibility.json",
+        "adapter/compatibility.py",
+        "adapter/organizer.py",
+        "contracts/tool_request.schema.json",
+        "contracts/tool_response.schema.json"
+      ],
+      "question_id": "Q-001",
+      "decision_ids": [
+        "D-0006"
+      ],
+      "close_condition": "Organizer publishes the tool list, arguments and error semantics in writing (Q-001) and adapter profile is BOUND.",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "Every policy prompt, arena client and test that names a tool would be wrong; the environment would reject valid actions.",
+      "verification_test": "tests/unit/test_adapter_compatibility.py",
+      "notes": null
+    },
+    {
+      "id": "A-002",
+      "title_ru": "Могут быть четыре типа ошибок: DUPLICATE_PAYMENT, PARTIAL_PAYMENT_ALLOCATION, FX_RATE_MISMATCH, PERIOD_CUTOFF",
+      "title_en": "The anomaly taxonomy may be exactly four types",
+      "spec_ref": "§2.2 A-002, §11",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "types": [
+          "DUPLICATE_PAYMENT",
+          "PARTIAL_PAYMENT_ALLOCATION",
+          "FX_RATE_MISMATCH",
+          "PERIOD_CUTOFF"
+        ]
+      },
+      "isolation_points": [
+        "spec/anomaly_catalog.json",
+        "contracts/common.defs.json",
+        "spec/invariants.json"
+      ],
+      "question_id": "Q-004",
+      "decision_ids": [
+        "D-0001",
+        "D-0014"
+      ],
+      "close_condition": "Organizer publishes the anomaly taxonomy and its accounting semantics (Q-004).",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "Generator, verifier, matcher and arena would implement the wrong taxonomy; scores would be incomparable with the official benchmark.",
+      "verification_test": "tests/phase0/test_assumption_registry.py",
+      "notes": "Taxonomy is data (spec/anomaly_catalog.json + schema enum), never a hardcoded if/elif ladder in core logic."
+    },
+    {
+      "id": "A-003",
+      "title_ru": "Finding может включать type, affected_ids, claimed_amount, currency, evidence_ids, explanation и optional confidence",
+      "title_en": "The finding schema may be type + affected_ids + claimed_amount + currency + evidence_ids + explanation + optional confidence",
+      "spec_ref": "§2.2 A-003, §15.1, Appendix H.3",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "required": [
+          "type",
+          "affected_ids",
+          "claimed_amount",
+          "currency",
+          "evidence_ids"
+        ],
+        "optional": [
+          "explanation",
+          "confidence"
+        ],
+        "id_namespaces": [
+          "JE",
+          "INV",
+          "CN",
+          "PAY",
+          "BANK",
+          "FX",
+          "CP"
+        ]
+      },
+      "isolation_points": [
+        "contracts/finding.schema.json",
+        "contracts/tool_request.schema.json"
+      ],
+      "question_id": "Q-003",
+      "decision_ids": [
+        "D-0007",
+        "D-0014"
+      ],
+      "close_condition": "Organizer publishes the finding schema, ID rules and array limits (Q-003).",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "Policies would emit findings the official scorer cannot parse; the matcher could accept fields the official contract forbids.",
+      "verification_test": "tests/contracts/test_contracts_valid_invalid.py",
+      "notes": null
+    },
+    {
+      "id": "A-004",
+      "title_ru": "Лимит может быть 100 действий, размер страницы — максимум 50",
+      "title_en": "Budget may be 100 inspection steps and the page size at most 50",
+      "spec_ref": "§2.2 A-004, §14.4",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "MAX_STEPS": 100,
+        "MAX_PAGE_SIZE": 50
+      },
+      "isolation_points": [
+        "configs/environment/limits.json",
+        "contracts/tool_request.schema.json"
+      ],
+      "question_id": "Q-002",
+      "decision_ids": [
+        "D-0009"
+      ],
+      "close_condition": "Organizer publishes the environment limits and reset/step semantics (Q-002).",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "Truncation timing, step penalty and page-size validation would all be wrong; reward becomes incomparable.",
+      "verification_test": "tests/unit/test_environment_config.py",
+      "notes": null
+    },
+    {
+      "id": "A-005",
+      "title_ru": "Reward может быть F1 минус штраф за шаги, ETA=0.05, max_steps=100",
+      "title_en": "Reward may be F1 - ETA * steps_used / max_steps with ETA=0.05 and max_steps=100",
+      "spec_ref": "§2.2 A-005, §15.5",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "formula": "max(0, F1 - ETA * steps_used / max_steps)",
+        "ETA": "0.05",
+        "max_steps": 100
+      },
+      "isolation_points": [
+        "configs/scoring/reward.json",
+        "configs/scoring/match.json"
+      ],
+      "question_id": "Q-005",
+      "decision_ids": [
+        "D-0009"
+      ],
+      "close_condition": "Organizer publishes the reward formula, match criteria and tolerance rules (Q-005).",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "Every reported reward, all baseline comparisons and the arena ladder would be wrong.",
+      "verification_test": "tests/unit/test_reward_config.py",
+      "notes": "The formula string is data. No module may embed 0.05 or 100 as a literal (checked by tools/check_no_magic_numbers.py)."
+    },
+    {
+      "id": "A-006",
+      "title_ru": "submit может не входить в inspection_steps",
+      "title_en": "submit may not count as an inspection step",
+      "spec_ref": "§2.2 A-006, §14.4",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "SUBMIT_COUNTS_AS_INSPECTION_STEP": false,
+        "FAILED_CALL_COSTS_A_STEP": true
+      },
+      "isolation_points": [
+        "configs/environment/limits.json",
+        "configs/scoring/reward.json"
+      ],
+      "question_id": "Q-005",
+      "decision_ids": [
+        "D-0009"
+      ],
+      "close_condition": "Organizer confirms the step accounting rule together with the reward formula (Q-005/Q-013).",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "Step penalty would be systematically off by one; budget-aware policies would be miscalibrated.",
+      "verification_test": "tests/unit/test_environment_config.py",
+      "notes": null
+    },
+    {
+      "id": "A-007",
+      "title_ru": "При truncation могут подаваться пустые findings с обычным scoring",
+      "title_en": "Truncation may submit empty findings and still be scored normally",
+      "spec_ref": "§2.2 A-007, §15.4",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "truncated_empty_submission_scored_normally": true,
+        "status_flag_required": "TRUNCATED_NO_SUBMIT"
+      },
+      "isolation_points": [
+        "configs/scoring/reward.json",
+        "configs/environment/mode.json"
+      ],
+      "question_id": "Q-013",
+      "decision_ids": [
+        "D-0009",
+        "D-0011"
+      ],
+      "close_condition": "Organizer confirms truncation semantics and when reward is returned (Q-013).",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "A clean episode reached by truncation could show F1=1 and look like a successful audit.",
+      "verification_test": "tests/unit/test_reward_config.py",
+      "notes": null
+    },
+    {
+      "id": "A-008",
+      "title_ru": "Closed mode может скрывать reward до финализации harness",
+      "title_en": "Closed mode may hide the reward until the harness finalizes the episode",
+      "spec_ref": "§2.2 A-008, §14.9",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "default_mode": "CLOSED_EVAL",
+        "step_reward": 0,
+        "scorer_process": "separate_process_after_env_close"
+      },
+      "isolation_points": [
+        "configs/environment/mode.json"
+      ],
+      "question_id": "Q-013",
+      "decision_ids": [
+        "D-0011"
+      ],
+      "close_condition": "Organizer confirms reward visibility and scoring time (Q-013).",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "The whole sealed-evaluation claim would be unsupported; a policy could hill-climb on live reward.",
+      "verification_test": "tests/unit/test_environment_config.py",
+      "notes": "CLOSED_EVAL is the default in code, not only in documentation (REQ-ENV-030)."
+    },
+    {
+      "id": "A-009",
+      "title_ru": "Cursor может быть непрозрачным и связанным со snapshot",
+      "title_en": "The cursor may be opaque and bound to the snapshot",
+      "spec_ref": "§2.2 A-009, §14.5",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "format": "urlsafe_base64(canonical_payload || checksum)",
+        "authenticated": false,
+        "bound_fields": [
+          "cursor_version",
+          "table",
+          "snapshot_digest",
+          "last_sort_key"
+        ]
+      },
+      "isolation_points": [
+        "configs/environment/cursor.json",
+        "contracts/tool_response.schema.json"
+      ],
+      "question_id": "Q-002",
+      "decision_ids": [
+        "D-0006"
+      ],
+      "close_condition": "Organizer defines the pagination contract (Q-002).",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "Pagination could leak or break replay; if the official protocol returns plain offsets, the adapter must translate.",
+      "verification_test": "tests/unit/test_cursor_config.py",
+      "notes": "The cursor is documented as checksum-only, not as an authenticated token (§14.5)."
+    },
+    {
+      "id": "A-010",
+      "title_ru": "Повторный submit/вызовы после terminal могут возвращать bounded errors",
+      "title_en": "Repeated submits or post-terminal calls may return bounded errors",
+      "spec_ref": "§2.2 A-010, §14.8",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "post_terminal_errors": [
+          "TERMINATED",
+          "ALREADY_SUBMITTED"
+        ],
+        "resubmit_changes_result": false
+      },
+      "isolation_points": [
+        "contracts/tool_response.schema.json",
+        "configs/environment/mode.json"
+      ],
+      "question_id": "Q-002",
+      "decision_ids": [
+        "D-0006"
+      ],
+      "close_condition": "Organizer defines termination and resubmission semantics (Q-002).",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "A policy could overwrite a submission or probe the scorer through error differences.",
+      "verification_test": "tests/contracts/test_contracts_valid_invalid.py",
+      "notes": null
+    },
+    {
+      "id": "A-011",
+      "title_ru": "Может быть watchdog 60 секунд; основной лимит — детерминированные шаги",
+      "title_en": "There may be a 60 s watchdog; the primary limit is deterministic steps",
+      "spec_ref": "§2.2 A-011, §14.8, §22.5",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "WATCHDOG_SECONDS": 60,
+        "truncation_source": "deterministic_steps_only"
+      },
+      "isolation_points": [
+        "configs/environment/limits.json",
+        "configs/environment/resources.json"
+      ],
+      "question_id": "Q-009",
+      "decision_ids": [
+        "D-0009"
+      ],
+      "close_condition": "Organizer publishes runtime restrictions including timeouts (Q-009).",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "A wall-clock truncation would make runs non-deterministic and replay impossible.",
+      "verification_test": "tests/unit/test_environment_config.py",
+      "notes": "Wall clock is a watchdog only; a timeout is a run error, never a quiet truncation."
+    },
+    {
+      "id": "A-012",
+      "title_ru": "Могут выдаваться train/dev, а hidden test храниться у организаторов",
+      "title_en": "train/dev may be published while the hidden test stays with the organizers",
+      "spec_ref": "§2.2 A-012, §18.6",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "splits": [
+          "train",
+          "dev",
+          "heldout"
+        ],
+        "grouping": "base_history_group",
+        "hidden_committed": false
+      },
+      "isolation_points": [
+        "configs/generator/default.json",
+        "docs/GIT_AND_DATA_POLICY.md",
+        ".gitignore"
+      ],
+      "question_id": "Q-008",
+      "decision_ids": [
+        "D-0008"
+      ],
+      "close_condition": "Organizer publishes the data splits and the submission contents (Q-008).",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "Clean/mutated twins could leak across splits and inflate held-out numbers; hidden data could be committed by accident.",
+      "verification_test": "tests/phase0/test_git_data_policy.py",
+      "notes": null
+    },
+    {
+      "id": "A-013",
+      "title_ru": "Runtime может быть Python 3.11, offline, около 2 CPU/4 GB RAM/1 GB",
+      "title_en": "Runtime may be Python 3.11, offline, about 2 CPU / 4 GB RAM / 1 GB disk",
+      "spec_ref": "§2.2 A-013, §22.5",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "python": "3.11",
+        "network": "forbidden",
+        "cpu_cores": 2,
+        "ram_mb": 4096,
+        "disk_mb": 1024
+      },
+      "isolation_points": [
+        "pyproject.toml",
+        "configs/environment/resources.json",
+        ".gitignore"
+      ],
+      "question_id": "Q-009",
+      "decision_ids": [
+        "D-0003"
+      ],
+      "close_condition": "Organizer publishes the runtime and resource limits (Q-009).",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "A dependency outside the stdlib or a network call would fail on the judge machine.",
+      "verification_test": "tests/unit/test_environment_config.py",
+      "notes": null
+    },
+    {
+      "id": "A-014",
+      "title_ru": "Допуск может рассчитываться от количества операций округления",
+      "title_en": "The tolerance may be derived from the number of rounding operations",
+      "spec_ref": "§2.2 A-014, §9.2",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "rule_id": "ROUNDING_OPERATIONS_V1",
+        "formula": "tolerance_minor = rounding_ops * per_op_minor"
+      },
+      "isolation_points": [
+        "configs/scoring/tolerance.json"
+      ],
+      "question_id": "Q-005",
+      "decision_ids": [
+        "D-0010"
+      ],
+      "close_condition": "Organizer publishes the tolerance model (Q-005) or the generator proves the bound per type.",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "A too-small tolerance rejects correct answers; a too-large tolerance accepts wrong ones and hides real errors.",
+      "verification_test": "tests/unit/test_tolerance_config.py",
+      "notes": null
+    },
+    {
+      "id": "A-015",
+      "title_ru": "Seed не должен появляться в observation/info",
+      "title_en": "The seed must never appear in observation or info",
+      "spec_ref": "§2.2 A-015, §10.1, §16.3",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "seed_in_public_output": false,
+        "info_fields_allowed": [
+          "steps_used",
+          "steps_remaining"
+        ]
+      },
+      "isolation_points": [
+        "configs/generator/default.json",
+        "configs/environment/mode.json",
+        "contracts/tool_response.schema.json"
+      ],
+      "question_id": "Q-010",
+      "decision_ids": [
+        "D-0008",
+        "D-0012"
+      ],
+      "close_condition": "Organizer confirms whether a sealed reference exists and how it is protected (Q-010).",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "A policy could regenerate the whole episode and read the truth.",
+      "verification_test": "tests/unit/test_environment_config.py",
+      "notes": "Enforced by a canary/leak scan in later phases plus the info allowlist."
+    },
+    {
+      "id": "A-016",
+      "title_ru": "Рубрика может содержать 20 проверок в каждом из 4 блоков и 5 критериев",
+      "title_en": "The rubric may contain 20 checks in each of 4 blocks plus 5 engineering criteria",
+      "spec_ref": "§2.2 A-016, §0.3, §23.4",
+      "status": "UNRESOLVED",
+      "status_reason": "No organizer statement has been archived in this repository (Phase 0 task 0.1).",
+      "official_source": null,
+      "provisional_value": {
+        "blocks": 4,
+        "checks_per_block": 20,
+        "engineering_criteria": 5,
+        "total_points": 100
+      },
+      "isolation_points": [
+        "configs/rubric/provisional.json",
+        "judge/rubric_map.json"
+      ],
+      "question_id": "Q-012",
+      "decision_ids": [
+        "D-0015",
+        "D-0002"
+      ],
+      "close_condition": "Organizer publishes the official rubric and weights (Q-012).",
+      "owner": "A0 orchestrator",
+      "impact_if_wrong": "Effort could be spent on the wrong checks; any 'score' shown to the jury would be fabricated.",
+      "verification_test": "tests/phase0/test_rubric_map.py",
+      "notes": "Weights are never hardcoded in core logic and are never presented as official (D-0002)."
+    }
+  ]
+}

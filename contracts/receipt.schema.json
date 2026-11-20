@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinledger://contracts/receipt.schema.json",
+  "title": "Episode receipt",
+  "description": "Offline-verifiable integrity receipt (§16.5). Integrity only; it is not proof of finding quality (REQ-SEAL-023).",
+  "schema_version": "1.0.0",
+  "status": "provisional",
+  "provisional_reason": "Derived from the TwinLedger v3.0 master technical specification. The organizer contract is not archived in this repository, therefore this schema is PROVISIONAL and isolated behind adapter/ (see docs/ASSUMPTIONS.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "episode_id",
+    "protocol_version",
+    "code_version_hash",
+    "config_hash",
+    "public_manifest_hash",
+    "truth_commitment",
+    "trajectory_head",
+    "merkle_leaf_index",
+    "policy_identifier",
+    "reward_breakdown_ref",
+    "verification_status"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "common.defs.json#/$defs/schema_version"
+    },
+    "episode_id": {
+      "type": "string",
+      "pattern": "^EP-[A-Z0-9]{4,16}$"
+    },
+    "protocol_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "code_version_hash": {
+      "$ref": "common.defs.json#/$defs/sha256_hex"
+    },
+    "config_hash": {
+      "$ref": "common.defs.json#/$defs/sha256_hex"
+    },
+    "public_manifest_hash": {
+      "$ref": "common.defs.json#/$defs/sha256_hex"
+    },
+    "truth_commitment": {
+      "$ref": "common.defs.json#/$defs/sha256_hex"
+    },
+    "salt_reveal_ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 200
+    },
+    "trajectory_head": {
+      "$ref": "common.defs.json#/$defs/sha256_hex"
+    },
+    "merkle_leaf_index": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "policy_identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "reward_breakdown_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "FAIL",
+        "SKIPPED",
+        "BLOCKED",
+        "NOT_RUN"
+      ]
+    }
+  }
+}

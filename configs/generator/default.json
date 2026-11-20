@@ -1,0 +1,33 @@
+{
+  "config_version": "1.0.0",
+  "status": "provisional",
+  "provisional": true,
+  "source": "Master specification §8.5, §9, §10.1.",
+  "assumption_ids": ["A-012", "A-015"],
+  "master_seed_policy": {
+    "seed_source": "explicit_config_value",
+    "seed_in_public_output": false,
+    "streams": ["company", "chart", "counterparties", "fx/<month>", "history/<month>/<event_type>",
+                "id/<entity_type>", "text/<language>/<document_type>", "order/<table>",
+                "mutation/<operator>/<index>"],
+    "derivation": "seed = int.from_bytes(sha256(namespace || master_seed)[:8], 'big')"
+  },
+  "levels": {
+    "L1": {"journal_entries": [150, 300], "documents": [25, 50], "anomalies": [0, 1]},
+    "L2": {"journal_entries": [400, 800], "documents": [60, 120], "anomalies": [1, 2]},
+    "L3": {"journal_entries": [1000, 1800], "documents": [120, 220], "anomalies": [2, 3]},
+    "L4": {"journal_entries": [2000, 3500], "documents": [220, 400], "anomalies": [3, 4]}
+  },
+  "synthetic_universe": {
+    "jurisdiction_codes": ["XA", "XK", "XM", "XR"],
+    "jurisdiction_note": "Internal reserved placeholders. Not ISO-3166 assignments and never described as such.",
+    "company_name_prefixes": ["Almaty Ridge", "Zhetysu Meridian", "Talgar Vector", "Saryarka Delta"],
+    "bank_name_prefixes": ["Synthetic Clearing Bank", "Twin Ledger Test Bank"],
+    "forbid_real_entity_names": true,
+    "forbid_personal_data": true
+  },
+  "id_styles": ["A", "B", "C", "D"],
+  "currencies": ["KZT", "USD", "EUR", "GBP", "CNY", "RUB", "TRY", "AED", "JPY", "KWD"],
+  "timezones": ["Asia/Almaty", "Asia/Aqtobe", "UTC", "Asia/Tokyo", "Asia/Kuwait"],
+  "splits": {"train": "grouped_by_base_history", "dev": "grouped_by_base_history", "heldout": "never_used_for_tuning"}
+}

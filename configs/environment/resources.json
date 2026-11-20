@@ -1,0 +1,25 @@
+{
+  "config_version": "1.0.0",
+  "status": "provisional",
+  "provisional": true,
+  "source": "Master specification §22.5. Preliminary organizer limits (Q-009).",
+  "assumption_ids": ["A-013", "A-011"],
+  "runtime": {
+    "python": "3.11",
+    "network": "forbidden",
+    "cpu_cores": 2,
+    "ram_mb": 4096,
+    "disk_mb": 1024
+  },
+  "performance_targets": {
+    "env_step_p99_ms": 5,
+    "l4_episode_disk_mb": 50,
+    "peak_memory_mb": 300,
+    "make_verify_seconds": 600
+  },
+  "measurement_policy": {
+    "record_host_and_python": true,
+    "claim_only_measured_targets": true,
+    "note": "Targets are measured on a recorded host; compliance on the organizer machine is not claimed until it is actually measured."
+  }
+}

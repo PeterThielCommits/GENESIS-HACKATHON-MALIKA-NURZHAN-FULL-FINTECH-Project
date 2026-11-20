@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "company_id": "CO-XK4T21",
+  "legal_name": "Almaty Ridge Trading LLP",
+  "name_variants": {
+    "ru": "ТОО «Алматы Ридж Трейдинг»",
+    "kk": "«Алматы Ридж Трейдинг» ЖШС",
+    "en": "Almaty Ridge Trading LLP"
+  },
+  "jurisdiction_code": "US",
+  "timezone": "Asia/Almaty",
+  "functional_currency": "KZT",
+  "supported_currencies": [
+    "KZT",
+    "USD",
+    "EUR",
+    "JPY"
+  ],
+  "fiscal_year_start": "2026-01-01",
+  "fiscal_period_rule": "MONTHLY",
+  "accounting_basis": {
+    "revenue_recognition": "SERVICE_DATE",
+    "expense_recognition": "SERVICE_COMPLETION",
+    "cutoff_rule": "COMPANY_LOCAL_DATE"
+  },
+  "id_style": "A",
+  "text_profile": {
+    "languages": [
+      "ru",
+      "kk",
+      "en"
+    ],
+    "register": "FORMAL"
+  },
+  "company_size": "L1"
+}

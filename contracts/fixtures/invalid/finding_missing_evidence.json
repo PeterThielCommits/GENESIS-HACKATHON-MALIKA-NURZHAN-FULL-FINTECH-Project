@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "type": "DUPLICATE_PAYMENT",
+  "affected_ids": [
+    "JE:JE-000123",
+    "PAY:PAY-7F3A91"
+  ],
+  "claimed_amount": 18450000,
+  "currency": "KZT",
+  "explanation": "Invoice INV-2025-0042 was settled twice by two distinct bank transfers in the same period.",
+  "confidence": 0.82
+}

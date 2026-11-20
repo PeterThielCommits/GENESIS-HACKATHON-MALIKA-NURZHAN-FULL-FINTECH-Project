@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "check_id": "CT-CONTRACTS-01",
+  "block": "contract_isolation",
+  "title": "Schema fixtures accept valid documents and reject malformed ones",
+  "official": false,
+  "provisional": true,
+  "req_ids": [
+    "REQ-CONTRACT-002",
+    "REQ-CONTRACT-004"
+  ],
+  "status": "PASS",
+  "command": "make test",
+  "artifact": "artifacts/reports/latest/verify_summary.json",
+  "reason": "17/17 fixtures behaved as declared.",
+  "duration_ms": 412
+}

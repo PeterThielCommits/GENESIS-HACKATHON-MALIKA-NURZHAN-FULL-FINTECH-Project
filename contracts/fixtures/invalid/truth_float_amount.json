@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0.0",
+  "episode_id": "EP-X7K2M9",
+  "truth_version": "0.0.0",
+  "episode_public_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "findings": [
+    {
+      "truth_id": "T-DUP-01",
+      "type": "DUPLICATE_PAYMENT",
+      "affected_ids": [
+        "JE:JE-000123",
+        "PAY:PAY-7F3A91"
+      ],
+      "amount_minor": 184500.5,
+      "currency": "KZT",
+      "tolerance_minor": 2,
+      "evidence_sets": [
+        [
+          "INV:INV-2025-0042",
+          "PAY:PAY-4C21B0",
+          "PAY:PAY-7F3A91"
+        ],
+        [
+          "JE:JE-000123",
+          "PAY:PAY-7F3A91"
+        ]
+      ],
+      "evidence_enumeration_complete": true,
+      "minimal_evidence_size": 2,
+      "optimal_steps_model_id": "INDEXED_TABLE_SCAN_V1",
+      "optimal_steps": 9,
+      "rounding_ops": 2,
+      "invariant_signature": {
+        "invariant_id": "INV-04",
+        "entity_key": "invoice:INV-2025-0042",
+        "expected_delta_minor": 0,
+        "currency": "KZT",
+        "direction": "over",
+        "tolerance_minor": 0,
+        "side_effect_class": "primary"
+      },
+      "operator_version": "0.0.0"
+    }
+  ]
+}

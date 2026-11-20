@@ -1,0 +1,33 @@
+{
+  "config_version": "1.0.0",
+  "status": "provisional",
+  "provisional": true,
+  "source": "Master specification §15.5. The formula is provisional until organizers confirm it (Q-005).",
+  "assumption_ids": ["A-005", "A-006", "A-007", "A-008"],
+  "formula_id": "F1_MINUS_STEP_PENALTY_V1",
+  "formula": "max(0, F1 - ETA * steps_used / max_steps)",
+  "parameters": {
+    "ETA": "0.05",
+    "max_steps": 100
+  },
+  "arithmetic": {
+    "representation": "exact_rational_or_decimal",
+    "float": "forbidden",
+    "display_rounding": 6,
+    "raw_reward_preserved": true
+  },
+  "edge_cases": {
+    "empty_truth_and_empty_submission_F1": "1",
+    "empty_truth_and_false_finding_F1": "0",
+    "empty_submission_with_truth_F1": "0",
+    "precision_zero_denominator": "defined_by_REQ_SCORE_004_rule",
+    "recall_zero_denominator": "defined_by_REQ_SCORE_004_rule"
+  },
+  "step_accounting": {
+    "counts": ["successful_tool_calls", "failed_tool_calls"],
+    "excludes": ["submit"],
+    "source": "configs/environment/limits.json",
+    "note": "A-006 is unresolved; if submit counts, only this file changes."
+  },
+  "status_note": "Never describe this file as the official reward before Q-005 is answered in writing."
+}

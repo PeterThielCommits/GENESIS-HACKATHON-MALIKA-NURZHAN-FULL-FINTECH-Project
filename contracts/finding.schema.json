@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinledger://contracts/finding.schema.json",
+  "title": "Finding",
+  "description": "A structured audit conclusion submitted by a policy (A-003, §15.1, §15.2).",
+  "schema_version": "1.0.0",
+  "status": "provisional",
+  "provisional_reason": "Derived from the TwinLedger v3.0 master technical specification. The organizer contract is not archived in this repository, therefore this schema is PROVISIONAL and isolated behind adapter/ (see docs/ASSUMPTIONS.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "patternProperties": {
+    "^x_twinledger_": {}
+  },
+  "required": [
+    "type",
+    "affected_ids",
+    "claimed_amount",
+    "currency",
+    "evidence_ids"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "common.defs.json#/$defs/schema_version"
+    },
+    "type": {
+      "$ref": "common.defs.json#/$defs/anomaly_type"
+    },
+    "affected_ids": {
+      "description": "Exact canonical set of records that carry the anomaly. Order is not significant; the matcher canonicalizes and de-duplicates (REQ-SCORE-002).",
+      "$ref": "common.defs.json#/$defs/id_list"
+    },
+    "claimed_amount": {
+      "description": "Claimed anomalous amount in minor units of `currency` (absolute value semantics are defined by scoring/match config).",
+      "$ref": "common.defs.json#/$defs/minor_amount"
+    },
+    "currency": {
+      "$ref": "common.defs.json#/$defs/currency_code"
+    },
+    "evidence_ids": {
+      "$ref": "common.defs.json#/$defs/id_list",
+      "description": "Public record IDs that prove the finding. Must contain one complete admissible evidence set; must be reachable through public tools (REQ-VER-010)."
+    },
+    "explanation": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "Free text. Never influences the base reward (15.2, Anti-goal: eloquence is not scored)."
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  }
+}

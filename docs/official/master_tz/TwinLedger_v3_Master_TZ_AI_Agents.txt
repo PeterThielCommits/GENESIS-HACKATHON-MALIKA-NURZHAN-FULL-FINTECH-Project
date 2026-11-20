@@ -1,0 +1,4062 @@
+################################################################################
+# TWINLEDGER v3.0                                                             #
+# ЕДИНОЕ МАСТЕР-ТЕХНИЧЕСКОЕ ЗАДАНИЕ ДЛЯ ИИ-АГЕНТОВ                           #
+# Proof-Carrying Audit Environment — Trust, but verify the verifier           #
+################################################################################
+
+Тип документа       : Единый источник инженерных требований (Master TЗ)
+Версия              : 3.0.0
+Статус              : Базовая спецификация реализации; сверить с организаторами
+Основной язык       : Русский; названия API, полей и модулей — английские
+Ядро                : Python 3.11, стандартная библиотека
+Результат           : Полный репозиторий, офлайн-проверка, воспроизводимые прогоны
+
+ВАЖНОЕ ПРИМЕЧАНИЕ О ДОСТУПЕ К ИСХОДНЫМ МАТЕРИАЛАМ
+--------------------------------------------------
+Документ объединяет и расширяет контекст TwinLedger, который был полностью
+вставлен в текущую переписку. Ссылка Claude Share, указанная пользователем,
+не открылась в доступной среде; скрытые вложения также не были предоставлены
+как читаемые файлы. Поэтому этот документ НЕ утверждает, что недоступные
+материалы были изучены. Все требования организаторов, известные только из
+пересказа в переписке, помечаются как предварительные и должны быть сверены с
+официальным ТЗ. ИИ-агентам запрещено выдавать предположение за официальный факт.
+
+ВАЖНОЕ ПРИМЕЧАНИЕ О РЕЗУЛЬТАТЕ ХАКАТОНА
+--------------------------------------
+Ни один документ не может гарантировать победу или максимальный балл при
+неизвестных скрытых проверках. Цель этой спецификации — добиться максимальной
+корректности, доказуемости, воспроизводимости, надёжности инженерной реализации
+и готовности к проверке жюри. Команда должна оптимизировать доказанные свойства,
+а не визуальное впечатление от проекта.
+
+КАК ПОЛЬЗОВАТЬСЯ ЭТИМ ФАЙЛОМ
+----------------------------
+1. Каждый ИИ-агент ДО ИЗМЕНЕНИЯ КОДА обязан прочитать этот документ полностью.
+2. Затем он читает docs/PROJECT_CONTEXT.md, docs/CURRENT_STATE.md,
+   docs/DECISIONS.md, docs/STATUS.md, релевантные contracts/, свою карточку
+   задачи и последний handoff.
+3. Официальное ТЗ организаторов имеет приоритет над любым предварительным
+   правилом этого документа. Конфликт фиксируется в DECISIONS.md и решается
+   через adapter/contracts, а не хаотичными правками ядра.
+4. MUST / ОБЯЗАН — обязательное требование. SHOULD / СЛЕДУЕТ — рекомендация;
+   отклонение документируется. MAY / МОЖЕТ — необязательная возможность.
+5. ID требований вида REQ-<AREA>-<NNN> используются в коде, тестах, PR, отчётах
+   и критериях приёмки.
+6. Написанный код не означает завершённую задачу. Нужны запущенные тесты,
+   фактический вывод и пройденный gate соответствующей фазы.
+7. Нельзя заявлять, что тест, команда, проверка, GitHub update или сборка
+   прошли успешно, если агент их фактически не запускал.
+
+
+================================================================================
+0. КОНТЕКСТ ПРОЕКТА ДЛЯ КАЖДОГО ИИ-АГЕНТА
+================================================================================
+
+0.1. Что мы создаём?
+--------------------
+TwinLedger — исследовательская и соревновательная среда для проверки ИИ-агентов,
+которые проводят аудит синтетических бухгалтерских данных через ограниченный
+набор инструментов. Каждый эпизод представляет вымышленную компанию с
+счётами-фактурами, платежами, банковскими строками, бухгалтерскими проводками,
+курсами валют, учётной политикой и документами. Одни эпизоды полностью чистые,
+другие содержат одну или несколько контролируемых бухгалтерских аномалий.
+Агент изучает только публичные записи в рамках лимита действий и отправляет
+структурированные выводы (findings).
+
+TwinLedger НЕ является реальной бухгалтерской системой, сервисом аудита,
+налоговым/юридическим консультантом или инструментом сертификации компаний.
+Все компании, банки, контрагенты, документы и операции должны быть вымышленными
+и генерироваться программно.
+
+У проекта две принципиально разные обязанности:
+
+A. ОБЯЗАННОСТЬ СРЕДЫ (ENVIRONMENT)
+   Предоставить честный, детерминированный, ограниченный интерфейс исследования.
+   Среда не раскрывает скрытые метки, provenance, seed, параметры мутаций,
+   количество правильных ответов или внутренности оценщика.
+
+B. ОБЯЗАННОСТЬ ОЦЕНЩИКА (EVALUATOR / SCORER)
+   Проверить соответствие отправленных выводов закрытому эталону, достаточность
+   доказательств и вычислить награду. Во время активного эпизода агент не должен
+   иметь доступа к оценщику или его памяти.
+
+Ключевое архитектурное правило: среда и оценщик не разделяют скрытое состояние.
+Политика может изучать публичные бухгалтерские данные, но не может читать truth,
+provenance, параметры мутации, внутренности scoring или приватные receipts.
+
+0.2. Главная идея продукта
+--------------------------
+«Мы не просто генерируем бухгалтерские ошибки. Мы создаём контролируемые
+контрафактические эпизоды, независимо проверяем, что каждая заявленная ошибка
+выводится из публичных доказательств, изолируем оценщик, испытываем награду
+атаками и можем воспроизвести каждый прогон по проверяемому receipt».
+
+Шесть механизмов, объединённых в одну систему:
+
+1. COUNTERFACTUAL TWIN ENGINE — генератор строит корректную чистую книгу C,
+   применяет явные операторы ошибок и получает испорченную книгу M. Кандидат
+   truth вычисляется из проверенного diff C -> M.
+
+2. INDEPENDENT EVIDENCE VERIFIER — независимая реализация проверяет только
+   публичную книгу M и заново обнаруживает выводы. Она не импортирует генератор
+   и не использует provenance при обнаружении.
+
+3. PROOF-CARRYING EPISODES — у каждого принятого вывода есть приватный
+   сертификат доказательств: достаточные/минимальные наборы публичных ID,
+   формальное правило вывода и явные предположения. Политика получает только
+   исходные публичные записи, а не сертификаты.
+
+4. SEALED EVALUATION — процессы политики, среды, harness и scorer изолированы.
+   Оценщик получает findings и trajectory только после окончания эпизода.
+   Commit-reveal и receipt помогают выявить последующее изменение truth.
+
+5. ADVERSARIAL REWARD ASSURANCE — matcher и reward проверяются на дубликатах,
+   дроблении выводов, чрезмерных обвинениях, неверных доказательствах,
+   некорректных запросах, шорткатах и мутантах кода оценщика.
+
+6. REPRODUCIBLE BENCHMARK TOOLKIT — независимые RNG-потоки, метаморфические
+   тесты, replay, отчёты, одна команда проверки и переносимый пакет контекста
+   позволяют жюри и следующему ИИ-агенту разобраться в проекте.
+
+0.3. Что предположительно оценивает жюри
+---------------------------------------
+В переданном контексте указано следующее предварительное распределение:
+
+  Контракт и изоляция ................ 25 баллов / предположительно 20 проверок
+  Данные и эталон .................... 25 баллов / предположительно 20 проверок
+  Надёжность награды ................. 25 баллов / предположительно 20 проверок
+  Воспроизводимость .................. 15 баллов / предположительно 20 проверок
+  Инженерия .......................... 10 баллов / предположительно 5 критериев
+  Всего ............................. 100 баллов
+
+ЭТО НЕ ПОДТВЕРЖДЕНО оригинальным документом организаторов в доступных файлах.
+Использовать это можно только как предварительную карту. Фаза 0 обязана
+заменить её официальной рубрикой. Не зашивать неподтверждённые веса и проверки
+в ядро приложения. Хранить реальную карту в judge/rubric_map.json.
+
+До получения официального подтверждения следующие проблемы считать P0:
+  - утечка скрытого эталона через observation, info, error, log или metadata;
+  - доступ политики к памяти оценщика или sealed-файлам;
+  - использование реальных финансовых данных там, где требуются синтетические;
+  - неработающий core environment/reset/step;
+  - недетерминированная или неверная реализация контракта награды.
+
+0.4. Что должно быть сдано?
+---------------------------
+Минимальный результат — законченный репозиторий и офлайн-пакет, включающий:
+  - описанные публичные схемы данных и протокол;
+  - детерминированный генератор синтетических эпизодов;
+  - контрафактический движок мутаций и построитель truth из diff;
+  - независимый verifier и сертификаты доказательств;
+  - среду reset/step и JSON-lines адаптер;
+  - изолированный оценщик, matcher, reward и receipts;
+  - чистые, ошибочные, отвлекающие, взаимодействующие и метаморфические кейсы;
+  - baseline-политики и arena с adversarial-тестами;
+  - unit/integration/property/mutation/security/replay/acceptance тесты;
+  - одну команду проверки, связанную с официальной рубрикой;
+  - воспроизводимую офлайн-сборку Docker;
+  - README, DESIGN, LIMITATIONS, журнал решений, демо и GitHub-отчёты.
+
+Веб-интерфейс не является ядром. Самодостаточный HTML-отчёт — необязательная
+функция после прохождения проверок корректности. Нельзя тратить критическое
+время на UI, пока обязательные gates не зелёные.
+
+
+================================================================================
+1. ОПРЕДЕЛЕНИЕ ПРОДУКТА, ЦЕЛИ, АНТИЦЕЛИ, УСПЕХ
+================================================================================
+
+1.1. Определение
+----------------
+TwinLedger — proof-oriented, RL-compatible benchmark для ИИ-агентов,
+исследующих бухгалтерские записи через инструменты. В него входят генератор,
+публичная среда, приватный оценщик, harness, arena политик и набор инструментов
+проверки целостности.
+
+«RL-compatible» означает, что среду можно адаптировать к reset/step-соглашению
+Gymnasium и использовать для ограниченных последовательных действий. Это НЕ
+означает, что обучение нейросетевых весов обязательно для MVP.
+
+1.2. Главные требования
+----------------------
+REQ-PROD-001 Одинаковые версия генератора, config, версии схем и master seed
+             ОБЯЗАНЫ давать побайтово одинаковые публичные данные эпизода.
+REQ-PROD-002 Каждый опубликованный finding ОБЯЗАН выводиться из публичных
+             записей через поддерживаемые инструменты; недоступные факты запрещены.
+REQ-PROD-003 Заявленная мутация ОБЯЗАНА соответствовать контрафактическому diff.
+REQ-PROD-004 Независимый verifier ОБЯЗАН обнаруживать выводы по public-данным,
+             не импортируя генератор и не читая provenance.
+REQ-PROD-005 Environment НЕ ДОЛЖЕН загружать truth/provenance/sealed.
+REQ-PROD-006 Policy НЕ ДОЛЖНА иметь прямой канал к scorer.
+REQ-PROD-007 Scorer ОБЯЗАН быть детерминированным и полностью описанным.
+REQ-PROD-008 Стоимость каждого действия по шагам соответствует официальному
+             контракту, включая ошибочные tool-вызовы, если так предписано.
+REQ-PROD-009 Полный прогон воспроизводится по immutable trajectory и receipt.
+REQ-PROD-010 Чистый offline checkout запускает обязательные тесты без скачивания
+             библиотек, данных или моделей.
+REQ-PROD-011 Отчёты отличают подтверждённые факты, допущения, пропуски и ошибки.
+REQ-PROD-012 Все компании, банки, лица и записи синтетические.
+
+1.3. Дополнительные требования
+------------------------------
+REQ-PROD-020 Добавить казахский, русский и английский текст, не делая free text
+             единственным основанием для truth.
+REQ-PROD-021 Добавить отдельный prompt-injection robustness track: текст документа
+             считается недоверенными данными, а не инструкцией среде.
+REQ-PROD-022 Добавить приватный ProofGraph и необязательный offline HTML report.
+REQ-PROD-023 Добавить optional Gymnasium/Hypothesis/scikit-learn/JSON Schema
+             extras; ни один не обязателен для запуска ядра.
+REQ-PROD-024 Добавить контролируемый learnability probe на отложенных seed.
+REQ-PROD-025 Добавить mutation testing scorer и differential matcher tests.
+
+1.4. Антицели
+-------------
+MVP НЕ ДОЛЖЕН:
+  - обучать/дообучать веса нейросетей;
+  - зависеть от облака, платных API, внешних LLM или доступа к сети;
+  - использовать реальные финансовые, банковские, налоговые или личные данные;
+  - заявлять, что успех на бенчмарке доказывает качество реального аудита;
+  - превращаться в production ERP или бухгалтерскую платформу;
+  - делать scorer импортируемым политикой;
+  - оценивать красноречие explanation;
+  - раскрывать truth через порядок, ID, ошибки, время или public manifest;
+  - ставить UI выше корректности;
+  - заявлять об улучшении модели без контролируемого held-out эксперимента.
+
+1.5. Критерии успеха
+--------------------
+S1. Ядро импортируется и запускается офлайн на требуемой версии Python.
+S2. Один чистый и один ошибочный эпизод проходят полный end-to-end цикл.
+S3. Каждый официальный тип ошибки имеет корректные положительные примеры.
+S4. Независимый verifier совпадает с truth на каждом опубликованном dev-эпизоде.
+S5. Политика не имеет доступа к скрытому эталону ни через один канал.
+S6. Matcher/reward проходят математические и adversarial-тесты.
+S7. Replay воспроизводит публичные ответы и trajectory hashes.
+S8. make verify завершается кодом 0 только при прохождении всех обязательных gates.
+S9. Отсутствующие optional-тесты помечены SKIPPED, а не PASS.
+S10. Документация соответствует фактической реализации и ограничениям.
+S11. Новый агент может продолжить работу из context-файлов, task card и handoff.
+
+
+================================================================================
+2. ПРИОРИТЕТ ТРЕБОВАНИЙ, ДОПУЩЕНИЯ, CHANGE CONTROL
+================================================================================
+
+2.1. Иерархия источников
+-----------------------
+1. Официальное письменное ТЗ организаторов и опубликованные тесты.
+2. Официальный интерфейс сдачи и ограничения runtime.
+3. Этот Master TЗ.
+4. Принятые решения из docs/DECISIONS.md.
+5. Предположения ИИ-агентов и удобство реализации.
+
+Нижестоящий источник не может незаметно переопределять вышестоящий.
+
+2.2. Предварительные допущения, которые надо закрыть
+----------------------------------------------------
+A-001 Инструменты могут называться list_records, get_record, get_document, calc,
+     submit.
+A-002 Могут быть четыре типа ошибок: DUPLICATE_PAYMENT,
+     PARTIAL_PAYMENT_ALLOCATION, FX_RATE_MISMATCH, PERIOD_CUTOFF.
+A-003 Finding может включать type, affected_ids, claimed_amount, currency,
+     evidence_ids, explanation и optional confidence.
+A-004 Лимит может быть 100 действий, размер страницы — максимум 50.
+A-005 Reward может быть F1 минус штраф за шаги, ETA=0.05, max_steps=100.
+A-006 submit может не входить в inspection_steps.
+A-007 При truncation могут подаваться пустые findings с обычным scoring.
+A-008 Closed mode может скрывать reward до финализации harness.
+A-009 Cursor может быть непрозрачным и связанным со snapshot.
+A-010 Повторный submit/вызовы после terminal могут возвращать bounded errors.
+A-011 Может быть watchdog 60 секунд; основной лимит — детерминированные шаги.
+A-012 Могут выдаваться train/dev, а hidden test храниться у организаторов.
+A-013 Runtime может быть Python 3.11, offline, около 2 CPU/4 GB RAM/1 GB.
+A-014 Допуск может рассчитываться от количества операций округления.
+A-015 Seed не должен появляться в observation/info.
+A-016 Рубрика может содержать 20 проверок в каждом из 4 блоков и 5 критериев.
+
+Для каждого A-* в DECISIONS.md поставить статус:
+  CONFIRMED — официальный источник/файл/раздел/hash указаны;
+  MODIFIED — официальный вариант отличается, зафиксирована точная адаптация;
+  UNRESOLVED — допущение изолировано в adapter/config, не зашито в ядро.
+
+2.3. Вопросы организаторам в Фазе 0
+-----------------------------------
+Q-001 Точные tools, аргументы, ответы и error semantics?
+Q-002 Точные reset/step, observation, termination rules?
+Q-003 Точная finding-схема, правила ID и лимиты массивов?
+Q-004 Точная таксономия и бухгалтерская семантика ошибок?
+Q-005 Точная формула награды, критерии совпадения, tolerance, дубликаты?
+Q-006 Точные affected IDs для каждого типа?
+Q-007 Разрешён ли отдельный процесс scorer или задан готовый harness?
+Q-008 Формат сдачи: репозиторий, архив, Docker, команда, entrypoint?
+Q-009 Версия Python, сеть, CPU/RAM/disk, разрешённые зависимости?
+Q-010 Можно ли включать sealed reference и как он защищается от policy?
+Q-011 Разрешены ли optional packages и vendor wheels?
+Q-012 Что конкретно проверяют официальные rubric checks?
+Q-013 Когда возвращается reward: каждый шаг, submit или finalize?
+Q-014 Требуется Gymnasium-native API или только совместимость?
+
+2.4. Change Request
+-------------------
+Изменения frozen contracts, public schemas, reward, ID semantics, process
+boundaries или organizer adapter оформляются CR со следующими полями:
+CR ID, автор, REQ IDs, конфликт/дефект, предлагаемое поведение, совместимость,
+новые/изменяемые тесты, миграция эпизодов, решение orchestrator, ссылки PR/CI.
+
+Запрещено удалять или ослаблять упавший тест только ради зелёной сборки.
+Изменение теста требует обоснования по официальному ТЗ и QA approval.
+
+
+================================================================================
+3. БАЗОВЫЕ ПРИНЦИПЫ И АРХИТЕКТУРА
+================================================================================
+
+P-001 Доказательства важнее презентации: каждое утверждение имеет тест/артефакт.
+P-002 Truth вычисляется из контрафактических близнецов, а не дублируется вручную.
+P-003 Verifier независимо повторно обнаруживает аномалии по публичным записям.
+P-004 Environment не знает answer key.
+P-005 Policy не имеет доступа к evaluator-файлам, памяти и процессу.
+P-006 Finding соответствует официальным правилам type/IDs/amount/currency/evidence.
+P-007 Текст может дополнять связь, но не создавать факты.
+P-008 Детерминизм охватывает порядок, сериализацию, арифметику, RNG, ошибки,
+      протокол и replay.
+P-009 Ядро не использует сеть и тяжёлые модели.
+P-010 Отсутствие optional package не ломает mandatory verify.
+P-011 Пропущенный тест никогда не считается пройденным.
+P-012 Заявления об изоляции соответствуют реально включённым OS controls.
+P-013 Документация соответствует коду.
+P-014 Каждый релиз воспроизводим из чистого checkout.
+
+ОБЯЗАННОСТИ КОМПОНЕНТОВ
+-----------------------
+GENERATOR: чистые книги, мутации, diff-derived truth candidates, episode files.
+INVARIANT SPEC: нормативные бухгалтерские свойства, не общая реализация detector.
+VERIFIER: независимое обнаружение и evidence certificates по public data.
+ENVIRONMENT: загрузка public, tools, validation, budget, bounded responses.
+HARNESS: запуск процессов, посредничество JSONL, trajectory, запуск scorer после
+         завершения среды.
+SCORER: загрузка sealed truth после прогона, валидация, matching, reward.
+ARENA: baseline/атаки как обычные внешние клиенты публичного интерфейса.
+JUDGE KIT: acceptance checks и привязка evidence к официальной рубрике.
+
+КРИТИЧЕСКОЕ ПРАВИЛО НЕЗАВИСИМОСТИ
+--------------------------------
+Generator и verifier могут использовать общие схемы и письменную спецификацию
+бухгалтерских правил. Они НЕ МОГУТ использовать одинаковый anomaly-detection
+алгоритм или provenance labels. Если обе стороны вызывают одну функцию для
+определения наличия ошибки, независимого verifier не существует. Общий low-level
+money parser считается common-mode риском и проверяется ручными reference vectors.
+
+ПОТОК ДАННЫХ — ПОСТРОЕНИЕ ЭПИЗОДА
+---------------------------------
+Namespace RNG -> чистая книга C -> clean invariants -> операторы O1..On -> M.
+Параллельно: canonical diff(C,M) -> кандидат truth; verifier читает только M/public
+-> независимо выводит findings и evidence. Cross-check; при ошибке reject;
+при успехе запечатать truth, сформировать manifest и public package.
+
+ПОТОК ДАННЫХ — ВЫПОЛНЕНИЕ ЭПИЗОДА
+---------------------------------
+POLICY <JSONL> HARNESS <JSONL> ENV
+                 |
+                 +-- append-only trajectory
+                 |
+          episode завершён; env закрыт
+                 |
+          запуск SCORER с findings + trajectory + sealed truth
+                 |
+          reward + receipt + replay hashes
+
+ДАННЫЕ, КОТОРЫЕ НИКОГДА НЕ ПОПАДАЮТ В PUBLIC
+--------------------------------------------
+truth.json; provenance.json; параметры мутаций; clean twin, если он раскрывает
+мутации; приватные seeds; ProofGraph и минимальные доказательства; hidden labels;
+диагностика, раскрывающая правильные IDs/types; salt до reveal; live scorer config.
+
+PUBLIC manifest не должен содержать число/типы findings, mutation count,
+affected IDs, operator name, clean flag или коррелирующие provenance-поля.
+
+ГРАНИЦЫ ПРОЦЕССОВ
+-----------------
+P0 HARNESS — супервизор; P1 POLICY — внешний клиент; P2 ENV — только public/;
+P3 SCORER — запускается после завершения и получает sealed truth.
+Policy получает только JSON-сообщения, никогда filesystem path к episode root.
+Env монтирует public/ read-only. Scorer не предоставляет policy socket/pipe.
+
+Отдельный subprocess сам по себе не является полноценной sandbox. Где возможно,
+использовать отдельного пользователя, ограниченные filesystem mounts, отсутствие
+сети, снятие привилегий, resource limits и allowlist переменных среды. Описывать
+фактически применённые controls. Нельзя заявлять OS-level sandbox, если есть
+только разделение процессов.
+
+
+================================================================================
+4. КОМАНДА, РОЛИ И ПРАВИЛА РАБОТЫ ИИ-АГЕНТОВ
+================================================================================
+
+ЧЕТЫРЕ ЧЕЛОВЕЧЕСКИХ ВЛАДЕЛЬЦА / ЧЕТЫРЕ ЗОНЫ
+------------------------------------------
+ЗОНА 1 — GENERATOR И DATA (Владелец A)
+  Агенты: Gen Architect, Error Operator Engineer.
+  Зона: gen/, episodes/, тесты генератора, сборка датасета.
+
+ЗОНА 2 — ENVIRONMENT И EVALUATOR (Владелец B)
+  Агенты: Environment, Scoring, Harness Engineers.
+  Зона: env/, adapter/, harness/, scoring/, seal/.
+
+ЗОНА 3 — INDEPENDENT VERIFICATION И RED TEAM (Владелец C)
+  Агенты: Independent Verifier, Red Team/Arena Engineer.
+  Зона: verifier/, arena/, связанные тесты.
+
+ЗОНА 4 — DOCUMENTATION, QA, JUDGE KIT (Владелец D)
+  Агенты: QA, Documentation, Judge Kit Engineers.
+  Зона: cross-zone tests, judge/, docs/, CI/build/reports.
+
+Один человек назначается orchestrator и отвечает за контракты, gates,
+распределение задач, Change Requests и финальный release approval.
+
+РОЛИ
+----
+A0 ORCHESTRATOR: frozen contracts, architecture decisions, requirements map,
+                 merge decisions, phase gates, change requests.
+A1 GEN ARCHITECT: RNG, company, chart, history, serialization.
+A1B ERROR ENGINEER: operators, causal composition, distractors, truth diff.
+A2 ENV ENGINEER: reset/step, tools, filters, cursors, calculator, budget/errors.
+A3 SCORING ENGINEER: finding validation, canonicalization, matcher, reward,
+                     diagnostics, commit/reveal, hashes, receipts.
+A4 INDEPENDENT VERIFIER: public-only discovery, evidence certificates, minimal
+                         proof sets, false-positive tests.
+A5 RED TEAM: baseline/attack policies, shortcut audit, injection, experiments.
+A6 QA: unit/integration/e2e, property/metamorphic, differential/mutation tests.
+A7 DOCS: README/DESIGN/LIMITATIONS, task cards, handoffs, GitHub reports, demo.
+A8 JUDGE KIT: Makefile, CLI, rubric map, offline Docker, reports, release checks.
+
+ТРЕБОВАНИЯ НЕЗАВИСИМОСТИ
+------------------------
+REQ-ORG-001 Verifier ОБЯЗАН писать другой человеческий владелец, не владелец gen.
+REQ-ORG-002 Verifier получает contracts/spec/public data, но не gen/, provenance,
+            mutation params или truth на этапе discovery.
+REQ-ORG-003 Truth передаётся только после фиксации/hash verifier output для сравнения.
+REQ-ORG-004 CI сканирует импорты verifier и запрещённые пути.
+REQ-ORG-005 docs/INDEPENDENCE.md фиксирует владельцев и доказательства независимости.
+
+ПРАВИЛА РАБОТЫ
+--------------
+REQ-ORG-010 У каждой задачи один ответственный владелец.
+REQ-ORG-011 Агент меняет только свою зону без специального разрешения.
+REQ-ORG-012 Изменение frozen contract требует одобренного CR.
+REQ-ORG-013 Нельзя менять тест только для сокрытия ошибки реализации.
+REQ-ORG-014 Handoff содержит файлы, команды, реальные выводы, дефекты и next step.
+REQ-ORG-015 Нельзя присваивать себе работу/тесты другого агента.
+REQ-ORG-016 Reviewer смотрит фактический diff, а не только summary.
+
+ЖИЗНЕННЫЙ ЦИКЛ ЗАДАЧИ
+---------------------
+BACKLOG -> READY -> IN_PROGRESS -> REVIEW -> VERIFIED -> DONE.
+DONE требует task card, commit (или объяснение отсутствия кода), запущенные
+тесты с выводом, независимый review, GitHub update и handoff/context update,
+если работу продолжает другой агент.
+
+ОБЯЗАТЕЛЬНЫЙ STARTUP READING
+----------------------------
+Каждый агент читает этот файл, PROJECT_CONTEXT, CURRENT_STATE, DECISIONS, STATUS,
+релевантные contracts, task card и последний handoff/phase report. Отсутствующие
+файлы нужно явно обозначить, а не выдумывать их содержание.
+
+
+================================================================================
+5. GITHUB-FIRST ENGINEERING И СОХРАНЕНИЕ КОНТЕКСТА
+================================================================================
+
+GitHub и репозиторий — постоянная память проекта. Контекст чата временный.
+Важные решения, результаты задач, дефекты, фазы и передачи работы должны быть
+сохранены в docs и отражены в GitHub Issue, Pull Request или Release.
+
+REQ-GH-001 Каждая нетривиальная задача имеет GitHub Issue или docs/TASKS card.
+REQ-GH-002 Завершённая задача имеет GitHub update: summary, files, tests/results,
+          дефекты, commit/PR links.
+REQ-GH-003 Каждая фаза имеет PHASE-XX-REPORT.md и GitHub update.
+REQ-GH-004 Каждый merged PR содержит REQ IDs и acceptance evidence.
+REQ-GH-005 При передаче модуля/задачи обязателен handoff report.
+REQ-GH-006 Контекст обновляется после фазы и изменения архитектуры/интерфейса.
+REQ-GH-007 В отчёты нельзя включать hidden labels, private seeds, secrets,
+          unrevealed salt или другие данные, нарушающие sealed challenge.
+REQ-GH-008 Если нет доступа к удалённому GitHub, агент создаёт локальный report
+          и явно пишет REMOTE GITHUB UPDATE NOT DONE. Нельзя притворяться,
+          что удалённое обновление выполнено.
+
+ОБЯЗАТЕЛЬНЫЕ КОНТЕКСТНЫЕ ФАЙЛЫ
+------------------------------
+docs/PROJECT_CONTEXT.md      идентичность, миссия, архитектура, ограничения,
+                              карта репозитория, правила старта нового агента.
+docs/CURRENT_STATE.md        branch/commit, last green commit, текущая фаза,
+                              failing tests, задачи, блокеры, три next actions.
+docs/DECISIONS.md             append-only архитектурные решения и допущения.
+docs/STATUS.md                PASS/FAIL/BLOCKED/NOT RUN/SKIPPED по gates.
+docs/QUESTIONS.md             нерешённые вопросы, владелец, условие закрытия.
+docs/INDEPENDENCE.md          отдельное авторство и независимость verifier.
+docs/CONTEXT/NEXT_AGENT.md    точная задача следующему агенту, файлы/команды/
+                              запреты.
+docs/CONTEXT/ARCHITECTURE_SNAPSHOT.md актуальная схема потоков/границ модулей.
+docs/TASKS/T-<phase>-<nn>.md   цель, входы/выходы, REQ IDs, приёмка, тесты,
+                              владелец, зависимости, статус.
+docs/HANDOFF/<from>-<to>-<id>.md handoff с реальным состоянием.
+docs/PHASE_REPORTS/PHASE-XX.md результаты фазы.
+docs/AGENT_REPORTS/YYYY-MM-DD/<agent>-<task>.md отчёт каждой сессии агента.
+
+ОБЯЗАТЕЛЬНЫЙ ОТЧЁТ КАЖДОГО ИИ-АГЕНТА
+------------------------------------
+После каждой рабочей сессии агент создаёт/обновляет report с датой, agent ID,
+человеческим владельцем, задачей и REQ IDs, start/end commit, изученными и
+изменёнными файлами, командами и exit codes, количеством/статусами тестов,
+выдержками логов, решениями, допущениями, дефектами, рисками, GitHub update
+status и точным первым действием следующего агента. Отчёт «сделано» без вывода
+команд недействителен.
+
+Каждый такой отчёт является tracked-файлом в GitHub repository, например
+docs/AGENT_REPORTS/YYYY-MM-DD/<agent>-<task>.md, и связывается с Issue/PR.
+Агент должен включить отчёт в свой PR/commit или создать отдельный docs PR. Если
+у агента нет разрешённого доступа к GitHub, он обязан сохранить готовый файл в
+рабочем дереве, пометить статус PUBLISH_PENDING и прямо сообщить, что отчёт ещё
+не опубликован. Нельзя писать «GitHub обновлён» без фактического URL/commit/PR.
+
+BRANCH / COMMIT / PR
+--------------------
+Примеры веток:
+ feat/REQ-ENV-099-pagination-example
+ fix/REQ-SC-006-matcher-tiebreak
+ test/REQ-VER-099-certificates-example
+ docs/phase-08-report
+
+Формат commit:
+ <type>(<scope>): <imperative summary> [REQ-...]
+Типы: feat, fix, test, docs, refactor, build, ci, perf, security, chore.
+
+PR включает цель, REQ IDs, изменение поведения, затронутые схемы, команды и
+реальные результаты тестов, риски/rollback, ссылки task/phase/report.
+
+CI SHOULD запускать formatter/lint/type checks, unit/contracts tests, verifier
+boundary scan, determinism, matcher/reward, offline import, integration smoke,
+а перед release — make verify. Optional пропуски отображать SKIPPED, не PASS.
+
+НЕ КОММИТИТЬ credentials, tokens, реальные финансовые/личные данные, hidden
+organizer data, unrevealed salt, venv/cache/build и крупные датасеты без прямого
+разрешения. Правило Git для sealed data должно быть решено в Phase 0.
+
+
+================================================================================
+6. СТРУКТУРА РЕПОЗИТОРИЯ И ГРАНИЦЫ МОДУЛЕЙ
+================================================================================
+
+TwinLedger/
+  contracts/   protocol/, data/, finding/, truth/, receipt/, currency.json,
+               version.json
+  adapter/     organizer.py, mapping.py, compatibility.py
+  gen/         core/{rng,company,chart,counterparties,calendar,money,fx,policy,
+               history,text,serialize}.py; errors/{base,duplicate_payment,
+               partial_allocation,fx_mismatch,period_cutoff,compose,signatures};
+               distractors/; twins.py; truthdiff.py; reject.py; difficulty.py;
+               build_episodes.py
+  spec/        accounting_rules.md, invariants.yaml, anomaly_catalog.yaml,
+               policy_semantics.md
+  invariants/  model.py, checks_clean.py, checks_mutated.py, reference_vectors/
+  verifier/   discover.py, отдельный модуль по каждому типу, evidence.py,
+               minimal_sets.py, result.py
+  env/         server.py, state.py, tools.py, filters.py, cursors.py, index.py,
+               calculator.py, validation.py, errors.py, budget.py
+  harness/     runner.py, policy_process.py, env_process.py, scorer_process.py,
+               protocol.py, trajectory.py, replay.py, sandbox.py
+  scoring/     canon.py, validate.py, matcher.py, reward.py, diagnostics.py,
+               explain_lint.py, crosscheck.py
+  seal/        commitment.py, hashchain.py, merkle.py, receipt.py
+  arena/       policies/, attacks/, autohacker.py, shortcut_audit.py,
+               side_channels.py, injection_track.py, ladder.py, experiments.py
+  metamorphic/ permutations.py, id_bijection.py, timezone_equivalence.py,
+               name_variants.py, transformations.py
+  judge/       verify.py, rubric_map.json, report.py, html_report.py, schemas.py
+  tests/       unit/, contracts/, gen/, invariants/, verifier/, env/, scoring/,
+               seal/, arena/, metamorphic/, integration/, e2e/, security/,
+               fixtures/
+  episodes/    train/, dev/, hidden/ (не коммитить без разрешения), manifests/
+  docs/        PROJECT_CONTEXT.md, CURRENT_STATE.md, STATUS.md, DECISIONS.md,
+               QUESTIONS.md, INDEPENDENCE.md, DESIGN.md, LIMITATIONS.md,
+               README.md, CONTEXT/, TASKS/, HANDOFF/, PHASE_REPORTS/, AGENT_REPORTS/, CR/
+  tools/       make_dataset.py, inspect_episode.py, verify_manifest.py,
+               check_import_boundaries.py, freeze_release.py
+  vendor/      optional offline wheels, только если разрешены
+  requirements-core.txt, requirements-dev.txt, requirements-extras.txt,
+  pyproject.toml, Dockerfile, Makefile, .gitignore, .dockerignore, LICENSE
+
+РАЗРЕШЁННОЕ НАПРАВЛЕНИЕ ИМПОРТОВ
+-------------------------------
+contracts <- все модули
+spec <- generator, verifier, docs/tests (только нормативные данные)
+gen -> contracts/spec/generator-side checks
+verifier -> contracts/spec и собственные алгоритмы
+env -> contracts и public-data loader
+scoring -> contracts и seal primitives
+seal -> contracts и stdlib
+harness -> processes/protocol
+arena -> публичный harness client API
+judge -> CLI и report schemas
+
+ЗАПРЕЩЕНО
+--------
+env НЕ импортирует gen, verifier, scoring, seal или private truth modules.
+policy НЕ импортирует gen, verifier, scoring, seal или private episode paths.
+verifier НЕ импортирует gen и не читает provenance при discovery.
+arena policies НЕ импортируют truth/provenance/generator/verifier/matcher internals.
+
+REQ-ARC-001 CI запускает AST import-boundary scan.
+REQ-ARC-002 CI сканирует env/ на обращения к sealed/provenance/truth.
+REQ-ARC-003 CI сканирует policies на private imports/paths.
+REQ-ARC-004 runtime env получает только public/ directory.
+REQ-ARC-005 scorer запускается после завершения и закрытия env.
+REQ-ARC-006 межпроцессные сообщения используют versioned JSONL.
+REQ-ARC-007 verifier discovery принимает только public data.
+
+
+================================================================================
+7. КОНТРАКТЫ, СХЕМЫ И СОВМЕСТИМОСТЬ
+================================================================================
+
+7.1. Контракты как замороженная граница
+---------------------------------------
+Все публичные структуры описываются до реализации в contracts/. Контракт —
+не пример и не рекомендация, а исполняемое соглашение между модулями.
+
+Обязательные схемы:
+  contracts/episode_manifest.schema.json
+  contracts/company.schema.json
+  contracts/policy.schema.json
+  contracts/finding.schema.json
+  contracts/truth.schema.json
+  contracts/tool_request.schema.json
+  contracts/tool_response.schema.json
+  contracts/trajectory_event.schema.json
+  contracts/receipt.schema.json
+  contracts/verifier_report.schema.json
+  contracts/rubric_check.schema.json
+
+Каждая схема имеет поле schema_version. Несовместимое изменение повышает
+major-версию контракта. Добавление необязательного поля повышает minor-версию.
+Исправление описания без изменения поведения повышает patch-версию.
+
+REQ-CONTRACT-001 Ни один модуль не использует неописанное поле как обязательное.
+REQ-CONTRACT-002 Все входные JSON проходят проверку типа, диапазона и структуры.
+REQ-CONTRACT-003 Неизвестные поля обрабатываются строго по правилам схемы:
+  - для публичных контрактов по умолчанию reject, если это не ломает официальный
+    протокол;
+  - для расширений допускаются только namespaced-поля вида "x_twinledger_*";
+  - в официальном адаптере поведение должно точно соответствовать организаторам.
+REQ-CONTRACT-004 Схемы версионируются и имеют backward-compatibility тесты.
+REQ-CONTRACT-005 Документация API генерируется или сверяется с контрактами;
+  ручное расхождение схемы и README блокирует релиз.
+
+7.2. Канонический JSON
+----------------------
+Для хеширования используется одна функция canonical_json(value):
+  - UTF-8;
+  - ensure_ascii=False;
+  - sort_keys=True;
+  - separators=(",", ":");
+  - запрещены NaN и Infinity;
+  - окончания строк LF;
+  - денежные значения остаются целыми minor units;
+  - Decimal сериализуется только в заранее установленном строковом формате.
+
+Запрещено хешировать обычный вывод json.dumps без тестов на каноничность.
+Порядок элементов массивов значим и должен быть детерминирован; где массив
+семантически является множеством, он сортируется до сериализации.
+
+REQ-CONTRACT-010 Один и тот же объект обязан иметь один canonical byte sequence.
+REQ-CONTRACT-011 Тестируетcя независимость хеша от порядка ключей входного dict.
+REQ-CONTRACT-012 Каноникализация не меняет семантику строк, Unicode и Decimal.
+
+7.3. Адаптер официального протокола
+-----------------------------------
+Все предположения об именах tool, полей и возвратов изолируются в adapter/.
+Внутренняя модель TwinLedger не должна копировать неясные детали организаторов.
+Адаптер реализует интерфейс:
+  normalize_request(external_request) -> InternalAction | ContractError
+  serialize_observation(internal_result) -> external_response
+  normalize_finding(external_finding) -> CanonicalFinding | ContractError
+  serialize_submission(internal_findings) -> external_submission
+
+REQ-ADAPTER-001 При публикации официальных схем агенты сначала фиксируют их
+  копии и контрольные суммы, затем создают contract diff.
+REQ-ADAPTER-002 Внутренний API не меняется ради точечного соответствия внешнему
+  имени поля: соответствие реализуется только в adapter/.
+REQ-ADAPTER-003 Не должно быть тихого fallback, который интерпретирует ошибочную
+  внешнюю структуру как валидную.
+REQ-ADAPTER-004 E2E-тест выполняет полный путь через официальный адаптер.
+
+7.4. Конфигурация
+-----------------
+Конфиги разделяются на:
+  configs/generator/*.json
+  configs/environment/*.json
+  configs/scoring/*.json
+  configs/arena/*.json
+  configs/rubric/*.json
+
+Каждый конфиг имеет config_version. Все численные параметры валидируются.
+Значения по умолчанию заданы явно; скрытые default в коде запрещены для
+параметров, влияющих на данные, награду, бюджет или детерминизм.
+
+REQ-CONTRACT-020 Любая конфигурация запуска сохраняется в episode manifest.
+REQ-CONTRACT-021 config_hash рассчитывается по canonical JSON.
+REQ-CONTRACT-022 Запуск с неизвестной версией конфига завершается понятной
+  ограниченной ошибкой, а не интерпретируется приблизительно.
+
+
+================================================================================
+8. МОДЕЛЬ ДАННЫХ И СИНТЕТИЧЕСКАЯ БУХГАЛТЕРСКАЯ ВСЕЛЕННАЯ
+================================================================================
+
+8.1. Принципы синтетической компании
+------------------------------------
+TwinLedger создаёт полностью вымышленные компании, контрагентов, счета,
+документы, банки и платежи. Синтетические данные должны выглядеть внутренне
+последовательно, но не должны копировать реальные персональные данные,
+реальные клиентские книги, реальные банковские выписки или реальные секреты.
+
+Каждая компания определяется полями:
+  company_id               уникальный ID
+  legal_name               вымышленное юридическое имя
+  name_variants            варианты ru, kk, en
+  jurisdiction_code        синтетический зарезервированный код
+  timezone                 IANA timezone
+  functional_currency      функциональная валюта
+  supported_currencies     список валют
+  fiscal_year_start        дата начала года
+  fiscal_period_rule       месячный/квартальный/иной период
+  accounting_basis         явно заданные правила признания
+  id_style                 стиль идентификаторов
+  text_profile             языковой профиль описаний
+  company_size             размер синтетической организации
+
+Внимание: XA–XZ не являются обычными официальными кодами ISO-3166 для
+произвольных реальных государств. Используйте их только как внутренние
+зарезервированные синтетические обозначения в собственной схеме; не утверждайте,
+что они являются официальными ISO-кодами страны. Банковские идентификаторы
+также должны быть собственным синтетическим пространством имён.
+
+8.2. Состав файлов public/
+--------------------------
+Минимальный набор public-файлов:
+  company.json
+  policy.json
+  accounts.json
+  counterparties.jsonl
+  journal_entries.jsonl
+  invoices.jsonl
+  credit_notes.jsonl
+  payments.jsonl
+  bank_lines.jsonl
+  fx_rates.jsonl
+  opening_balances.json
+  period_calendar.json
+  document_links.jsonl (только если такой объект предусмотрен контрактом)
+
+Файл index_hints.json с подсказками о местонахождении аномалий запрещён.
+Публичные индексы допустимы только как производные структуры без информации
+об истинных ошибках; их содержимое должно быть полностью вычислимо из public/.
+Если индекс не является частью официального протокола, он остаётся внутренним
+артефактом runtime и не предъявляется политике.
+
+8.3. Минимальные поля таблиц
+----------------------------
+Точные обязательные поля подлежат фиксации в contracts/ и сверке с организаторами.
+Ниже — внутренняя нормализованная модель.
+
+journal_entries:
+  je_id, timestamp, posting_period, source_document_id|null,
+  description, lines[]
+
+lines[]:
+  line_id, account_id, debit_minor, credit_minor, currency,
+  fx_rate_decimal, functional_debit_minor, functional_credit_minor,
+  counterparty_id|null, analytic_tag|null
+
+invoices:
+  doc_id, counterparty_id, issue_timestamp, service_start, service_end|null,
+  due_timestamp, currency, total_minor, tax_minor|null,
+  line_items[], status
+
+line_items[]:
+  line_id, description, quantity_decimal|null, unit_price_minor|null,
+  amount_minor, service_reference|null
+
+credit_notes:
+  credit_note_id, invoice_id, counterparty_id, timestamp,
+  amount_minor, currency, reason_code
+
+payments:
+  pay_id, timestamp, counterparty_id, currency, amount_minor,
+  allocations[], bank_reference|null, payment_channel
+
+allocations[]:
+  allocation_id, document_id, amount_minor, allocation_timestamp
+
+bank_lines:
+  bank_line_id, timestamp, amount_minor, currency, direction,
+  reference_text, matched_payment_id|null, bank_account_id
+
+fx_rates:
+  pair, effective_date, rate_decimal, source_code, publication_timestamp|null
+
+Все таблицы имеют однозначный primary key. Referential integrity проверяется
+до выпуска эпизода. Явный null означает неизвестную/неприменимую связь, а не
+разрешение агенту угадать её.
+
+8.4. ID и анти-шорткат
+----------------------
+Поддержать не менее четырёх семейств ID:
+  A: JE-000123, INV-2025-0042, PAY-7F3A91
+  B: 2025/05/J/0123, S-0042-25, P0007F3A
+  C: je_ab12cd, in_9f2e, pm_77aa
+  D: синтетический числовой идентификатор с контрольной цифрой
+
+Правила:
+  - тип ID всегда однозначен по contract namespace или table;
+  - стили ID применяются одинаково к чистым и изменённым записям;
+  - нет маркеров BUG, DUP, ERROR, SYNTHETIC или последовательного блока
+    «подозрительных» ID;
+  - ID не кодирует seed, тип ошибки, индекс оператора или позицию записи;
+  - внесённая запись получает нормальное распределение ID, timestamp и полей.
+
+REQ-DATA-001 Один ID не повторяется в пределах таблицы и namespace.
+REQ-DATA-002 Перекрёстные ссылки существуют либо явно равны null.
+REQ-DATA-003 Все денежные поля — integer в minor units.
+REQ-DATA-004 Все timestamps содержат timezone offset или однозначно определяемую
+  IANA-зону в company context.
+REQ-DATA-005 Публичный корпус не содержит реальных данных или секретов.
+
+8.5. Размеры и профили эпизодов
+-------------------------------
+Предварительная лестница сложности:
+  L1: 150–300 проводок; 25–50 документов; 1 аномалия либо чистая книга.
+  L2: 400–800 проводок; 60–120 документов; 1–2 аномалии.
+  L3: 1 000–1 800 проводок; 120–220 документов; 2–3 аномалии.
+  L4: 2 000–3 500 проводок; 220–400 документов; 3–4 аномалии,
+      составные зависимости и более глубокие доказательства.
+
+Эти диапазоны являются настраиваемыми начальными целями, а не абсолютной
+обязанностью, если ресурсные лимиты или официальное задание задают иное.
+Размер измеряется фактическим числом строк и размером файлов, а сложность —
+не только числом записей, но и числом переходов доказательства, шумом,
+количеством правдоподобных distractors и доступным бюджетом шагов.
+
+8.6. Структура одного эпизода
+-----------------------------
+episodes/<episode_id>/
+  public/             доступные политике таблицы и правила
+  sealed/             truth и provenance, закрытые от политики
+  manifest.json       версии, конфиги, public hashes, commitment
+  verifier_report.json независимый результат проверки генерации
+  receipt.json        формируется после закрытия эпизода
+
+Внутри public/ не должно быть скрытых файлов, имён каталогов, timestamp
+создания или иных метаданных, по которым можно распознать внесённую запись.
+Служебная информация ОС не включается в API наблюдения.
+
+8.7. Поле truth и provenance
+----------------------------
+Truth — не обучающая подсказка для политики и не часть public API.
+Для каждого finding truth содержит:
+  truth_id
+  type
+  affected_ids (канонический отсортированный список)
+  amount_minor
+  currency
+  tolerance_minor
+  evidence_sets (допустимые сертификаты доказательств)
+  minimal_evidence_size
+  optimal_steps_model_id
+  optimal_steps (если рассчитано точным алгоритмом в описанной модели)
+  depends_on (информационная причинная связь)
+  invariant_signature
+  operator_version
+
+Provenance содержит происхождение записей, применённые мутации, связь между
+clean и mutated twin, причины rejection sampling и внутренние канарейки.
+Provenance никогда не подаётся политике и не используется для формирования
+ответов list/get/error.
+
+REQ-DATA-020 Нельзя называть число findings, число внесённых строк или ID
+  внесённых строк в public manifest, если это раскрывает целевую информацию.
+REQ-DATA-021 Хеши всех public-файлов воспроизводимы и записаны в manifest.
+REQ-DATA-022 Sealed-файлы хранятся отдельно от public и имеют отдельные права.
+
+
+================================================================================
+9. ДЕНЕЖНАЯ АРИФМЕТИКА, FX И ВРЕМЯ
+================================================================================
+
+9.1. Деньги
+-----------
+В финансовых расчётах запрещены float и двоичная плавающая арифметика.
+Использовать integer minor units для хранимых сумм и Decimal для курсов и
+промежуточных операций, строго с явно заданным context и rounding mode.
+
+Примеры exponent:
+  KZT: 2
+  USD: 2
+  EUR: 2
+  JPY: 0
+  KWD: 3
+
+Это конфигурационный справочник среды, а не попытка автоматически вывести
+экспонент из внешнего кода во время прогона.
+
+Функция convert_minor(amount_minor, from_currency, to_currency, rate, mode)
+обязана явно учитывать exponent обеих валют. Она возвращает integer minor
+units и метаданные округления (исходное значение, округлённое значение,
+режим, число операций округления). В production observation раскрывается
+только результат, допустимый контрактом; внутренние метаданные остаются в
+верификации/diagnostics.
+
+REQ-MONEY-001 Все суммарные расчёты используют int или Decimal.
+REQ-MONEY-002 Decimal создаётся из строки, не из float.
+REQ-MONEY-003 Rounding mode задаётся в policy.json.
+REQ-MONEY-004 Нет неявного смешения валют.
+REQ-MONEY-005 Все операции конвертации покрыты ручными эталонными тестами,
+  включая half-even, half-up, пограничное округление и нулевую разрядность.
+REQ-MONEY-006 Переполнение или невалидная величина обрабатывается контролируемо.
+
+9.2. Допуск
+-----------
+Допуск не должен определяться только «примерным числом округлений», если
+фактический путь вычисления иной. Для каждого truth finding хранится
+rounding_trace или компактный проверяемый счётчик реальных операций округления.
+Начальная модель:
+  tolerance_minor = n_round * 1
+
+Она допускается только после доказательства для каждого типа, что ошибка
+максимально ограничена таким числом минимальных единиц. Если анализ округления
+показывает, что данная формула недостаточна, tolerance rule версионируется и
+изменяется до выпуска данных. Нельзя расширять допуск после просмотра ошибок
+агента или скрытых результатов.
+
+9.3. Генерация FX
+-----------------
+FX ряды генерируются детерминированно. Подходящая модель — mean-reverting
+random walk / дискретный процесс Орнштейна–Уленбека на Decimal или целочисленных
+коэффициентах с фиксированной точностью. В выходные дни значения могут
+отсутствовать согласно профилю рынка. Политика компании определяет:
+  - курс на дату документа, операции или платежа;
+  - последний доступный курс до даты, если день нерабочий;
+  - допустимые источники;
+  - обратное котирование;
+  - порядок конвертации и округления.
+
+Алгоритм FX policy реализуется независимо в генераторе и verifier. Совместный
+конвертер денег допустим только как низкоуровневая функция с собственными
+ручными тестовыми векторами; алгоритм выбора требуемой даты курса должен быть
+реализован независимо.
+
+9.4. Временные зоны и cut-off
+-----------------------------
+Использовать zoneinfo и IANA timezone identifiers. Правило закрытия периода
+считается в часовом поясе компании. Timestamp должен быть однозначным.
+DST учитывается, когда соответствующая зона его применяет; для компаний без
+DST должны присутствовать контрольные примеры, показывающие отсутствие
+фиктивного сдвига.
+
+REQ-TIME-001 Сохранённый timestamp сериализуется как ISO-8601 с offset.
+REQ-TIME-002 Период определяется только по policy и timezone компании.
+REQ-TIME-003 Тестируется UTC/local boundary, DST spring-forward и fall-back.
+REQ-TIME-004 Неоднозначные/несуществующие local times разрешаются явной
+  политикой генератора; они не должны появляться случайно.
+REQ-TIME-005 Не использовать локальное время машины для финансовой логики.
+
+
+================================================================================
+10. ДЕТЕРМИНИРОВАННЫЙ ГЕНЕРАТОР И КОНТРАФАКТИЧЕСКИЕ БЛИЗНЕЦЫ
+================================================================================
+
+10.1. RNG как адресуемые независимые потоки
+-------------------------------------------
+Один master_seed порождает изолированные потоки по namespace. Например:
+  company
+  chart
+  counterparties
+  fx/<month>
+  history/<month>/<event_type>
+  id/<entity_type>
+  text/<language>/<document_type>
+  order/<table>
+  mutation/<operator>/<index>
+
+Поток вычисляется из SHA-256 канонической строки namespace + master seed;
+полученный digest преобразуется в seed локального random.Random. Seed и
+внутренний namespace не попадают в public observation, filename или error.
+
+REQ-GEN-001 Глобальный random запрещён.
+REQ-GEN-002 Каждый компонент получает RNG явно через dependency injection.
+REQ-GEN-003 Добавление оператора ошибки не изменяет чистый twin.
+REQ-GEN-004 Добавление текста одного документа не изменяет ID, суммы или
+  порядок других документов.
+REQ-GEN-005 У каждого seed есть golden digest набора public-файлов.
+REQ-GEN-006 Детерминизм проверяется на двух свежих процессах.
+
+10.2. Конвейер генерации
+------------------------
+Этапы:
+  G1. Прочитать и проверить versioned config.
+  G2. Построить company context и policy.
+  G3. Построить chart of accounts и synthetic counterparties.
+  G4. Построить FX timeline.
+  G5. Сгенерировать clean business events по периодам.
+  G6. Создать первичные документы, payments, bank lines, journal entries.
+  G7. Проверить ссылки, баланс, денежную арифметику и базовые invariants.
+  G8. Сгенерировать multilingual descriptions.
+  G9. Применить ноль или несколько мутационных операторов к копии clean twin.
+  G10. Отсортировать таблицы по стабильному ключу.
+  G11. Вычислить фактический diff clean twin ↔ mutated twin.
+  G12. Построить candidate truth только из diff и operator declaration.
+  G13. Запустить независимый verifier на public mutated twin.
+  G14. Сверить verifier report с candidate truth.
+  G15. Проверить отсутствие неоднозначности, шорткатов и недоступных фактов.
+  G16. Сформировать commitment и manifest.
+  G17. Атомарно записать episode в staging, проверить checksum, затем publish.
+
+10.3. Контрафактические близнецы
+--------------------------------
+Clean twin C — валидная история компании. Mutated twin M = C после применения
+заранее описанных mutation operators. Truth строится не из произвольной ручной
+разметки, а из структурного diff C и M, связанного с причинным delta оператора.
+
+Diff должен различать:
+  - добавленные записи;
+  - изменённые поля;
+  - удалённые записи;
+  - изменение связей;
+  - изменение распределений и периодов;
+  - изменение функциональной денежной оценки.
+
+Важно: diff сам по себе не доказывает, что мутация является ошибкой. Он лишь
+определяет точное изменение между двумя книгами. Семантическую ошибочность
+подтверждают invariants, независимый verifier и доступные доказательства.
+
+REQ-GEN-010 Truth finding нельзя создавать, если отсутствует точная связь
+  candidate mutation -> diff facts -> invariant signature -> verifier finding.
+REQ-GEN-011 Для чистой книги C должно быть truth.findings=[].
+REQ-GEN-012 Минимум 10 000 детерминированных mutation configurations (или
+  объём, согласованный по времени/ресурсам) проходят diff consistency suite;
+  реальное число записывается в report.
+
+10.4. Rejection sampling
+------------------------
+Эпизод не выпускается, если:
+  - clean twin нарушает базовый инвариант;
+  - mutated twin нарушает незаявленные финансовые инварианты;
+  - независимый verifier не подтверждает finding;
+  - finding не выводится из достижимых public records;
+  - минимальные наборы доказательств превышают лимит finding;
+  - возникает неоднозначность сопоставления двух истинных findings;
+  - обнаружен metadata shortcut;
+  - структура нарушает контракт;
+  - хеши не воспроизводятся.
+
+Пересэмплируется только namespace оператора/ошибки, а не вся чистая история.
+Каждая отбраковка записывается в private reject_log и в агрегированный отчёт
+без раскрытия seed или конкретных truth IDs в публичной диагностике.
+
+REQ-GEN-020 Reject sampling имеет лимит попыток. При исчерпании генератор
+  выдаёт REJECT_BUDGET_EXHAUSTED и не публикует частично валидный эпизод.
+REQ-GEN-021 Reject rate по причинам наблюдаем и включён в отчёт разработчика.
+REQ-GEN-022 Один и тот же seed и config дают одинаковое количество и причины
+  rejection attempts.
+
+10.5. Сложность и минимальный путь
+----------------------------------
+Каждый episode описывает профиль:
+  record_count_by_table
+  document_count
+  distractor_count
+  anomaly_count
+  evidence_depth
+  ambiguity_density
+  text_noise_level
+  tool_budget
+  evidence_graph_nodes/edges
+
+`optimal_steps` не следует объявлять абсолютным глобальным минимумом, если
+пространство возможных последовательностей запросов не исчерпывается. Сначала
+задаётся модель допустимых query plans: набор инструментов, лимиты страниц,
+фильтры, стоимость вызовов и правило остановки. Затем точный или ограниченный
+поисковый алгоритм рассчитывает `optimal_steps` внутри этой модели.
+В документации поле всегда сопровождается `optimal_steps_model_id`.
+
+REQ-GEN-030 Нельзя сравнивать agent steps с optimal_steps разных моделей.
+REQ-GEN-031 В отчёте показывается эффективность относительно заявленной модели,
+  а не как математически абсолютная эффективность.
+
+
+================================================================================
+11. ТАКСОНОМИЯ АНОМАЛИЙ, МУТАЦИОННЫЕ ОПЕРАТОРЫ И ОТВЛЕКАЮЩИЕ СЛУЧАИ
+================================================================================
+
+11.1. Общий интерфейс оператора
+-------------------------------
+Каждый оператор имеет:
+  operator_id, operator_version, supported_policy_profiles,
+  preconditions, apply(clean_book, rng, params), declared_delta,
+  expected_invariant_signature, expected_side_effects.
+
+Оператор возвращает новый immutable snapshot или безопасную копию; он не
+изменяет clean twin. Вся мутация логируется в sealed provenance.
+
+REQ-ERR-001 Оператор детерминирован на фиксированных входах.
+REQ-ERR-002 Оператор не меняет независимые RNG namespaces.
+REQ-ERR-003 Оператор использует тот же стиль ID, timestamps и текстовые
+  распределения, что и обычная запись.
+REQ-ERR-004 Оператор не создаёт ложных ссылок, кроме явно моделируемой ошибки.
+REQ-ERR-005 Оператор формулирует affected_ids по документированному правилу.
+
+11.2. DUPLICATE_PAYMENT — повторный платёж
+------------------------------------------
+Семантика: один и тот же документ фактически оплачен более одного раза в
+отсутствие кредита, возврата или другого объясняющего события, которое
+устраняет сверхоплату.
+
+Оператор создаёт второй payment event с нормальным новым ID, связанными
+allocation/document references и реалистичным временем. Если в мире книги
+существует банковский след платежа, соответствующая bank line создаётся
+согласно обычной логике генератора. Проводка отражает событие и остаётся
+сбалансированной.
+
+Проверяемая логика:
+  - по документу суммарно распределено больше допустимой к оплате суммы;
+  - нет credit note/refund/void event, объясняющего сумму;
+  - повторный платёж относится к тому же документу или к эквивалентной
+    подтверждённой обязанности;
+  - вывод может быть получен из публичных записей.
+
+Важно: корректно сопоставленная банковская строка не обязана ломать
+BANK_RECON. При дублирующем реальном переводе банк может честно показывать оба
+перевода. Главная аномалия — повторное погашение одной обязанности и/или
+переплата по документу. Поэтому BANK_RECON не объявляется нарушенным без
+конкретной причины несверки.
+
+Кандидатный affected_ids (сверить с официальным правилом): PAY нового платежа
+и JE, непосредственно отражающая его. Исходный PAY и invoice могут быть
+evidence, но не обязательно affected_ids.
+
+11.3. PARTIAL_PAYMENT_ALLOCATION — неверное распределение частичной оплаты
+--------------------------------------------------------------------------
+Семантика: частичный платёж распределён не в соответствии с фактической
+оплатой и остатком долга. Типовые варианты:
+  - allocation закрывает invoice полностью, хотя payment amount меньше;
+  - часть платежа распределена на неверный invoice;
+  - остаток документа рассчитан неправильно;
+  - распределения суммарно превышают платёж.
+
+Генератор обязан выбрать однозначный подтип и в policy описать допустимые
+правила авансов, credit notes и распределений. Отвлекающий случай с другим
+платежом, закрывающим остаток, не должен маркироваться ошибкой.
+
+Кандидатный affected_ids: PAY с неверным allocation и invoice(ы), на остаток
+которых непосредственно влияет ошибочное распределение.
+
+11.4. FX_RATE_MISMATCH — несоответствие валютного курса
+------------------------------------------------------
+Семантика: отражённая операция использует курс, отличный от курса, который
+требует policy на соответствующую дату/событие/источник.
+
+Оператор изменяет rate reference или booked fx_rate, затем рассчитывает
+functional values так, чтобы двойная запись оставалась сбалансированной.
+Не допускается искусственно ломать JE_BALANCE ради того, чтобы агент просто
+нашёл арифметический дефект.
+
+Verifier независимо вычисляет допустимый rate date, выбранный rate и
+functional amount. Finding указывает именно те JE IDs, которые ошибочны по
+официальной семантике; FX rate row может быть доказательством, но не обязательно
+affected ID.
+
+11.5. PERIOD_CUTOFF — неверная периодная отсечка
+------------------------------------------------
+Семантика: расход/доход или связанная операция отражена в периоде, который
+не соответствует policy recognition event (например, service date), с учётом
+пояса компании, даты поставки, предоплат и прочих правил.
+
+Оператор меняет posting_period и/или accounting timestamp, сохраняя исходный
+service timestamp. Сдвиг не должен создавать невозможные timestamp values.
+Проверка учитывает договорные правила признания, если они доступны в public.
+
+11.6. Минимальные distractor pairs
+---------------------------------
+Каждому типу сопоставляются правдоподобные чистые случаи, отличающиеся от
+ошибочного случая одним доступным фактом. Минимальный набор:
+  DUPLICATE_PAYMENT:
+    D-DUP-01 credit note/credit adjustment, полностью объясняющий разницу;
+    D-DUP-02 одинаковые суммы по двум разным invoice;
+    D-DUP-03 recurring subscription за разные периоды;
+    D-DUP-04 корректный refund или reversal.
+  PARTIAL_PAYMENT_ALLOCATION:
+    D-PART-01 второй payment закрывает оставшийся баланс;
+    D-PART-02 корректный аванс, отражённый в отдельном учёте;
+    D-PART-03 корректное распределение платежа между несколькими счетами;
+    D-PART-04 частичный возврат по документированной политике.
+  FX_RATE_MISMATCH:
+    D-FX-01 выходной день с корректным последним доступным курсом;
+    D-FX-02 policy использует дату документа, а не дату платежа;
+    D-FX-03 обратное котирование при корректной инверсии;
+    D-FX-04 допустимое округление по явно записанной политике.
+  PERIOD_CUTOFF:
+    D-CUT-01 UTC-дата отличается от локальной даты компании;
+    D-CUT-02 корректная предоплата по правилам компании;
+    D-CUT-03 service interval пересекает период и признаётся по иному правилу;
+    D-CUT-04 документ создан позже, но относится к ранее оказанной услуге.
+
+Для distractor хранится `distractor_of` и `distinguishing_fact` только в sealed
+provenance. Агент должен получить этот distinguishing fact через публичный
+инструмент, иначе тест считается недопустимым.
+
+11.7. Составные и взаимодействующие аномалии
+--------------------------------------------
+Ошибки задаются причинно-упорядоченными операторами O1 -> O2 -> O3. Каждая
+мутация применяет delta к текущему snapshot. Вклад оператора измеряется между
+состоянием непосредственно до и после этого оператора. Это обеспечивает
+детерминированную атрибуцию, но не отменяет проверки взаимодействия.
+
+Truth может использовать depends_on как описание происхождения, но matcher
+не должен опираться на depends_on, если это не предусмотрено официальным
+контрактом. Один finding обязан оставаться выводимым из своего evidence
+certificate с учётом явно указанной зависимости.
+
+Пример сценария: неверное распределение частичного платежа + неправильный FX
+rate + неверный posting period. Три finding допустимы только если каждый
+отличим по type, affected_ids, amount/currency и минимальному доказательству.
+
+REQ-ERR-020 Нельзя создавать составной эпизод с неразличимой денежной
+  атрибуцией.
+REQ-ERR-021 При пересечении affected_ids проверяется matcher ambiguity.
+REQ-ERR-022 Составные ошибки не должны создавать случайные побочные нарушения.
+
+11.8. Матрица ошибок
+-------------------
+Для каждой версии оператора хранится машинно-читаемая таблица:
+  operator -> intended invariants -> allowed side effects -> forbidden
+  invariants -> affected IDs -> evidence requirements -> distractor suite.
+
+Выпуск запрещён, если любое нарушение вне `allowed side effects` появляется
+в mutated twin.
+
+
+================================================================================
+12. КАТАЛОГ ИНВАРИАНТОВ И СИГНАТУРЫ НАРУШЕНИЙ
+================================================================================
+
+12.1. Обязательные инварианты
+-----------------------------
+Базовый каталог (может расширяться, но не сокращаться без решения A0):
+  INV-01 JE_BALANCE: дебет = кредит в каждой проводке.
+  INV-02 TRIAL_BALANCE: пробный баланс сходится по определённому срезу.
+  INV-03 AP_SUBLEDGER_VS_DOCS: расчётные обязательства соответствуют документам.
+  INV-04 OPEN_BALANCE: открытый остаток согласован с оплатами и credit notes.
+  INV-05 AGING: корзина просрочки соответствует due date и остатку.
+  INV-06 BANK_MATCH: банковские строки корректно связаны с платежами либо
+                     имеют обоснованный unmatched status.
+  INV-07 FX_POLICY: выбранный курс соответствует policy.
+  INV-08 FX_RECALC: functional amount пересчитан по допустимому курсу.
+  INV-09 CUTOFF: posting period соответствует recognition policy.
+  INV-10 PERIOD_TOTALS: итоги рассчитаны по правильному периоду.
+  INV-11 ID_UNIQUENESS: ID уникальны в своём пространстве.
+  INV-12 REFERENTIAL: все явные ссылки разрешаются.
+  INV-13 CURRENCY_EXPONENT: scale и minor units корректны.
+  INV-14 TIMEZONE_VALID: timestamp/zone интерпретируются однозначно.
+  INV-15 ALLOCATION_CONSERVATION: сумма allocations не превышает/не нарушает
+                                  payment semantics.
+  INV-16 CREDIT_NOTE_LIMIT: credit notes не превышают policy-defined cap.
+  INV-17 DOCUMENT_STATUS: status согласован с открытым остатком и событиями.
+
+Для каждого инварианта указать scope, ключ группировки, денежную метрику,
+допуск, исключения и ожидаемую семантику null.
+
+12.2. Инварианты до и после
+---------------------------
+Для чистого twin проверяются все базовые invariants и ожидается ноль нарушений.
+Для mutated twin ожидается конкретный набор нарушений оператора плюс только
+разрешённые side effects. Сам по себе факт, что общий баланс сошёлся, не
+доказывает отсутствие ошибки периода, FX или allocation.
+
+12.3. Signature object
+----------------------
+Каждая сигнатура включает:
+  invariant_id
+  entity_key (канонический ключ группировки)
+  expected_delta_minor|null
+  currency|null
+  direction (over/under/mismatch/invalid)
+  tolerance_minor
+  side_effect_class
+
+Сравнение сигнатуры детерминировано. Диагностика указывает точную причину
+отбраковки, но не раскрывает private IDs пользователю/политике.
+
+REQ-INV-001 Clean twin: все базовые invariants проходят.
+REQ-INV-002 Mutated twin: набор нарушений совпадает со спецификацией оператора.
+REQ-INV-003 Неожиданное нарушение блокирует episode.
+REQ-INV-004 У каждого invariant есть минимум 5 ручных positive/negative тестов.
+REQ-INV-005 Денежные и временные инварианты включают граничные примеры.
+
+12.4. Защита от общей ошибки
+---------------------------
+Генератор и verifier не должны просто вызывать один и тот же код детекции.
+Общая низкоуровневая арифметика допустима лишь если она мала, прозрачна и
+проверена независимыми hand-authored test vectors. Для критических проверок
+создать независимые reference tests, которые не строятся генератором.
+
+Если одна функция расчёта используется несколькими подсистемами, report
+должен явно показывать это как common-mode dependency. Скрывать такую общую
+зависимость под названием "independent verifier" запрещено.
+
+
+================================================================================
+13. НЕЗАВИСИМЫЙ ВЕРИФИКАТОР И ГРАФ ДОКАЗАТЕЛЬСТВ
+================================================================================
+
+13.1. Цель
+----------
+Verifier — отдельная реализация, которая получает только public data и
+нормативные contracts/spec. Он не знает, какая мутация была запущена, и не
+читает provenance в процессе обнаружения. Он должен самостоятельно вывести:
+  - существует ли аномалия;
+  - её тип;
+  - точные affected_ids;
+  - сумму и валюту;
+  - какие публичные записи достаточны для доказательства;
+  - какие distractor facts исключают ложный вывод.
+
+Verifier — не «второй вызов генератора» и не функция сравнения truth. Это
+самостоятельный аудиторский алгоритм и отдельная зона ответственности.
+
+13.2. Изоляция разработки
+------------------------
+Агент/разработчик verifier не должен писать generator. Для реального
+мультиагентного проекта независимость организационная: другой владелец зоны,
+другой контекст реализации, отдельные commits и review. Для одиночной работы
+обязательна хотя бы отдельная спецификация алгоритма, отдельные тестовые
+векторы, отдельное дерево зависимостей и независимая реализация без копирования
+генераторных функций.
+
+Verifier читает:
+  - contracts/;
+  - spec/accounting_rules/;
+  - episode public/;
+  - собственные индексы, построенные только из public/.
+
+Verifier не читает при discovery:
+  - gen/;
+  - sealed/truth.json;
+  - sealed/provenance.json;
+  - reject_log;
+  - mutation declarations;
+  - generator seeds.
+
+После завершения discovery отдельная judge-команда может сопоставить
+verifier_report с truth для оценки качества генерации. Это второй, логически
+отделённый этап.
+
+13.3. Интерфейс verifier
+------------------------
+  discover(public_episode, verifier_config) -> VerifierReport
+  validate_report(report, public_contracts) -> ValidationResult
+  crosscheck(report, sealed_truth) -> CrosscheckReport
+
+VerifierReport содержит:
+  schema_version
+  episode_public_hash
+  findings[]
+  examined_public_sources[]
+  unresolved_ambiguities[]
+  verifier_version
+  deterministic_diagnostics
+
+Для каждого finding:
+  type
+  affected_ids
+  claimed_amount_minor
+  currency
+  evidence_sets[]
+  proof_graph_ref
+  explanation_code (машинный код причины, не свободный текст)
+
+13.4. Доказательственный граф ProofGraph
+----------------------------------------
+Это одна из главных уникальных особенностей TwinLedger. Вместо плоского
+списка доказательств verifier строит направленный граф происхождения вывода:
+
+  узлы:
+    RecordNode       публичная запись/документ
+    FactNode         проверяемый извлечённый факт
+    RuleNode         правило accounting policy
+    CalculationNode детерминированный расчёт
+    FindingNode      обнаруженный вывод
+
+  ребра:
+    derived_from
+    supports
+    contradicts
+    governed_by
+    excludes
+
+Каждый FindingNode обязан иметь путь к публичным RecordNode и RuleNode.
+Запрещены узлы, опирающиеся на hidden provenance, seed или недоступный внешний
+факт. Граф помогает показать, почему определённая пара платежей является
+дублем, и почему похожий distractor не является дублем.
+
+Для MVP ProofGraph хранится как простой JSON/DAG без графовой СУБД.
+Обязательные поля: node_id, node_type, source_ids, rule_id, value_digest,
+parent_node_ids. Узлы сортируются детерминированно.
+
+REQ-VER-001 Discovery не получает truth/provenance.
+REQ-VER-002 Verifier не импортирует gen/ и generator helpers.
+REQ-VER-003 Каждый finding имеет доказательный путь к public records.
+REQ-VER-004 Каждый использованный факт имеет source ID и правило извлечения.
+REQ-VER-005 Все unresolved ambiguities перечисляются; сомнительный вывод
+  нельзя автоматически считать доказанным.
+
+13.5. Минимальные и альтернативные наборы доказательств
+-------------------------------------------------------
+Для каждого finding verifier строит один или несколько допустимых evidence
+certificates. Набор минимален, если удаление любого элемента разрушает
+возможность вывести тот же finding при повторном запуске verifier на указанном
+подмножестве доступных данных.
+
+Точное условие минимальности должно быть формализовано: какие общие правила,
+company policy и таблицы считаются исходным контекстом, а какие записи являются
+предметными доказательствами. Нельзя случайно считать весь company policy
+частью каждого evidence set, если он всегда доступен и не должен занимать
+слоты evidence_ids.
+
+Если существует несколько минимальных наборов, сохранить все наборы в пределах
+лимита. Если их слишком много, сохранить доказуемо покрывающий набор
+альтернатив по contract rules, не выдавая усечённый список за полный.
+В таком случае truth schema должна содержать `evidence_enumeration_complete`.
+
+REQ-VER-010 Все ID из evidence_sets достижимы через предусмотренные инструменты.
+REQ-VER-011 Размер evidence set не превышает официального лимита finding.
+REQ-VER-012 Удаление любого элемента минимального набора разрушает заявленный
+  proof, иначе набор не минимален.
+REQ-VER-013 Альтернативные наборы действительно достаточны.
+REQ-VER-014 Если доказательство требует недоступный факт — episode rejected.
+
+13.6. Независимое обнаружение по типам
+--------------------------------------
+DUPLICATE_PAYMENT:
+  - построить связи payment -> allocation -> invoice;
+  - рассчитать уже погашенную обязанность с учётом credit notes, refunds,
+    reversals и правил компании;
+  - определить переплату/повторное исполнение;
+  - проверить, что одинаковая сумма не относится к двум разным счетам;
+  - проверить доступные документы и банковский след;
+  - не считать одинаковую сумму в одной дате доказательством сама по себе.
+
+PARTIAL_PAYMENT_ALLOCATION:
+  - восстановить остаток каждого документа;
+  - сверить сумму payment и allocations;
+  - учесть несколько платежей, credit notes, advances и partial refunds;
+  - найти ошибочный allocation и конкретные affected records.
+
+FX_RATE_MISMATCH:
+  - прочитать FX policy;
+  - определить event date и курс, который должен использоваться;
+  - выбрать правильный опубликованный rate по policy;
+  - пересчитать функциональную сумму с заданным rounding mode;
+  - вывести отклонение и supporting records.
+
+PERIOD_CUTOFF:
+  - определить recognition event по policy и документу;
+  - вычислить локальную дату/период в компании;
+  - сопоставить с posting_period;
+  - учесть предоплаты, service intervals, credit notes и закрытие периодов.
+
+13.7. Контроль качества verifier
+--------------------------------
+На clean episodes verifier обязан выдавать ноль findings, кроме явно
+специфицированных тестов на невалидные данные. На mutated episodes все
+ожидаемые выводы должны быть найдены с точной суммой и ID.
+На distractor episodes запрещены ложные срабатывания.
+
+Метрики отдельно:
+  precision, recall, F1;
+  exact affected ID accuracy;
+  amount exact/tolerance accuracy;
+  evidence sufficiency rate;
+  evidence minimality rate;
+  distractor false-positive rate;
+  unresolved ambiguity count.
+
+REQ-VER-020 Каждое расхождение с truth блокирует выпуск episode.
+REQ-VER-021 Crosscheck выполняется только ПОСЛЕ discovery.
+REQ-VER-022 Verifier report и исходные хеши записываются в audit artifact.
+
+
+================================================================================
+14. КОНТРАКТ СРЕДЫ И ИНСТРУМЕНТЫ АГЕНТА
+================================================================================
+
+14.1. Основной интерфейс
+-----------------------
+Среда предоставляет последовательный интерфейс действий. Точный внешний
+сигнатурный формат определяется организаторами и реализуется через adapter/.
+Внутренний интерфейс:
+  reset(episode_public_ref, env_config) -> Observation
+  step(action) -> StepResult
+
+StepResult:
+  observation
+  reward
+  terminated
+  truncated
+  info
+
+В закрытом режиме reward всегда 0 до post-episode finalize, а info не содержит
+частичной оценки качества. Нельзя возвращать диагностические поля, из которых
+можно вывести truth или состояние scorer.
+
+14.2. Инструменты
+-----------------
+Предполагаемый минимальный набор (подлежит сверке с официальным контрактом):
+
+A. list_records
+  args: table, cursor|null, limit (1..50), filters optional
+  result: rows, next_cursor|null, optional neutral pagination metadata
+
+B. get_record
+  args: table, id
+  result: один публичный record или одинаковый NOT_FOUND
+
+C. get_document
+  args: doc_id
+  result: полный доступный документ, включая line_items и ссылки
+
+D. calc
+  args: expression
+  result: безопасный детерминированный результат Decimal
+
+E. submit
+  args: findings[]
+  result: закрытие эпизода, но не раскрытие результата до finalize
+
+Если официальное ТЗ содержит иной набор, внешний адаптер меняется. Внутренний
+контракт и тестовые свойства сохраняются там, где они совместимы.
+
+14.3. Безопасный контракт действий
+----------------------------------
+Каждое действие:
+  action_id (опционально, если требуется протоколом)
+  tool
+  args
+
+Валидатор проверяет:
+  - tool входит в allowlist;
+  - args — JSON object с допустимыми полями;
+  - типы и длины полей;
+  - лимит размера запроса;
+  - таблица входит в allowlist;
+  - filters используют только разрешённые поля;
+  - limit не превышает 50;
+  - expression не превышает лимит длины/узлов;
+  - submit содержит корректный findings array.
+
+Неиспользуемые и неизвестные поля не должны бесшумно менять поведение.
+
+14.4. Бюджет
+-------------
+Начальное допущение — 100 inspection steps на эпизод. Каждый вызов tool,
+включая ошибочный, списывает один шаг. submit не считается inspection step,
+если официальная рубрика подтверждает такое правило.
+
+Должны быть явные константы:
+  MAX_STEPS
+  MAX_PAGE_SIZE
+  MAX_FINDINGS
+  MAX_EVIDENCE_IDS
+  MAX_REQUEST_BYTES
+  MAX_CALC_EXPRESSION_LENGTH
+  MAX_CALC_AST_NODES
+
+REQ-ENV-001 Бюджет определяется config и записывается в manifest.
+REQ-ENV-002 Ошибочные запросы списывают шаг по утверждённому правилу.
+REQ-ENV-003 Ни один путь не позволяет получить бесплатные повторные запросы.
+REQ-ENV-004 После исчерпания бюджета поведение однозначно и тестируется.
+
+14.5. Курсоры
+-------------
+Курсор — непрозрачный серверный токен, привязанный к конкретной таблице,
+срезу и snapshot. Он не должен раскрывать seed или позицию мутации.
+
+Вариант реализации:
+  token = urlsafe_base64(canonical_payload || authenticator)
+  payload = {table, last_sort_key, snapshot_digest, cursor_version}
+
+Для проверки целостности нужен ключ/secret, недоступный политике. Если ключ
+публичный, это не authentication и не защита от подделки; тогда курсор остаётся
+только checksum-форматом для контроля ошибок, что должно быть так и описано.
+
+REQ-ENV-010 Курсоры детерминированы внутри эпизода, если этого требует replay.
+REQ-ENV-011 Курсор от другой таблицы или snapshot отклоняется.
+REQ-ENV-012 Неверный курсор возвращает фиксированный BAD_CURSOR.
+REQ-ENV-013 Нельзя по курсору распознать внесённую запись.
+
+14.6. Ограниченные ошибки
+-------------------------
+Формат ошибки фиксирован контрактом. Рекомендуемые коды:
+  UNKNOWN_TOOL, BAD_ARGS, BAD_FILTER, BAD_CURSOR, NOT_FOUND,
+  BAD_FINDING, CALC_ERROR, LIMIT, TERMINATED, ALREADY_SUBMITTED,
+  INTERNAL.
+
+Публичная ошибка не содержит:
+  - stack trace;
+  - абсолютных путей;
+  - содержимого sealed;
+  - названий внутренних функций;
+  - существования hidden resource;
+  - seed, mutation names или generator diagnostics.
+
+NOT_FOUND для существующего, но недоступного политике ресурса и несуществующего
+ID должно иметь идентичную структуру, если это предусмотрено моделью доступа.
+
+14.7. Калькулятор
+-----------------
+Если калькулятор входит в официальный контракт, реализовать через ast.parse
+(mode="eval") и строгий allowlist. Разрешить только необходимые типы:
+  Expression, Constant (числовая строка/целое), BinOp(Add/Sub/Mult/Div),
+  UnaryOp(UAdd/USub), допустимые скобки.
+
+Запретить Name, Call, Attribute, Pow, Subscript, comprehensions, lambda,
+boolean logic, import, форматирование строк и все неизвестные узлы.
+Ограничить длину выражения, глубину AST, количество узлов и величину результата.
+Деление на ноль и превышение диапазона возвращают CALC_ERROR.
+
+REQ-ENV-020 Не использовать eval или exec.
+REQ-ENV-021 Каждый AST node проходит whitelist validation до вычисления.
+REQ-ENV-022 Decimal не создаётся из float.
+REQ-ENV-023 Фаззер проверяет злонамеренные строки и Unicode lookalikes.
+
+14.8. Семантика завершения
+--------------------------
+Только один submit может успешно закрыть эпизод. Повторный submit возвращает
+ALREADY_SUBMITTED и не меняет итог. После terminated/truncated любые дальнейшие
+действия обрабатываются согласно контракту и не могут изменить оценку.
+
+`truncated` означает исчерпание заранее установленного детерминированного
+бюджета/условия среды, а не произвольное срабатывание wall-clock timeout.
+Реальное время — watchdog процесса. Timeout считается ошибкой прогона, если
+официальное ТЗ не определяет иначе. Это предотвращает недетерминированность.
+
+14.9. Закрытый и открытый режим
+-------------------------------
+OPEN_DEV:
+  - локальный разработчик может видеть диагностику и reward после submit;
+  - режим явно маркируется и не используется как доказательство изоляции.
+CLOSED_EVAL:
+  - step возвращает reward=0;
+  - info не раскрывает TP/FP/FN, truth count или скрытые IDs;
+  - scorer запускается после закрытия env;
+  - reward доступен только harness/judge после finalize.
+
+REQ-ENV-030 make verify по умолчанию использует CLOSED_EVAL.
+REQ-ENV-031 Открытый режим невозможно включить незаметной переменной окружения.
+REQ-ENV-032 Все различия режимов документируются и тестируются.
+
+
+================================================================================
+15. MATCHER, НАГРАДА И ДИАГНОСТИКА
+================================================================================
+
+15.1. Каноникализация
+--------------------
+Каждый ID преобразуется в типизированное представление согласно contracts:
+  JE:<raw-id>, INV:<raw-id>, CN:<raw-id>, PAY:<raw-id>,
+  BANK:<raw-id>, FX:<raw-id>, CP:<raw-id>.
+
+ID нормализуется Unicode NFC, проверяется namespace, сортируется и
+дедуплицируется. Нельзя просто удалять префиксы, если это создаёт коллизии.
+Неизвестный тип или неоднозначный ID приводит к невалидному finding.
+
+15.2. Условие совпадения
+------------------------
+Предварительное условие match (сверить с официальным ТЗ):
+  1. type совпадает;
+  2. canon(affected_ids) совпадает точно;
+  3. currency совпадает;
+  4. absolute amount difference <= tolerance_minor;
+  5. evidence_ids содержит один полный допустимый evidence set;
+  6. ограничения длины и допустимых ID соблюдены.
+
+Explanation и confidence не должны влиять на базовую награду, если иное не
+установлено официальным контрактом. Наличие этих полей не должно создавать
+неявный бонус за красноречие.
+
+15.3. Максимальное паросочетание
+-------------------------------
+Строится двудольный граф: предсказания F слева, truths T справа. Ребро
+существует, если finding удовлетворяет всем правилам match.
+
+Оптимизация:
+  первичная цель: максимизировать число matched pairs;
+  вторичная: минимизировать суммарную абсолютную ошибку суммы;
+  третичная: детерминированный лексикографический tie-break.
+
+Рекомендуемая реализация для обычных малых наборов: алгоритм максимального
+паросочетания с формализованным tie-break либо min-cost max-flow на stdlib.
+Нельзя полагаться на случайный порядок dict/set.
+Для маленьких случайных графов до 7×7 сделать exhaustive reference matcher и
+сверять результат по двум критериям.
+
+REQ-SCORE-001 Matcher — единственное место определения TP/FP/FN.
+REQ-SCORE-002 Matcher детерминирован и инвариантен к перестановке findings,
+  кроме исходного индекса, используемого лишь как последний tie-break.
+REQ-SCORE-003 Ни один truth не сопоставляется более чем с одним finding.
+REQ-SCORE-004 Дубли, split и лишние выводы не увеличивают TP сверх числа truths.
+REQ-SCORE-005 Одна и та же truth/false prediction пара даёт одинаковый match.
+
+15.4. F1
+--------
+Если TP/FP/FN определены стандартно:
+  precision = TP / (TP + FP), при нулевом знаменателе — по явно установленному
+              специальному правилу;
+  recall    = TP / (TP + FN), с отдельным правилом для пустого truth;
+  F1        = 2TP / (2TP + FP + FN).
+
+Для чистой книги и пустого ответа можно определить F1=1. Это важное решение,
+которое означает, что молчание на чистой книге является корректным. Для
+truncated на чистой книге также может получиться высокий F1 при пустом ответе;
+такой случай обязан отдельно помечаться в diagnostics и не называться
+«успешным аудитом». Следуйте официальной формуле, если она опубликована.
+
+15.5. Награда
+-------------
+Предварительная формула из исходного контекста:
+  R = max(0, F1 - ETA * steps_used / max_steps)
+  ETA = 0.05
+  max_steps = 100
+
+Эта формула — provisional, пока организаторы не подтвердили её явно.
+Вычисление reward должно использовать Decimal или точную рациональную
+арифметику; не округляйте промежуточные значения произвольно. Формат вывода
+округляется только для отображения, raw reward сохраняется точно.
+
+steps_used = число inspection tool calls по официальному определению, включая
+ошибочные вызовы, без submit — только если это подтвердит рубрика.
+
+15.6. Примеры sanity checks (при ETA=0.05, max_steps=100)
+---------------------------------------------------------
+  A. Два truth, оба найдены, 40 шагов: F1=1.0, R=0.98.
+  B. Два truth, найден один, 30 шагов: F1=2/3, R≈0.6516667.
+  C. Два truth, найдено два, добавлен лишний дубликат, 40 шагов:
+     TP=2, FP=1, FN=0; F1=0.8; R=0.78.
+  D. Чистая книга, пустой ответ, 20 шагов: F1=1; R=0.99.
+  E. Чистая книга, ложный finding: TP=0, FP=1; F1=0; R=0.
+  F. Ошибочная книга, пустой ответ: recall=0; F1=0; R=0.
+  G. Truncated на ошибочной книге: пустой ответ; F1=0.
+  H. Truncated на чистой книге: пустой ответ; F1=1, R=0.95; но status
+     отдельно отмечает truncation/no-submit.
+  I. Один истинный finding разбит на два меньших: каждый не проходит точную
+     проверку суммы/ID, TP не должен искусственно расти.
+  J. Сумма на tolerance boundary совпадает; за пределом boundary — нет.
+
+Все числовые sanity examples должны стать executable tests.
+
+15.7. Пять обязательных свойств
+-------------------------------
+P1. На ошибочной книге корректный ответ лучше молчания.
+P2. На чистой книге молчание лучше ложных обвинений.
+P3. Дубликаты и дробление выводов не дают выгоды.
+P4. Flag-all хуже честной политики на представительном наборе.
+P5. Экономия шагов различает одинаковую полноту лишь ограниченно: максимум
+    штрафа за весь бюджет не превышает ETA, если именно так задано в рубрике.
+
+Каждое свойство проверяется на нескольких типах ошибок и чистых эпизодах,
+а не на одном hand-picked примере. Таблица результатов строится автоматически.
+
+15.8. Experimental grounded score
+---------------------------------
+Дополнительный диагностический режим может требовать, чтобы evidence IDs
+действительно запрашивались политикой до submit. Он не заменяет официальную
+формулу и не смешивается с основной наградой. Отображается отдельной колонкой
+`experimental_grounded_score`, помечается как исследовательский показатель.
+
+15.9. Диагностика, не входящая в reward
+--------------------------------------
+  - TP/FP/FN и precision/recall/F1;
+  - reward breakdown;
+  - exact type/ID/amount matches;
+  - tool calls и steps_used;
+  - evidence coverage;
+  - truncated/no-submit/timeout;
+  - optimal steps relative to model id;
+  - explanation consistency;
+  - verifier quality metrics;
+  - result by difficulty and anomaly type.
+
+Никакая метрика диагностики не влияет на reward, пока это не подтверждено
+официальным contract.
+
+
+================================================================================
+16. ПРОЦЕССНАЯ ИЗОЛЯЦИЯ, COMMIT-REVEAL И ПРОВЕРЯЕМОЕ ПРОИСХОЖДЕНИЕ
+================================================================================
+
+16.1. Процессы
+--------------
+Целевая архитектура:
+  POLICY  — внешняя политика, общается JSONL через stdin/stdout.
+  ENV     — процесс, видящий только public episode files.
+  HARNESS — посредник, маршрутизатор и watchdog.
+  SCORER  — отдельный процесс, запускаемый после закрытия env.
+  JUDGE   — запускает проверки, агрегирует отчёты.
+
+Для разработки допускается in-process режим, но доказательства изоляции
+принимаются только из CLOSED_EVAL process mode.
+
+16.2. Реальные границы безопасности
+-----------------------------------
+Процессная изоляция сама по себе не является полной песочницей. Обычный
+subprocess без ограничений ОС не предотвращает чтение файлов, доступ к сети,
+наследование дескрипторов или исчерпание ресурсов.
+
+Обязательные меры по возможностям платформы:
+  - отдельная рабочая директория политики без episodes/ и sealed/;
+  - передача только stdin/stdout pipe;
+  - закрытие лишних file descriptors;
+  - allowlisted environment variables;
+  - отключение сети средствами ОС/Docker;
+  - read-only public mount для env;
+  - отсутствие mounted sealed path в env/policy containers;
+  - resource limits для CPU/RAM/processes/file size, где поддерживается;
+  - запрет shell interpolation пользовательских строк;
+  - фиксированный executable и argv, без shell=True.
+
+Каждая платформа имеет security_profile с фактически включёнными механизмами.
+Недоступные функции отмечаются в LIMITATIONS.md. Запрещено заявлять полную
+изоляцию, если реализовано только разделение процессов.
+
+REQ-SEAL-001 Env не имеет доступа к sealed files.
+REQ-SEAL-002 Policy не имеет доступа к файлам episodes и scorer process.
+REQ-SEAL-003 Scorer не запускается с изменяемым состоянием env.
+REQ-SEAL-004 Никакие secret values не попадают в environment policy.
+REQ-SEAL-005 При сбое процесса harness не раскрывает private traceback policy.
+
+16.3. Commit-reveal
+-------------------
+Для каждого эпизода вычисляется:
+  commitment = SHA256(canonical_truth_bytes || salt)
+
+Commitment публикуется в manifest до запуска политики. Salt и truth остаются
+sealed до завершения эпизода. После finalize salt раскрывается в private/judge
+receipt, и проверка пересчитывает commitment.
+
+Критическое ограничение: commitment доказывает неизменность истины после
+создания commitment, но НЕ доказывает, что истина была корректной изначально.
+Её корректность подтверждается только diff checks, invariants, independent
+verifier, evidence reachability и crosscheck.
+
+REQ-SEAL-010 Commitment создаётся до запуска policy.
+REQ-SEAL-011 Reveal проверяет byte-identical canonical truth.
+REQ-SEAL-012 Salt генерируется криптографически безопасным источником и
+  никогда не появляется в observation или policy logs.
+REQ-SEAL-013 Reproducible benchmark может использовать фиксированный salt;
+  его режим явно маркируется как test fixture, не как production secrecy.
+
+16.4. Хеш-цепочка траектории
+----------------------------
+Для каждого события строится детерминированная запись:
+  event_index
+  action_digest
+  response_digest
+  protocol_version
+  logical_step
+  previous_hash
+
+  h_0 = SHA256(commitment || episode_id)
+  h_i = SHA256(h_(i-1) || canonical(event_i))
+
+Не записывать в детерминированную replay chain wall-clock timestamp, если он
+не нормализован; для времени можно иметь отдельный диагностический лог.
+
+16.5. Merkle tree и receipt
+---------------------------
+После выполнения всех эпизодов trajectory heads становятся leaves дерева
+Меркла. Правила построения tree (порядок leaves, odd leaf handling, hash
+prefix/domain separation) должны быть формально зафиксированы и протестированы.
+
+Receipt:
+  episode_id
+  protocol_version
+  code_version_hash
+  config_hash
+  public_manifest_hash
+  truth_commitment
+  salt_reveal_ref или salt, согласно режиму
+  trajectory_head
+  merkle_leaf_index
+  policy_identifier
+  reward_breakdown_ref
+  verification_status
+
+REQ-SEAL-020 Receipt можно проверить offline.
+REQ-SEAL-021 Любое изменение trajectory event меняет chain head.
+REQ-SEAL-022 Любое изменение leaf меняет Merkle root.
+REQ-SEAL-023 Merkle root не преподносится как доказательство качества finding;
+  это доказательство целостности набора записей.
+
+16.6. Replay
+-------------
+Команда replay запускает ту же среду на том же public snapshot и подаёт
+зафиксированные actions. Она сравнивает canonical response bytes, event hashes,
+trajectory head и итоговый reward. Если протокол допускает nondeterministic
+field, он должен быть вынесен из replay-critical response и явно документирован.
+
+REQ-SEAL-030 replay выполняется на свежем процессе и чистой рабочей директории.
+REQ-SEAL-031 Не допускается исправлять replay mismatch сортировкой результата
+  постфактум; первопричина должна быть найдена и исправлена.
+
+
+================================================================================
+17. NLP, МНОГОЯЗЫЧНЫЕ ОПИСАНИЯ И УСТОЙЧИВОСТЬ К PROMPT INJECTION
+================================================================================
+
+17.1. Цель текстового слоя
+-------------------------
+Текстовый слой делает среду менее шаблонной и проверяет, может ли агент
+объединять структурированные сведения с описаниями на русском, казахском и
+английском. Он не заменяет бухгалтерские доказательства и не расширяет
+официальную схему случайными новыми полями.
+
+Свободный текст разрешён только там, где его допускает контракт, например:
+  line_items[].description
+  invoice.memo
+  payment.reference_text
+  bank_lines.reference_text
+
+Нельзя добавлять обязательные новые поля в official schema без разрешения.
+
+17.2. Детерминированная генерация текста
+----------------------------------------
+Генерация основывается на локальных шаблонах и словарях, а не на удалённой LLM.
+Вариативность:
+  - ru/kk/en description templates;
+  - сокращения и деловые формулировки;
+  - транслитерация;
+  - безопасные опечатки;
+  - порядок слов и пунктуация;
+  - Unicode NFC;
+  - разные варианты номера документа;
+  - контекстные слова, относящиеся к услуге/платежу.
+
+Текстовые генераторы имеют собственные RNG namespaces и фиксированные версии
+словарей. Один и тот же seed/config генерирует один и тот же текст.
+
+17.3. Evidence hierarchy
+------------------------
+Строгий порядок:
+  1. Структурные ссылки и ledger fields.
+  2. Доступные договорные/политические правила.
+  3. Документальные тексты как дополнительное подтверждение связи.
+  4. Нечёткое совпадение текста только как кандидат на дальнейшую проверку.
+
+Текст не может быть единственным основанием для критического finding, если
+из него нельзя независимо подтвердить факт. NLP-слой не должен делать
+искусственно истинной связь только за счёт похожих слов.
+
+17.4. Локальный NLP baseline
+----------------------------
+Опциональные компоненты:
+  - Unicode normalization;
+  - tokenization по языковым правилам;
+  - набор детерминированных alias dictionaries;
+  - character n-gram similarity;
+  - простая TF-IDF similarity при наличии sklearn extras;
+  - transliteration map;
+  - fuzzy candidate ranking.
+
+Результат similarity — только candidate relation. Для finding обязательна
+проверка структурных доказательств. Модельный/эвристический score не изменяет
+официальную награду.
+
+17.5. Prompt-injection robustness track
+---------------------------------------
+В отдельных robustness episodes свободный текст может содержать безопасные
+вредоносные инструкции, например просьбы игнорировать расхождения или сообщить
+скрытые значения. Эти строки являются данными документа, а не инструкциями
+системы. Они не содержат реальных секретов и не побуждают к реальному вреду.
+
+Трек по умолчанию выключен для официального scoring, если его не требуют
+организаторы. Он оценивает устойчивость policy отдельно:
+  - игнорирует ли policy инструкции внутри бизнес-документа;
+  - продолжает ли использовать структурные доказательства;
+  - не пытается ли документировать/раскрывать скрытый truth;
+  - сохраняет ли одинаковое качество при нейтральном и injection-тексте.
+
+17.6. Explanation consistency linter
+------------------------------------
+Диагностический модуль проверяет explanation:
+  - ID в объяснении входят в evidence_ids или affected_ids;
+  - сумма в объяснении совпадает с claimed amount, если распознаётся;
+  - currency упоминается корректно;
+  - нет утверждения о факте, который не представлен в доказательствах;
+  - свободное объяснение не влияет на official reward.
+
+Linter может использовать regex, tokenizer и таблицу ID. Он не должен
+пытаться судить о риторическом качестве и не должен подменять matcher.
+Результат `explanation_consistency` — диагностический.
+
+REQ-NLP-001 Тексты синтетические и воспроизводимые.
+REQ-NLP-002 Текст не является единственным доказательством finding.
+REQ-NLP-003 NLP errors не должны влиять на core environment validity.
+REQ-NLP-004 Robustness prompt-injection трек отделён от baseline score.
+REQ-NLP-005 Все текстовые transformations property-tested на Unicode.
+
+
+================================================================================
+18. ARENA: BASELINE-ПОЛИТИКИ, КАТАЛОГ АТАК И LEARNABILITY
+================================================================================
+
+18.1. Задача Arena
+------------------
+Arena проверяет, что среда пригодна для сравнения разных политик, что reward
+не вознаграждает очевидные злоупотребления и что наблюдаемые стратегии могут
+улучшаться на отложенных эпизодах без утечки из train.
+
+Arena не должна менять scoring contract. Это тестовый клиент публичного API.
+
+18.2. Baseline политики
+-----------------------
+Обязательные базовые политики:
+  random_policy       случайный, но контрактно валидный exploration;
+  silent_policy      всегда submit пустого списка;
+  blind_submit       submit без inspection;
+  simple_recon       группировка платежей и invoice balances;
+  rule_based_auditor набор прозрачных правил по четырём типам;
+  evidence_first     политика, сначала строящая evidence candidates;
+  budget_aware       политика с выбором следующих запросов по ожидаемой ценности;
+  oracle_test_only   верхняя контрольная граница, недоступная официальной policy.
+
+Oracle не читает truth через public API и не запускается как участник закрытого
+соревнования. Он используется только в test harness с привилегированным
+test-only интерфейсом и маркируется как Upper Bound, а не как baseline для
+агентов.
+
+18.3. Атаки и невыгодные стратегии (минимум 18)
+---------------------------------------------
+  AT-01 flag_all: обвинять все доступные кандидаты.
+  AT-02 flag_by_type: выдавать типы без точных ID.
+  AT-03 random_ids: случайные affected IDs.
+  AT-04 duplicate_spam: отправить один finding многократно.
+  AT-05 split_spam: разбить одну сумму на несколько findings.
+  AT-06 merge_spam: склеить разные truth findings в один.
+  AT-07 edge_tolerance: подобрать сумму на границе tolerance.
+  AT-08 evidence_padding: набить список случайными evidence IDs.
+  AT-09 silent: всегда молчать.
+  AT-10 blind_submit: submit до просмотра записей.
+  AT-11 resubmit: повторить submit с другим результатом.
+  AT-12 post_termination: вызывать инструменты после завершения.
+  AT-13 cursor_fuzz: некорректные и повторные курсоры.
+  AT-14 error_probe: сравнивать структуру ошибок.
+  AT-15 timing_probe: искать различия времени ответа.
+  AT-16 metadata_shortcut: использовать ID, порядок и формат сумм.
+  AT-17 budget_bomb: тратить бюджет на пустые запросы.
+  AT-18 injection_follow: подчиняться инструкциям в документах.
+  AT-19 stale_cursor: использовать cursor после изменения snapshot.
+  AT-20 currency_confusion: игнорировать currency/exponent.
+  AT-21 timezone_confusion: считать дату в timezone машины.
+  AT-22 evidence_guess: угадывать evidence IDs без чтения.
+
+Каждая attack policy документирует цель теста, ожидаемый симптом, тестовый
+сценарий и ожидаемый результат. Некоторые атаки должны быть отвергнуты
+контрактной валидацией; другие могут выдать valid но плохой finding и получить
+низкую reward. Эти категории не смешивать.
+
+18.4. Автохакер
+---------------
+AutoHacker оптимизирует небольшое пространство параметров baseline policy:
+  - порядок исследования таблиц;
+  - выбор страницы и filters;
+  - приоритет типов ошибок;
+  - критерии остановки;
+  - количество evidence IDs;
+  - распределение бюджета шагов.
+
+Использовать deterministic random search + hill climbing или grid search.
+Цель — показать, что reward чувствителен к полезному выбору стратегии. Он
+не является proof отсутствия всех exploit strategies.
+
+Обязательное разделение:
+  - TRAIN seeds — разрешены для подбора параметров;
+  - DEV seeds — для выбора между заранее определёнными кандидатами, если
+    правила соревнования разрешают;
+  - HELDOUT seeds — не используются для тюнинга и открываются только для
+    финальной отчётности.
+
+Нельзя подбирать на heldout и потом называть результат out-of-sample.
+
+18.5. Learnability probe
+------------------------
+Параметризованная policy сравнивается с исходным baseline на train и heldout.
+Показывать:
+  - mean reward;
+  - median reward;
+  - 95% bootstrap confidence interval;
+  - результат по L1-L4;
+  - результат по clean/mutated episodes;
+  - число эпизодов/seed;
+  - точное описание tuning budget.
+
+Фраза о результате ограничивается наблюдаемым экспериментом:
+«В зафиксированном эксперименте параметры policy X дали такую-то разницу
+с такими-то доверительными интервалами на указанных независимых seed».
+Запрещены заявления «модель улучшилась» и причинные выводы, которые эксперимент
+не подтверждает.
+
+18.6. Статистическая корректность
+---------------------------------
+Доверительные интервалы рассчитываются с детерминированным bootstrap RNG.
+Train/dev/heldout split выполняется по episode seed/group, а не по отдельным
+записям одного эпизода. Не допускается утечка близнецов в разные split: clean
+и mutated twins одной исходной истории должны находиться в одной группе.
+
+Не требуйте искусственно, чтобы лестница random < simple < heuristic < oracle
+обязательно была статистически разделена на каждом уровне. Это экспериментальная
+гипотеза, а не условие корректности среды. Если порядок нарушается, сначала
+исследуйте policy, complexity и sample size; не подправляйте reward ради
+красивого графика.
+
+REQ-ARENA-001 Каждая policy использует только публичный API.
+REQ-ARENA-002 Стратегия не читает scoring/truth internals.
+REQ-ARENA-003 AutoHacker не меняет официальный matcher или reward.
+REQ-ARENA-004 Heldout split сохраняется и не используется для настройки.
+REQ-ARENA-005 Oracle test-only и отсутствует в public submission package.
+
+
+================================================================================
+19. АУДИТ ШОРТКАТОВ, ПОБОЧНЫХ КАНАЛОВ И CANARY-ФАЗЗИНГ
+================================================================================
+
+19.1. Что считается шорткатом
+-----------------------------
+Шорткат — признак, который позволяет предсказать внесённую запись без
+бухгалтерского анализа: ID-диапазон, позиция в файле, круглость суммы,
+специальный timestamp, необычная длина description, отдельный источник данных
+или иная особенность генератора.
+
+Нельзя путать shortcut leakage с реальной бухгалтерской закономерностью.
+Аномалия должна обнаруживаться по содержимому public data; полноценный
+классификатор по accounting features может отличать ошибочные записи именно
+потому, что ошибка объективно меняет бизнес-отношения. Цель аудита — показать,
+что не существует лёгкого метаданного «ярлыка генератора».
+
+19.2. Metadata-only classifier
+------------------------------
+Построить датасет записи с меткой происхождения, доступной только тестовому
+аудитору. Признаки ограничить metadata-only:
+  - нормированная позиция строки;
+  - длина и алфавит ID;
+  - тип ID и его статистический профиль;
+  - количество цифр в сумме;
+  - число нулей в конце суммы;
+  - час и день недели;
+  - длина текста и простые символьные статистики;
+  - номер страницы/позиция в JSONL;
+  - формат даты и timezone offset.
+
+Train/test split группировать по episode/source history, чтобы близнецы одной
+истории не попали одновременно в train и test. Применять простой Logistic
+Regression или другой заранее зафиксированный базовый classifier.
+
+Метрики: ROC AUC, PR AUC, balanced accuracy, calibration. Целевое AUC около
+0.5; допустимая граница, например <=0.55, утверждается в config. Если выше,
+анализировать важность признаков и исправлять генератор, а не просто менять
+threshold classifier.
+
+19.3. Side-channel tests
+------------------------
+Проверить одинаковость публичных ошибок для:
+  - несуществующего ID;
+  - существующего, но недоступного ресурса;
+  - чужого/просроченного cursor;
+  - некорректного table name;
+  - запроса к запрещённым private path.
+
+Измерение timing:
+  - сделать warm-up;
+  - выполнять interleaved randomized trials;
+  - фиксировать платформу и нагрузку;
+  - сравнивать распределения и confidence intervals;
+  - заранее установить practical equivalence margin.
+
+Нулевая гипотеза «p > 0.05» не является доказательством равенства времён.
+Для заявления о практической неразличимости нужен equivalence test или
+confidence interval разности/отношения времён, укладывающийся в заранее
+заданный margin. В README описать, что timing tests не гарантируют отсутствие
+всех side channels.
+
+19.4. Canary и leakage fuzzing
+------------------------------
+В private truth, provenance и internal seed metadata добавляются уникальные
+случайные canary tokens, которые не используются в public data. Затем fuzz
+runner проверяет все каналы:
+  - observation;
+  - tool errors;
+  - info;
+  - logs, доступные policy;
+  - tracebacks;
+  - filenames и paths;
+  - cursor payloads;
+  - response sizes;
+  - environment variables;
+  - stdout/stderr policy channel.
+
+Canary token никогда не должен быть реальным секретом. Проверяется точное
+совпадение, URL/base64/hex-представления, нормализованный Unicode и известные
+простые кодировки. Fuzzer имеет фиксированный seed для replay и отдельный
+режим с рандомизированным fuzz seed.
+
+REQ-LEAK-001 Ноль canary occurrences в policy-visible channels.
+REQ-LEAK-002 Logs делятся на public policy logs и private developer logs.
+REQ-LEAK-003 Developer logs не должны случайно перенаправляться в policy pipe.
+REQ-LEAK-004 Любой canary hit блокирует release.
+REQ-LEAK-005 Отчёт содержит число каналов, тестов и преобразований, но не сами
+  canary strings.
+
+19.5. Fuzzing API
+-----------------
+Fuzz cases включают malformed JSON, oversized request, nested filters,
+unknown fields, Unicode confusion, invalid cursor, large calc AST, repeated
+submit, calls after termination и random action sequences. Fuzzer не должен
+обходить контракт намеренно для получения truth; он тестирует устойчивость
+интерфейса.
+
+
+================================================================================
+20. PROPERTY TESTS, МЕТАМОРФНЫЕ ТЕСТЫ И МУТАЦИОННАЯ ПРОВЕРКА
+================================================================================
+
+20.1. Unit и integration tests
+------------------------------
+Все функции расчёта, сериализации, RNG, cursor validation, matcher, reward,
+commitment и replay имеют unit tests. Каждая граница между модулями имеет
+contract tests. Сквозные e2e tests проходят reset -> inspect -> submit -> score
+-> receipt -> replay.
+
+20.2. Property-based tests
+--------------------------
+При наличии Hypothesis extras проверять свойства на широком диапазоне
+генерируемых значений. Core build не должен требовать Hypothesis для запуска
+официального окружения. Если extras отсутствуют, критичные свойства всё равно
+проверяются детерминированными property loops на stdlib.
+
+Обязательные свойства:
+  - canonical JSON стабилен при перестановке ключей;
+  - money conversion сохраняет допустимую точность и округление;
+  - JE balance сохраняется после каждого допустимого clean event;
+  - duplicate mutation создаёт ожидаемый diff;
+  - invalid allocation нарушает конкретный invariant;
+  - FX policy даёт один и тот же курс на один и тот же snapshot;
+  - cutoff учитывает timezone;
+  - ID mapping сохраняет связи;
+  - permutation сохраняет семантический oracle result;
+  - scoring остаётся в диапазоне [0,1];
+  - дублирование prediction не увеличивает TP;
+  - изменение explanation не меняет base reward;
+  - interleaved episodes не разделяют state.
+
+20.3. Метаморфические преобразования
+------------------------------------
+Преобразования, сохраняющие семантику:
+  M-01 permutation: перестановка строк с сохранением сортировочного контракта
+       или эквивалентный порядок после каноникализации;
+  M-02 ID bijection: взаимно-однозначное переименование ID и всех ссылок;
+  M-03 entity renaming: смена имён компании/контрагентов без изменения ключей;
+  M-04 timezone representation: эквивалентное представление момента времени,
+       если policy timezone mapping допускает его;
+  M-05 JSON key order: изменение порядка object keys;
+  M-06 equivalent description: изменение неструктурированного текста без
+       изменения фактов;
+  M-07 table serialization: JSONL serialization variants, эквивалентные схеме.
+
+Главное свойство:
+  oracle(transform(E)) == transform(oracle(E))
+и базовая reward сохраняется, за исключением явно меняющихся идентификаторов,
+которые должны быть сопоставлены через transformation map.
+
+Не всякая смена timezone является семантически нейтральной: при изменении
+локального времени/периода она может менять cut-off. Тест допускается только
+для эквивалентных instant и правил. Нельзя объявлять timezone transformation
+семантически нейтральной, если сдвигается accounting period.
+
+20.4. RNG isolation tests
+-------------------------
+Сгенерировать чистую книгу с одинаковым master seed и разными наборами
+mutation operators. Clean twin hash должен совпасть. Изменение текстового
+namespace не меняет суммы и ID. Изменение порядка operator execution меняет
+результат только в тех составных сценариях, где порядок явно является частью
+causal spec.
+
+20.5. Reward mutation testing
+-----------------------------
+Создать не менее 25 искусственных мутантов matcher/reward. Обязательные классы:
+  - игнорировать type;
+  - не сравнивать currency;
+  - ослабить affected IDs;
+  - не проверять evidence;
+  - сделать tolerance чрезмерно широким;
+  - изменить знак штрафа за шаги;
+  - забыть FP;
+  - забыть FN;
+  - засчитывать один truth несколько раз;
+  - засчитывать один finding несколько раз;
+  - считать duplicate prediction выгодным;
+  - игнорировать truncated;
+  - считать clean silence ошибкой вопреки policy;
+  - применять explanation similarity к reward;
+  - использовать float и получить пограничную ошибку;
+  - зависеть от порядка input list;
+  - пропустить currency exponent;
+  - обрезать evidence список до проверки;
+  - принять split finding как точное совпадение;
+  - не валидировать неизвестные finding types;
+  - использовать seed в tie-break;
+  - позволить reward измениться после second submit;
+  - считать submit как inspection step без основания;
+  - пропустить max_steps cap;
+  - не включить один из типовых anomaly fields.
+
+Mutation score = доля мутантов, убитых тестами. Цель — 100% для заранее
+объявленного набора мутантов; surviving mutants документируются и требуют
+обоснования/добавления тестов. Высокий mutation score не доказывает отсутствие
+всех багов, но выявляет слабые тесты.
+
+20.6. Differential matcher tests
+--------------------------------
+Для случайных малых cases (до 7x7) эталонный brute-force matcher сверяется с
+production matcher по числу пар, общей стоимости и tie-break result. Входные
+случаи сохраняются при любом расхождении, чтобы регрессия была воспроизводима.
+
+20.7. Interleaved environment isolation
+---------------------------------------
+Два или более окружения с разными seed/episode одновременно либо чередуясь
+проходят набор действий. Результат каждого должен совпадать с отдельным
+изолированным запуском. Никакие global cache, singleton state или временные
+файлы не должны смешивать данные.
+
+REQ-TEST-001 Любой баг, найденный в интеграционном прогоне, получает regression test.
+REQ-TEST-002 Тесты не ослабляются ради прохождения без обоснованного CR.
+REQ-TEST-003 Randomized test failure сохраняет seed и минимальный reproducer.
+REQ-TEST-004 На каждом фазовом gate выполняется минимальный core test suite.
+
+
+================================================================================
+21. УНИКАЛЬНЫЕ ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ И ПРОДУКТОВАЯ ДИФФЕРЕНЦИАЦИЯ
+================================================================================
+
+Эти функции дают TwinLedger исследовательскую и демонстрационную ценность,
+но не должны попадать в critical path раньше, чем core contract, generator,
+verifier, scoring и reproducibility зелёные.
+
+21.1. Proof-Carrying Findings
+-----------------------------
+Каждый finding сопровождается ProofGraph certificate: факты, ссылки,
+правила и вычисления, из которых следует вывод. В judge report можно открыть
+finding и проверить путь до исходных public records. Это делает результат
+объяснимым и пригодным для аудита самого агента.
+
+Критерий приёмки: для 100% benchmark findings существует машинно-проверяемый
+proof path; для каждого proof path есть хотя бы один воспроизводимый public
+source record.
+
+21.2. Counterfactual Pair Benchmark
+-----------------------------------
+Публиковать benchmark pairs: два максимально похожих эпизода, где в одном
+есть ошибка, а во втором — ровно один исправляющий факт. Метрика показывает,
+способен ли policy различить не только аномалию, но и ближайший корректный
+случай. Это сильнее простой классификации «есть/нет ошибки».
+
+Критерий приёмки: pair manifest содержит transformation relation и проверяется
+независимым verifier; пары не разделяются между train/dev/heldout.
+
+21.3. Evidence Ablation Benchmark
+---------------------------------
+Для каждого truth finding удаляется один из supporting records или один факт
+из evidence set и запускается verifier повторно. Если finding остаётся
+доказуемым, значит исходный набор был не минимален или существует альтернативный
+сертификат; отчёт должен выявить это. При удалении всех элементов одного
+минимального набора хотя бы один обязательный proof path должен исчезнуть.
+
+Критерий приёмки: evidence minimality и alternative certificate coverage
+измеряются автоматически.
+
+21.4. Contradiction-aware Evidence
+----------------------------------
+ProofGraph хранит не только supports, но и contradicts/excludes. Например,
+credit note или refund может опровергать простой вывод о дублирующем платеже.
+Это снижает false positives и делает distractors формальными проверочными
+объектами.
+
+Критерий приёмки: на всех distractor pairs verifier либо находит корректный
+вывод, либо явно строит exclusion path; ложные findings равны нулю на
+контрольной выборке.
+
+21.5. Active Inspection / Value-of-Information Track
+----------------------------------------------------
+Экспериментальная метрика оценивает выбор следующего инструмента: какие
+запросы сокращают неопределённость по finding с минимальным бюджетом. Для
+каждого tool action можно рассчитать expected information gain в test oracle
+(не раскрывать его policy), а затем сравнить поведение policy с greedy
+information baseline.
+
+Это исследовательский показатель, не official reward. Он демонстрирует, что
+среда оценивает не только правильность ответа, но и качество процесса поиска.
+
+Критерий приёмки: value-of-information metrics отделены от reward и не
+используются при генерации truth.
+
+21.6. Calibration Track
+-----------------------
+Отдельно анализируется confidence calibration, если finding schema содержит
+confidence. Метрики: Brier score, expected calibration error, reliability
+plot. Если confidence не предусмотрен официальной схемой, track выключен и
+не расширяет finding contract.
+
+21.7. Data lineage / Episode Provenance Receipt
+------------------------------------------------
+Каждый эпизод получает digest цепочки:
+  generator version -> config hash -> clean twin hash -> mutation diff hash
+  -> verifier report hash -> truth commitment -> public manifest hash
+  -> trajectory head -> scorer report hash.
+
+Receipt позволяет жюри проверить историю построения эпизода, не давая policy
+доступа к private source data. Provenance receipt доказывает происхождение и
+целостность, но не заменяет независимую семантическую проверку.
+
+21.8. Gymnasium adapter
+-----------------------
+Опциональная тонкая обёртка адаптирует среду к Gymnasium API. Внутренняя
+реализация не должна зависеть от Gymnasium. Обёртка проверяется на совместимость
+и не является официальным ядром, если организаторы не требуют иначе.
+
+21.9. Самодостаточный отчёт
+---------------------------
+Опциональная команда создаёт статический HTML report с inline CSS/JS и
+агрегированными JSON artifacts. Никаких remote scripts/CDN/network requests.
+Графики строятся локально или встраиваются статически. Отчёт не содержит
+секретов, canary strings, скрытых seed или raw private data.
+
+REQ-UNIQUE-001 Ни одна уникальная функция не меняет official reward без approval.
+REQ-UNIQUE-002 У каждой функции есть отдельный test gate и config flag.
+REQ-UNIQUE-003 В отсутствие optional dependency core продолжает работать.
+REQ-UNIQUE-004 Feature не добавляется, если увеличивает риск нарушения
+  официального API или не укладывается в ресурсы.
+
+
+================================================================================
+22. БИБЛИОТЕКИ, СРЕДА ВЫПОЛНЕНИЯ И OFFLINE BUILD
+================================================================================
+
+22.1. Core dependencies
+-----------------------
+Core должен работать на Python 3.11 и стандартной библиотеке:
+  argparse, ast, base64, collections, copy, csv, dataclasses, datetime,
+  decimal, difflib (только где применимо), enum, hashlib, hmac, io, itertools,
+  json, math (не для денег), multiprocessing, os, pathlib, random, secrets,
+  statistics, subprocess, sys, tempfile, textwrap, time, typing, unicodedata,
+  unittest, zoneinfo.
+
+Не добавлять зависимость, если эквивалентная функция проста и безопасно
+реализуется на stdlib. Для timezone database на платформах без системных
+данных может понадобиться закреплённый tzdata пакет; его наличие и версия
+документируются.
+
+22.2. Optional extras
+---------------------
+  pytest             developer test runner;
+  hypothesis         property-based tests;
+  jsonschema         schema validation;
+  numpy              численные эксперименты;
+  scikit-learn       shortcut classifiers/TF-IDF;
+  gymnasium          optional RL adapter;
+  matplotlib         optional static plots;
+  build tooling      только для разработки и package assembly.
+
+Ни одна optional dependency не должна быть нужна для reset/step, truth scoring,
+commit verification или replay core.
+
+22.3. Offline dependency policy
+-------------------------------
+Для каждого стороннего пакета:
+  - точная версия;
+  - hashes для wheels/source distributions;
+  - licence review;
+  - wheelhouse/vendor только если разрешён правилами;
+  - SBOM или dependency manifest;
+  - проверка запуска без сети.
+
+Запрещено во время запуска:
+  - pip install;
+  - автоматическое скачивание модели;
+  - обращение к внешнему API;
+  - телеметрия;
+  - remote font/CDN;
+  - автоматические обновления.
+
+22.4. Docker
+-------------
+Docker build должен быть reproducible насколько позволяет базовый образ.
+Закрепить base image digest, Python patch version, пакетные версии и команды.
+Контейнер проверки запускается с отключённой сетью. Не запускать как root,
+если это технически возможно и не ломает официальный entrypoint. Sealed data
+не монтируется в env/policy containers.
+
+22.5. Ресурсы и производительность
+----------------------------------
+Предварительные лимиты из контекста:
+  CPU: 2 cores
+  RAM: 4 GB
+  disk: до 1 GB на решение
+  offline execution
+  Python 3.11
+
+Начальные performance targets:
+  - env step p99 < 5 ms на согласованном benchmark host для indexed queries;
+  - один L4 episode < 50 MB на диске;
+  - peak memory < 300 MB на episode;
+  - make verify < 10 минут на целевом стенде.
+
+Эти targets измеряются и включают benchmark hardware/OS/Python version в
+report. Не утверждать соответствие лимиту по одному локальному запуску на
+неизвестной машине.
+
+REQ-OPS-001 Core не зависит от network.
+REQ-OPS-002 Dependencies фиксированы и проверяются offline.
+REQ-OPS-003 Все resource budgets измеряются.
+REQ-OPS-004 При превышении ресурса команда завершается понятной ошибкой,
+  оставляя диагностический receipt без ложного PASS.
+
+
+================================================================================
+23. JUDGE KIT, MAKE TARGETS И АВТОМАТИЧЕСКИЙ ОТЧЁТ
+================================================================================
+
+23.1. Цель Judge Kit
+--------------------
+Judge Kit — единая точка входа для команды и жюри. Он не должен содержать
+особые скрытые пути, которые обходят основной контракт. Все проверки доступны
+из CLI и имеют JSON machine-readable output.
+
+23.2. Обязательные Make targets
+--------------------------------
+  make help
+      Показывает доступные команды и краткое назначение.
+  make setup
+      Проверяет Python version и наличие optional extras; ничего не скачивает.
+  make lint
+      Стиль, import boundaries, contract consistency.
+  make test
+      Unit + integration tests core.
+  make test-property
+      Property tests; если Hypothesis отсутствует, выполняет stdlib fallback.
+  make build-episodes
+      Генерирует train/dev/test-public наборы из locked configs.
+  make verify-core
+      Проверяет критичное ядро и release blockers.
+  make verify
+      Запускает полный рубрикатор и формирует итоговый PASS/FAIL report.
+  make replay
+      Проверяет trajectory determinism.
+  make audit-shortcuts
+      Проверяет metadata-only leakage.
+  make mutation-test
+      Запускает набор scorer mutants.
+  make report
+      Создаёт агрегированный JSON/HTML report.
+  make docker-check
+      Offline build/run smoke test.
+  make clean
+      Удаляет только generated temporary artifacts, не sealed source inputs.
+
+Команды могут иметь иной CLI синтаксис, но должны сохранять эти понятные
+операции и documented return codes.
+
+23.3. Результаты make verify
+----------------------------
+Вывод включает:
+  - имя проверки;
+  - соответствующий REQ-ID и rubric item;
+  - PASS / FAIL / SKIPPED / BLOCKED;
+  - причину;
+  - artifact reference;
+  - duration;
+  - краткую диагностику без secret data.
+
+Exit codes:
+  0 — все обязательные проверки PASS; optional SKIPPED явно обозначены;
+  1 — один или более обязательных тестов FAIL;
+  2 — configuration/contract error;
+  3 — resource/environment error;
+  4 — release blocker (leak, scorer tampering, non-determinism, invalid truth);
+  5 — test suite not complete / required dependency missing.
+
+Нельзя возвращать exit code 0, если критическая проверка была SKIPPED из-за
+нехватки зависимости или не запускалась. Разделять required и optional.
+
+23.4. Рубрикатор
+----------------
+rubric_map.json сопоставляет:
+  official rubric criterion -> REQ-ID -> test id -> command -> evidence artifact.
+
+Если организаторы ещё не раскрыли точные 80 тестов, rubric map показывает
+`provisional=true`. Нельзя выдавать внутренние 80 тестов за официальные.
+После публикации официальных проверок каждая переносится в rubric_map с точной
+цитатой/идентификатором и зеркальным тестом.
+
+23.5. Обязательные отчёты
+------------------------
+artifacts/reports/latest/
+  verify_summary.json
+  verify_summary.txt
+  rubric_matrix.csv
+  episode_matrix.csv
+  generator_report.json
+  invariants_report.json
+  verifier_report_index.json
+  reward_strategy_report.json
+  shortcut_audit.json
+  canary_fuzz_report.json
+  mutation_test_report.json
+  metamorphic_report.json
+  replay_report.json
+  performance_report.json
+  dependency_report.json
+  limitations_snapshot.md
+  report.html (optional)
+
+Каждый report должен содержать code version, config hash, run timestamp (для
+человеческой диагностики; исключён из deterministic hashes), target platform,
+Python version и команды запуска.
+
+23.6. Понятный PASS не равен «победе»
+------------------------------------
+Итог в 100 баллов разрешён только если официальная рубрика и её веса известны,
+каждая проверка реализована корректно, а scoring воспроизводит официальную
+методику. До этого показывать внутренний процент прохождения TwinLedger
+verification suite, не выдавая его за оценку жюри.
+
+23.7. Отчёт о каждой фазе
+------------------------
+После завершения фазы агент публикует:
+  docs/PHASE_REPORTS/PHASE-XX.md
+  docs/PHASE_REPORTS/PHASE-XX.json (машиночитаемый краткий отчёт)
+
+Включить: scope, REQ IDs, commits, changed files, команды, результаты,
+непрошедшие tests, deviations, known limitations, next phase, owner sign-off.
+
+REQ-JUDGE-001 make verify запускается с чистой рабочей копии.
+REQ-JUDGE-002 PASS сопровождается конкретным artifact path и командой.
+REQ-JUDGE-003 Optional checks явно SKIPPED, not silently omitted.
+REQ-JUDGE-004 HTML report не требует сети.
+REQ-JUDGE-005 Report не раскрывает truth, canaries или heldout seed.
+
+
+================================================================================
+24. ФАЗЫ РАЗРАБОТКИ: ОТ НУЛЯ ДО СДАЧИ
+================================================================================
+
+План ниже рассчитан как пошаговый план для четырёх владельцев зон и нескольких
+ИИ-агентов. Число календарных часов не является обещанием; при ограниченном
+сроке приоритеты A/B/C из раздела 25 важнее попытки параллельно делать всё.
+Каждая фаза имеет вход, задачи, результаты, тесты и exit gate.
+
+-------------------------------------------------------------------------------
+ФАЗА 0. DISCOVERY, ОФИЦИАЛЬНЫЙ КОНТРАКТ И РЕЕСТР РИСКОВ
+-------------------------------------------------------------------------------
+Цель: убрать неопределённость до создания архитектуры.
+
+Задачи:
+  0.1 Найти полное официальное ТЗ, rubric, sample inputs/outputs и starter code.
+  0.2 Сохранить локальную неизменённую копию, version/date/source/hash.
+  0.3 Выписать точные имена инструментов, схемы, reward, budget, limits,
+      submission format и environment restrictions.
+  0.4 Сопоставить каждый официальный пункт с предположениями этого документа.
+  0.5 Составить docs/DECISIONS.md: CONFIRMED / CHANGED / OPEN.
+  0.6 Создать docs/QUESTIONS.md и задать организаторам неясные вопросы.
+  0.7 Запустить минимальный smoke test официального starter environment, если есть.
+  0.8 Зафиксировать submission deadline и локальный timezone.
+
+Результаты:
+  docs/official/ (если правила разрешают хранить копию)
+  docs/DECISIONS.md
+  docs/QUESTIONS.md
+  contracts/ v0.1
+  docs/RUBRIC_TRACEABILITY.md
+  docs/STATUS.md
+
+Тесты:
+  - каждый A-xxx вопрос имеет ответ или явный статус OPEN;
+  - ни одна provisional formula не названа официальной;
+  - official contract summary проверен двумя людьми.
+
+EXIT GATE 0:
+  - обязательные интерфейсы известны;
+  - неизвестные вопросы изолированы в adapter/ и config;
+  - критический риск, блокирующий архитектуру, либо снят, либо имеет
+    документированное безопасное решение.
+
+-------------------------------------------------------------------------------
+ФАЗА 1. REPOSITORY FOUNDATION И CONTRACT FREEZE
+-------------------------------------------------------------------------------
+Цель: создать структуру проекта, автоматизацию и границы модулей.
+
+Задачи:
+  1.1 Инициализировать repository и default branch.
+  1.2 Настроить Python 3.11, pyproject, Makefile и .gitignore.
+  1.3 Создать contracts/ и JSON schemas.
+  1.4 Добавить typed domain models и canonical JSON utility.
+  1.5 Настроить CI: tests, lint, import-boundary scan.
+  1.6 Настроить PR template, issue templates, CODEOWNERS, branch protection.
+  1.7 Создать PROJECT_CONTEXT.md, CURRENT_STATE.md, DECISIONS.md.
+  1.8 Утвердить ownership всех директорий.
+
+Результаты:
+  repository skeleton;
+  validated schema examples;
+  CI checks;
+  one-page architecture map.
+
+Тесты:
+  - схемы принимают valid fixtures;
+  - схемы отклоняют malformed fixtures;
+  - canonical JSON golden tests;
+  - import boundary test запускается в CI.
+
+EXIT GATE 1:
+  contracts заморожены для MVP; дальнейшие изменения только через CR.
+
+-------------------------------------------------------------------------------
+ФАЗА 2. ДЕНЕЖНЫЕ ПРИМИТИВЫ, ВРЕМЯ, ID И ИНВАРИАНТЫ
+-------------------------------------------------------------------------------
+Цель: создать независимый фундамент бизнес-логики до генератора.
+
+Задачи:
+  2.1 Implement currency exponent registry.
+  2.2 Implement Decimal rate parsing and minor-unit conversion.
+  2.3 Implement rounding policy.
+  2.4 Implement timezone/period calendar utilities.
+  2.5 Implement deterministic ID factory.
+  2.6 Implement invariant catalog and machine-readable signatures.
+  2.7 Prepare manually authored accounting fixtures.
+
+Результаты:
+  core/money.py;
+  core/time_rules.py;
+  core/ids.py;
+  invariants/;
+  tests/fixtures/manual/.
+
+Тесты:
+  - ручные тесты KZT/USD/JPY/KWD;
+  - half-even и boundary rounding;
+  - DST / period boundary;
+  - balance and allocation invariants;
+  - invalid reference and duplicate ID.
+
+EXIT GATE 2:
+  арифметика и time policy однозначны; все критичные primitives имеют
+  hand-authored tests, не сгенерированные generator.
+
+-------------------------------------------------------------------------------
+ФАЗА 3. ЧИСТЫЙ ГЕНЕРАТОР (CLEAN TWIN)
+-------------------------------------------------------------------------------
+Цель: построить реалистичную, полностью сбалансированную синтетическую компанию.
+
+Задачи:
+  3.1 Implement namespaced RNG service.
+  3.2 Generate company, chart of accounts, counterparties.
+  3.3 Generate FX timeline and policy.
+  3.4 Generate invoices, payments, credit notes, bank lines and JE.
+  3.5 Generate multilingual descriptions.
+  3.6 Validate all referential constraints.
+  3.7 Run full invariant suite.
+  3.8 Persist clean snapshot and digest.
+
+Результаты:
+  gen/core/;
+  clean episode fixtures L1-L4;
+  generator golden hashes.
+
+Тесты:
+  - identical seed/config -> identical bytes;
+  - no errors in clean twins;
+  - interleaved RNG streams do not interfere;
+  - all IDs are unique and references resolve.
+
+EXIT GATE 3:
+  clean generation stable; all invariants pass for full seed matrix.
+
+-------------------------------------------------------------------------------
+ФАЗА 4. ПЕРВЫЕ МУТАЦИОННЫЕ ОПЕРАТОРЫ И DIFF TRUTH
+-------------------------------------------------------------------------------
+Цель: создать вертикальный срез end-to-end с одной-двумя аномалиями.
+
+Задачи:
+  4.1 Implement immutable clean/mutated twin snapshots.
+  4.2 Implement DUPLICATE_PAYMENT operator.
+  4.3 Implement PARTIAL_PAYMENT_ALLOCATION operator.
+  4.4 Implement structural diff.
+  4.5 Build candidate truth with invariant signatures.
+  4.6 Add first distractor pair per type.
+  4.7 Add rejection sampling.
+
+Результаты:
+  gen/errors/;
+  gen/truthdiff.py;
+  gen/reject.py;
+  two anomaly episode families.
+
+Тесты:
+  - exact diff and amounts;
+  - only intended invariant changes;
+  - clean twin unchanged by mutations;
+  - no generator shortcut in ID/order/position.
+
+EXIT GATE 4:
+  два типа аномалий генерируются и проходят все текущие quality gates.
+
+-------------------------------------------------------------------------------
+ФАЗА 5. СРЕДА RESET/STEP И PUBLIC TOOL API
+-------------------------------------------------------------------------------
+Цель: сделать работающую среду, из которой policy может собирать доступные факты.
+
+Задачи:
+  5.1 Implement public-only episode loader.
+  5.2 Implement reset and step state machine.
+  5.3 Implement list_records, get_record, get_document.
+  5.4 Implement filters, ordering and cursor pagination.
+  5.5 Implement bounded errors and budget accounting.
+  5.6 Implement submit validation and lifecycle state.
+  5.7 Implement calculator only if required by official contract.
+  5.8 Implement CLOSED_EVAL behavior.
+
+Результаты:
+  env/;
+  contract tests;
+  environment CLI smoke test.
+
+Тесты:
+  - all valid actions;
+  - all invalid actions;
+  - budget and termination;
+  - duplicate submit;
+  - invalid cursor;
+  - no truth/seed in observation/info;
+  - env loader cannot access sealed.
+
+EXIT GATE 5:
+  reset/step stable and complete through official adapter for MVP subset.
+
+-------------------------------------------------------------------------------
+ФАЗА 6. MATCHER И БАЗОВАЯ НАГРАДА
+-------------------------------------------------------------------------------
+Цель: сделать reward точным, прозрачным и независимым от формулировки текста.
+
+Задачи:
+  6.1 Freeze finding canonical schema.
+  6.2 Implement canonical IDs and finding validation.
+  6.3 Implement match predicate.
+  6.4 Implement deterministic maximum matching and tie-break.
+  6.5 Implement TP/FP/FN, F1 and official reward.
+  6.6 Add five reward-property suites.
+  6.7 Add brute-force differential matcher for small graphs.
+
+Результаты:
+  scoring/matcher.py;
+  scoring/reward.py;
+  scoring/diagnostics.py;
+  reward test matrix.
+
+Тесты:
+  - all control examples;
+  - duplicate/split/flag-all;
+  - clean silence and false positives;
+  - tolerance boundaries;
+  - currency/ID/evidence mismatch;
+  - order invariance and tie-breaking.
+
+EXIT GATE 6:
+  matcher and reward are stable, deterministic, and conform to official rubric
+  or are clearly marked provisional if rubric not published.
+
+-------------------------------------------------------------------------------
+ФАЗА 7. FX И PERIOD CUTOFF OPERATORS
+-------------------------------------------------------------------------------
+Цель: покрыть весь обязательный набор типов ошибок.
+
+Задачи:
+  7.1 Implement FX_RATE_MISMATCH.
+  7.2 Implement PERIOD_CUTOFF.
+  7.3 Add minimum 4 distractors per type where time permits.
+  7.4 Validate financial balance and period invariants.
+  7.5 Add mixed-currency and DST fixtures.
+  7.6 Verify affected_ids semantics against official spec.
+
+Результаты:
+  complete four-type mutation set;
+  per-type invariants and distractor reports.
+
+EXIT GATE 7:
+  all four types generate deterministically, are distinguishable and discoverable.
+
+-------------------------------------------------------------------------------
+ФАЗА 8. НЕЗАВИСИМЫЙ VERIFIER И PROOFGRAPH
+-------------------------------------------------------------------------------
+Цель: независимо проверить truth и доказать достаточность evidence.
+
+Задачи:
+  8.1 Freeze verifier algorithm spec without reading generator code.
+  8.2 Implement independent discovery for all four anomaly types.
+  8.3 Implement ProofGraph DAG.
+  8.4 Enumerate minimal/alternative evidence sets.
+  8.5 Implement distractor exclusion logic.
+  8.6 Add independent crosscheck against truth.
+  8.7 Add import and file-access boundary tests.
+
+Результаты:
+  verifier/;
+  verifier_report.json for each episode;
+  independence report.
+
+Тесты:
+  - zero FP on clean;
+  - no missed truth finding;
+  - evidence reachability;
+  - evidence deletion/ablation;
+  - no gen/sealed access during discovery.
+
+EXIT GATE 8:
+  100% generated release episodes independently verified; else reject/rebuild.
+
+-------------------------------------------------------------------------------
+ФАЗА 9. ПРОЦЕССЫ, SEALED EVALUATION И RECEIPTS
+-------------------------------------------------------------------------------
+Цель: закрыть каналы к оценщику и обеспечить проверяемое происхождение.
+
+Задачи:
+  9.1 Implement policy JSONL protocol.
+  9.2 Implement harness and env subprocess.
+  9.3 Implement scorer subprocess after termination.
+  9.4 Add commit-reveal.
+  9.5 Add trajectory hash chain.
+  9.6 Add Merkle tree and receipt.
+  9.7 Add replay command.
+  9.8 Add platform-specific isolation profile.
+
+Результаты:
+  harness/;
+  seal/;
+  receipts;
+  replay report.
+
+Тесты:
+  - policy cannot read sealed;
+  - env cannot read sealed;
+  - scorer only starts after environment ends;
+  - commitment verifies;
+  - trajectory mutation changes hash;
+  - replay is byte-identical.
+
+EXIT GATE 9:
+  CLOSED_EVAL full flow passes on a clean workspace.
+
+-------------------------------------------------------------------------------
+ФАЗА 10. MULTILINGUAL TEXT / NLP LAYER
+-------------------------------------------------------------------------------
+Цель: повысить реалистичность и разнообразие данных без изменения core semantics.
+
+Задачи:
+  10.1 Add deterministic ru/kk/en templates.
+  10.2 Add abbreviations, transliteration and benign typos.
+  10.3 Add Unicode normalization tests.
+  10.4 Add text-to-entity candidate matching as optional helper.
+  10.5 Enforce evidence hierarchy and no text-only findings.
+  10.6 Build explanation consistency linter.
+
+Результаты:
+  gen/core/text/;
+  nlp/;
+  explanation consistency report.
+
+EXIT GATE 10:
+  текстовый слой отключается без влияния на core; verifier does not rely on
+  unsupported fuzzy matches.
+
+-------------------------------------------------------------------------------
+ФАЗА 11. ROBUSTNESS / PROMPT-INJECTION TRACK
+-------------------------------------------------------------------------------
+Цель: проверить устойчивость policy к инструкциям внутри документов.
+
+Задачи:
+  11.1 Create separate robustness config.
+  11.2 Generate benign injection canaries in synthetic descriptions.
+  11.3 Implement injection-follow baseline attack.
+  11.4 Compare policy behavior with neutral-text twin.
+  11.5 Report score and behavioral change separately.
+
+EXIT GATE 11:
+  robustness track is isolated, deterministic and cannot alter official reward.
+
+-------------------------------------------------------------------------------
+ФАЗА 12. ARENA, ATTACK CATALOG И SHORTCUT AUDIT
+-------------------------------------------------------------------------------
+Цель: проверить, что среда не вознаграждает простые злоупотребления.
+
+Задачи:
+  12.1 Implement baseline policies.
+  12.2 Implement minimum 18 attacks.
+  12.3 Implement deterministic AutoHacker.
+  12.4 Build train/dev/heldout by source-history group.
+  12.5 Implement metadata-only classifier audit.
+  12.6 Implement side-channel and canary fuzz tests.
+  12.7 Generate strategy report by difficulty and clean/dirty episodes.
+
+EXIT GATE 12:
+  all attacks execute; no severe leakage; shortcut threshold passes or release
+  blocker is explicitly unresolved and core cannot be marked leak-safe.
+
+-------------------------------------------------------------------------------
+ФАЗА 13. METAMORPHIC, PROPERTY И MUTATION TESTS
+-------------------------------------------------------------------------------
+Цель: проверить устойчивость к перестановкам и типовым регрессиям.
+
+Задачи:
+  13.1 Implement metamorphic transformations.
+  13.2 Implement RNG isolation suite.
+  13.3 Implement evidence ablation.
+  13.4 Create 25+ reward/matcher mutants.
+  13.5 Add property-based tests and stdlib fallback.
+  13.6 Add interleaved environment tests.
+
+EXIT GATE 13:
+  all required mutants killed or explicitly reviewed; metamorphic invariants pass.
+
+-------------------------------------------------------------------------------
+ФАЗА 14. JUDGE KIT И FULL REPORT
+-------------------------------------------------------------------------------
+Цель: собрать одну команду, которая воспроизводит доказательства качества.
+
+Задачи:
+  14.1 Implement rubric_map.
+  14.2 Implement make verify and exit codes.
+  14.3 Implement artifact report schemas.
+  14.4 Generate CSV/JSON summary.
+  14.5 Generate optional offline HTML report.
+  14.6 Add phase report template and automatic artifact index.
+
+EXIT GATE 14:
+  чистая checkout + documented command -> complete verification outputs.
+
+-------------------------------------------------------------------------------
+ФАЗА 15. ДОКУМЕНТАЦИЯ И ДЕМО
+-------------------------------------------------------------------------------
+Цель: сделать архитектуру проверяемой для жюри, а не только понятной разработчикам.
+
+Задачи:
+  15.1 Write README, DESIGN, LIMITATIONS, DATA_DICTIONARY.
+  15.2 Write THREAT_MODEL and INDEPENDENCE.
+  15.3 Write API usage and policy protocol docs.
+  15.4 Prepare 3-minute demo and technical backup demo.
+  15.5 Ensure all claims link to report artifacts.
+  15.6 Validate no unsupported claims or fake metrics.
+
+EXIT GATE 15:
+  жюри может развернуть проект по README и проверить ключевые утверждения.
+
+-------------------------------------------------------------------------------
+ФАЗА 16. RELEASE CANDIDATE, CLEAN MACHINE И SUBMISSION
+-------------------------------------------------------------------------------
+Цель: заморозить реализацию и проверить submission package.
+
+Задачи:
+  16.1 Freeze feature development.
+  16.2 Run full `make verify` on clean clone.
+  16.3 Run offline Docker check with network disabled.
+  16.4 Run replay on all published trajectories.
+  16.5 Audit secrets, file list, package size and dependencies.
+  16.6 Verify exact official entrypoint and submission format.
+  16.7 Tag release and record commit hash.
+  16.8 Create final GitHub release with report and limitations.
+
+EXIT GATE 16:
+  no release blockers; all required tests pass; submission format verified.
+
+-------------------------------------------------------------------------------
+ФАЗА 17. POST-RELEASE EVIDENCE FREEZE
+-------------------------------------------------------------------------------
+Цель: сохранить полностью воспроизводимый пакет результатов.
+
+Задачи:
+  17.1 Archive final code version and config hashes.
+  17.2 Archive verify and replay reports.
+  17.3 Archive final rubric map and decisions.
+  17.4 Create final commit/release tag.
+  17.5 Write final status and known limitations.
+  17.6 Ensure next agent can reconstruct context from repo only.
+
+EXIT GATE 17:
+  релиз можно восстановить и проверить без устных пояснений команды.
+
+
+================================================================================
+25. ПРИОРИТЕТЫ A / B / C И ПРАВИЛА СРЕЗА ФУНКЦИОНАЛА
+================================================================================
+
+25.1. Уровень A — обязательно для сдаваемого MVP
+-----------------------------------------------
+  - official contract adapter;
+  - reset/step и public tools;
+  - deterministic clean generator;
+  - все четыре anomaly types;
+  - diff-based truth;
+  - invariant signatures;
+  - независимый verifier;
+  - evidence reachability/minimality;
+  - matcher и official reward;
+  - closed evaluation mode;
+  - commit-reveal / replay настолько, насколько требует rubric;
+  - базовый attack suite;
+  - core make verify;
+  - README, DESIGN, LIMITATIONS;
+  - clean offline run.
+
+Уровень A не считается готовым, если любой критичный тест только пропускается.
+
+25.2. Уровень B — основные отличия
+---------------------------------
+  - ProofGraph;
+  - counterfactual minimal pairs;
+  - shortcut classifier;
+  - canary fuzzing;
+  - metamorphic tests;
+  - 25+ mutation mutants;
+  - full reward strategy matrix;
+  - AutoHacker и heldout learnability probe;
+  - train/dev/heldout grouped by base history.
+
+25.3. Уровень C — дополнительные демонстрационные/исследовательские функции
+----------------------------------------------------------------------------
+  - NLP fuzzy matching;
+  - prompt-injection robustness track;
+  - explanation linter;
+  - Gymnasium adapter;
+  - HTML report;
+  - calibration track;
+  - value-of-information benchmark.
+
+25.4. Правило среза
+------------------
+Если срок сокращается, функции удаляются строго в обратном порядке приоритета:
+сначала C, затем B. Нельзя ради красивого NLP demo пропустить независимый
+verifier, reward correctness или core contract.
+
+Уровень A нельзя сокращать так, чтобы проект нарушал официальный контракт.
+Если ресурс не позволяет реализовать все A функции, агент должен прямо
+обозначить MVP incomplete и перечислить блокирующие требования.
+
+
+================================================================================
+26. СЦЕНАРИЙ ДЕМОНСТРАЦИИ ДЛЯ ЖЮРИ
+================================================================================
+
+Цель demo — быстро продемонстрировать доверие к среде, а не показывать длинный
+UI walkthrough. Рекомендуемая длительность — около 3 минут.
+
+0:00–0:25 — Проблема и архитектурная идея
+  «Большинство benchmark environments сообщают ground truth, но не показывают,
+   как он получен и можно ли ему доверять. TwinLedger строит чистую компанию,
+   создаёт контролируемую контрафактическую мутацию и независимо проверяет её».
+
+0:25–0:55 — Контрафактические близнецы
+  Показать clean/mutated twin на безопасном примере. Продемонстрировать diff,
+  invariant signature и сформированный candidate truth. Подчеркнуть, что diff
+  не является единственным доказательством семантической ошибки.
+
+0:55–1:25 — ProofGraph и независимый verifier
+  Показать путь finding -> calculation -> policy rule -> public evidence.
+  Открыть distractor pair и показать факт, который исключает ложный вывод.
+
+1:25–1:55 — Изоляция и целостность
+  Показать CLOSED_EVAL, commitment, canary scan и trajectory replay. Не
+  утверждать абсолютную песочницу, если ограничения платформы этого не дают.
+
+1:55–2:30 — Reward stress test
+  Показать стратегию honest auditor рядом с flag-all, duplicate spam и silent.
+  Показать, что официальный scoring не изменён экспериментальными метриками.
+
+2:30–3:00 — make verify и честные ограничения
+  Запустить make verify или показать свежий отчёт с commit hash. Закончить
+  LIMITATIONS: что проверено, что остаётся ограниченным и какие проверки
+  определяются только организаторами.
+
+DEMO RULES:
+  - demo проводится на заранее зафиксированном episode и config;
+  - никаких выдуманных цифр/скриншотов;
+  - не показывать private truth до корректного reveal;
+  - не называть internal score official score;
+  - при сбое demo использовать проверенный artifact, а не фальшивый вывод.
+
+
+================================================================================
+27. РИСКИ, ПРОТИВОРЕЧИЯ И ОБЯЗАТЕЛЬНЫЕ ИНЖЕНЕРНЫЕ РЕШЕНИЯ
+================================================================================
+
+R-01 Официальная рубрика отличается от предположений.
+  Mitigation: Phase 0, adapter, rubric_map, decisions.
+
+R-02 Truth корректен по diff, но семантически неверен.
+  Mitigation: independent verifier, invariant signatures, hand-authored tests.
+
+R-03 Verifier повторяет баг генератора.
+  Mitigation: отдельный owner, отдельный алгоритм, common-mode dependency report.
+
+R-04 Evidence IDs недоступны через инструменты.
+  Mitigation: reachability tests и evidence graph.
+
+R-05 Matcher неоднозначен из-за пересекающихся findings.
+  Mitigation: ambiguity rejection, exact affected IDs, deterministic tie-break.
+
+R-06 Генераторная запись распознаётся по metadata.
+  Mitigation: metadata-only classifier, realistic insertion distribution.
+
+R-07 Текстовая similarity порождает ложные связи.
+  Mitigation: text is supplemental only; structured proof required.
+
+R-08 Prompt injection влияет на policy.
+  Mitigation: separate robustness track, neutral twin comparison.
+
+R-09 Процессная изоляция заявлена сильнее, чем реализована.
+  Mitigation: platform-specific threat model and LIMITATIONS.
+
+R-10 Commit-reveal ошибочно трактуется как доказательство истинности.
+  Mitigation: explicitly separate integrity and semantic validation.
+
+R-11 Время исполнения нарушает детерминизм.
+  Mitigation: steps are deterministic truncation; wall clock only watchdog.
+
+R-12 Timing side-channel test с p>0.05 трактуется как эквивалентность.
+  Mitigation: predeclared equivalence margin and CI/equivalence test.
+
+R-13 AutoHacker legitimate performance improvement ошибочно называется exploit.
+  Mitigation: separate strategy optimization from shortcut/leakage testing.
+
+R-14 Train/dev contamination through clean/mutated twin pairs.
+  Mitigation: split by base-history group.
+
+R-15 Optional extras unavailable offline.
+  Mitigation: core stdlib fallback, pinned vendor wheels if allowed.
+
+R-16 Overengineering consumes submission time.
+  Mitigation: strict A/B/C gates and feature freeze.
+
+R-17 Shared money helper introduces a common-mode verifier bug.
+  Mitigation: hand-authored reference vectors and independently implemented
+  rate-selection/semantic logic.
+
+R-18 Currency exponent / FX direction confusion.
+  Mitigation: explicit currency pair convention and boundary tests.
+
+R-19 DST or timezone representation changes period semantics.
+  Mitigation: only apply semantically valid metamorphic timezone transforms.
+
+R-20 Reward examples conflict with official formula.
+  Mitigation: organizer spec wins; update examples/tests in one controlled CR.
+
+R-21 Resource limits not met on judge environment.
+  Mitigation: benchmark on resource-limited Docker profile and record host.
+
+R-22 Hidden test leaks through dev artifact.
+  Mitigation: no heldout artifacts in public report; separate data permissions.
+
+R-23 Test suite passes only in developer workspace.
+  Mitigation: clean clone, offline Docker, reproducible install.
+
+R-24 False claim of 100/100 or guaranteed victory.
+  Mitigation: label internal status accurately and quote only actual rubric result.
+
+
+================================================================================
+28. ОБЯЗАТЕЛЬНАЯ ДОКУМЕНТАЦИЯ РЕПОЗИТОРИЯ
+================================================================================
+
+README.md
+  - what TwinLedger is;
+  - quick start;
+  - official compatibility status;
+  - architecture overview;
+  - core commands;
+  - input/output examples;
+  - resource limits;
+  - current known limitations.
+
+AGENTS.md
+  - universal instructions for coding agents;
+  - context loading order;
+  - ownership and forbidden operations;
+  - test/report/handoff rules.
+
+docs/PROJECT_CONTEXT.md
+  - mission and full project context for a new agent;
+  - what is official vs provisional;
+  - architecture and glossary;
+  - source-of-truth files.
+
+docs/CURRENT_STATE.md
+  - current phase;
+  - last verified commit;
+  - test status;
+  - incomplete items;
+  - active blockers;
+  - next action.
+
+docs/DECISIONS.md
+  - dated decision records;
+  - alternatives and rationale;
+  - changed contracts;
+  - owner and approval.
+
+docs/STATUS.md
+  - overall progress with evidence links;
+  - not a subjective percentage without task mapping.
+
+docs/DATA_DICTIONARY.md
+  - tables, fields, IDs, null semantics, currency and timestamp conventions.
+
+docs/DESIGN.md
+  - architecture decisions;
+  - process boundaries;
+  - truth lifecycle;
+  - scoring design;
+  - key data flows.
+
+docs/THREAT_MODEL.md
+  - assets, trust boundaries, attackers, attack surfaces, mitigations,
+    residual risks.
+
+docs/INDEPENDENCE.md
+  - verifier ownership, implementation boundaries, import scan results,
+    known shared dependencies.
+
+docs/LIMITATIONS.md
+  - what is not guaranteed;
+  - sandbox limits;
+  - official rubric unknowns;
+  - statistical limitations;
+  - unsupported accounting policies;
+  - benchmark generalization caveats.
+
+docs/RUBRIC_TRACEABILITY.md
+  - organizer criterion -> REQ-ID -> test -> report artifact.
+
+docs/QUESTIONS.md
+  - unanswered questions to organizers/maintainers.
+
+docs/CHANGELOG.md
+  - versioned changes.
+
+docs/TASKS/
+  - one ticket per discrete implementation task.
+
+docs/HANDOFF/
+  - agent-to-agent transfer notes.
+
+docs/PHASE_REPORTS/
+  - end-of-phase evidence reports.
+
+docs/CR/
+  - formal change requests.
+
+Каждый документ должен быть актуальным. Нельзя оставлять README, который
+описывает несуществующие команды или функции.
+
+
+================================================================================
+29. ФИНАЛЬНЫЕ КРИТЕРИИ ГОТОВНОСТИ (DEFINITION OF DONE)
+================================================================================
+
+TwinLedger считается готовым к сдаче только при одновременном выполнении
+обязательных пунктов ниже либо при явном согласованном исключении, которое
+не нарушает official rubric.
+
+29.1. Контракт
+[ ] Official schemas/contract imported or assumptions explicitly marked.
+[ ] reset/step smoke test passes.
+[ ] all tools and errors have contract tests.
+[ ] adapter tests pass against official examples.
+[ ] resource and budget semantics match specification.
+
+29.2. Данные и truth
+[ ] clean twin passes every base invariant.
+[ ] all four anomaly types are generated.
+[ ] clean/mutated diff is deterministic.
+[ ] truth is computed from diff and validated semantically.
+[ ] no metadata shortcut above the accepted threshold.
+[ ] all distractors have one accessible distinguishing fact.
+[ ] all evidence IDs are reachable via public tools.
+[ ] independent verifier confirms every release episode.
+[ ] minimal evidence claims have ablation tests.
+
+29.3. Reward
+[ ] matcher implements exact official match semantics.
+[ ] deterministic maximum matching and tie-break are tested.
+[ ] F1 and reward examples match the official contract.
+[ ] five required reward properties pass.
+[ ] duplicate/split/flag-all attacks do not exploit scoring.
+[ ] diagnostic text/confidence do not alter base reward unless official.
+[ ] experimental metrics are clearly separated.
+
+29.4. Reproducibility and sealing
+[ ] RNG streams are isolated.
+[ ] same seed/config produces identical public episode bytes.
+[ ] no cross-episode state contamination.
+[ ] CLOSED_EVAL uses process-separated components.
+[ ] policy and env cannot read sealed files under tested security profile.
+[ ] canary scan reports zero hits.
+[ ] commit-reveal validates.
+[ ] trajectory replay matches.
+[ ] Merkle root and receipts verify.
+
+29.5. Engineering
+[ ] `make verify` works on clean clone.
+[ ] offline Docker run works.
+[ ] no runtime network access or downloads.
+[ ] dependencies are pinned and permitted.
+[ ] full reports include PASS/FAIL/SKIPPED and artifact refs.
+[ ] docs are complete and current.
+[ ] GitHub issues/PRs/phase reports provide traceability.
+[ ] final release tag and commit hash recorded.
+[ ] LIMITATIONS.md is honest and specific.
+
+29.6. Release blockers
+---------------------
+Любой из следующих дефектов запрещает выпуск:
+  - truth/seed/provenance leak to policy;
+  - policy can alter/read scorer state;
+  - use of real or unauthorized private data;
+  - reset/step core fails;
+  - generator publishes unverified or unreachable truth;
+  - reward can be manipulated by duplicate submissions or obvious exploit;
+  - deterministic replay mismatch without understood cause;
+  - required verification was silently skipped;
+  - README/CLI gives false instructions;
+  - submission package differs from tested release commit.
+
+
+================================================================================
+ПРИЛОЖЕНИЕ A. УНИВЕРСАЛЬНЫЙ MASTER PROMPT ДЛЯ КАЖДОГО ИИ-АГЕНТА
+================================================================================
+
+Следующий текст вставляется в начало новой сессии Codex / Claude Code / другого
+ИИ-агента. В нём нет полномочий нарушать official competition rules.
+
+--- НАЧАЛО MASTER PROMPT ---
+
+Ты — инженерный ИИ-агент проекта TwinLedger v3.0. Твоя задача — реализовать
+свой назначенный scope в существующем GitHub repository. TwinLedger —
+детерминированная синтетическая RL-среда бухгалтерского аудита с независимым
+верификатором, proof-carrying findings, запечатанным оценщиком и воспроизводимой
+проверкой качества.
+
+ОБЯЗАТЕЛЬНО ПРОЧИТАЙ ДО РАБОТЫ:
+  1. TwinLedger_v3_Master_TZ_AI_Agents.txt (этот файл или его repo-копию);
+  2. AGENTS.md;
+  3. docs/PROJECT_CONTEXT.md;
+  4. docs/CURRENT_STATE.md;
+  5. docs/DECISIONS.md;
+  6. docs/STATUS.md;
+  7. contracts/ relevant to your task;
+  8. свою GitHub Issue / docs/TASKS ticket;
+  9. ближайший предыдущий phase report и handoff.
+
+ПЕРЕД ИЗМЕНЕНИЕМ КОДА:
+  - выясни текущий branch и git status;
+  - найди последнюю проверенную commit hash;
+  - проверь, нет ли незакоммиченных пользовательских изменений;
+  - не перезаписывай чужую работу;
+  - сформулируй краткий план и критерии приёмки;
+  - установи, какие требования official, а какие provisional.
+
+ТВОИ ПРАВИЛА:
+  1. Не выдумывай существующие файлы, API, тесты или результаты команд.
+  2. Не заявляй PASS, пока не запустил соответствующую команду.
+  3. Не скрывай failed, skipped или flaky tests.
+  4. Не меняй чужие зоны без CHANGE REQUEST и разрешения владельца.
+  5. Не ослабляй тесты только ради зелёного CI.
+  6. Не меняй frozen contracts без CR и обновления всех зависимых tests.
+  7. Никогда не помещай truth/provenance/seed в public observation или policy logs.
+  8. Никогда не позволяй policy импортировать private scorer/verifier/generator.
+  9. Не используй реальные бухгалтерские записи или персональные данные.
+ 10. Не добавляй сетевую зависимость, платный API или скачивание модели в core.
+ 11. Все финансовые вычисления — integer minor units / Decimal из строки.
+ 12. Любая недетерминированность должна быть выявлена и объяснена.
+ 13. Каждое отклонение от ТЗ записывай в docs/DECISIONS.md.
+ 14. Каждый результат связывай с REQ-ID и GitHub Issue/PR.
+ 15. После выполнения создай подробный task report и handoff.
+
+ПРОЕКТНЫЕ ИНВАРИАНТЫ:
+  - Truth создаётся через clean/mutated twin diff, затем независимо валидируется.
+  - Diff подтверждает факт изменения, но не семантическую ошибочность сам по себе.
+  - Verifier не импортирует generator и не читает sealed данные при discovery.
+  - Каждое finding выводимо из публично доступных фактов.
+  - Process separation описывается честно; она не называется полной sandbox,
+    если OS-level security controls отсутствуют.
+  - Commit-reveal подтверждает целостность после commitment, но не качество
+    изначальной truth.
+  - Official reward никогда не заменяется экспериментальной метрикой.
+  - NLP text является дополнительным источником, но не единственным proof.
+  - Любые красивые показатели должны быть воспроизводимы по report artifacts.
+
+РАБОЧИЙ ЦИКЛ:
+  1. Read context and ticket.
+  2. Inspect repo and dependencies.
+  3. Implement the smallest correct vertical slice.
+  4. Add unit/contract/property/regression tests.
+  5. Run scoped tests.
+  6. Run relevant cross-module tests.
+  7. Review diff for secrets, contract drift and forbidden imports.
+  8. Update docs and report.
+  9. Commit with REQ-ID and ticket reference, unless user asked not to commit.
+ 10. Handoff to owner/orchestrator.
+
+ФОРМАТ ИТОГОВОГО ОТВЕТА:
+  STATUS: DONE / PARTIAL / BLOCKED
+  SCOPE: что было назначено
+  IMPLEMENTED: файлы и поведение
+  REQUIREMENTS: REQ IDs закрыты
+  TESTS RUN: точные команды
+  TEST RESULTS: PASS/FAIL/SKIPPED с числами
+  COMMIT: hash или NOT COMMITTED
+  RISKS: открытые проблемы
+  DECISIONS: новые decision IDs
+  NEXT ACTION: ровно следующий конкретный шаг
+
+Если инструменты или контекст не позволяют проверить утверждение, так и напиши.
+Не выдавай предположение за факт. Твоя цель — правильное и проверяемое
+изменение, а не максимальное количество написанного кода.
+
+--- КОНЕЦ MASTER PROMPT ---
+
+
+================================================================================
+ПРИЛОЖЕНИЕ B. ШАБЛОН AGENT TASK REPORT (ПОСЛЕ КАЖДОЙ ЗАДАЧИ)
+================================================================================
+
+Файл: docs/AGENT_REPORTS/YYYY-MM-DD/<agent>-<ticket>.md
+
+# Task Report
+
+- Date/time (timezone):
+- Agent / model / session label:
+- Human owner:
+- GitHub repository:
+- Branch:
+- Base commit:
+- Final commit:
+- Issue / task ID:
+- Phase:
+- Status: DONE / PARTIAL / BLOCKED
+
+## 1. Context loaded
+- Master specification version/hash:
+- PROJECT_CONTEXT.md reviewed: yes/no
+- CURRENT_STATE.md reviewed: yes/no
+- DECISIONS.md reviewed: yes/no
+- Relevant contracts:
+- Scope boundary:
+
+## 2. Goal and requirements
+- Goal:
+- REQ IDs:
+- Acceptance criteria:
+
+## 3. Implementation
+- Changed files:
+- New files:
+- Removed files:
+- Public API changes:
+- Contract changes (CR reference):
+- Design decisions:
+
+## 4. Verification
+Для каждой команды указать точную команду и фактический exit code.
+
+| Command | Exit code | Result | Artifact / log |
+|---------|-----------|--------|----------------|
+|         |           |        |                |
+
+Не писать «tests pass», если тесты не запускались.
+Для SKIPPED объяснить причину, последствия и владельца решения.
+
+## 5. Regression and security review
+- Truth/seed leakage risk:
+- Import boundary review:
+- Determinism review:
+- Money/time review:
+- Public/private data review:
+- Resource/performance review:
+
+## 6. Remaining problems
+- Known bugs:
+- Unverified assumptions:
+- Follow-up tickets:
+
+## 7. GitHub traceability
+- Commit(s):
+- PR:
+- CI run:
+- Linked issues:
+
+## 8. Next action
+Один следующий приоритетный шаг, owner и блокирующая зависимость.
+
+
+================================================================================
+ПРИЛОЖЕНИЕ C. ШАБЛОН HANDOFF МЕЖДУ ИИ-АГЕНТАМИ
+================================================================================
+
+Файл: docs/HANDOFF/<from>-to-<to>-<ticket>.md
+
+# Handoff
+
+## Sender and receiver
+- From agent:
+- To agent:
+- Human owner:
+- Timestamp:
+
+## Exact repository state
+- Repository URL/name:
+- Branch:
+- Last verified commit hash:
+- Working tree clean: yes/no
+- Uncommitted changes:
+- PR status:
+
+## Completed work
+- Implemented modules:
+- Requirements closed:
+- Tests executed and results:
+- Artifact paths:
+
+## Current architecture facts
+- Contracts involved:
+- Data formats:
+- APIs and function signatures:
+- Import boundaries:
+- Configuration versions:
+
+## Open issues
+- Failing tests:
+- Known defects:
+- Unresolved decisions:
+- Security/resource constraints:
+
+## Exact next steps
+1.
+2.
+3.
+
+## Do not repeat / do not change
+- Already completed work:
+- Frozen contracts:
+- Protected files:
+- Risks of duplicate implementation:
+
+## Acceptance checklist for receiver
+[ ] Read master spec and project context.
+[ ] Verified current commit and clean status.
+[ ] Reproduced sender's test results.
+[ ] Confirmed next task scope.
+[ ] Added a new report after changes.
+
+
+================================================================================
+ПРИЛОЖЕНИЕ D. GITHUB ISSUE TEMPLATE
+================================================================================
+
+Title: [PHASE-X][AREA][REQ-XXX] Short action-oriented title
+
+## Problem
+Что не работает или какую проверяемую возможность требуется добавить.
+
+## Context
+Связанные разделы master specification, contracts, decisions, prior PR.
+
+## Requirements
+- REQ-XXX:
+- Official/provisional:
+
+## Scope
+### In scope
+- 
+### Out of scope
+- 
+
+## Acceptance criteria
+- [ ] Functional behavior
+- [ ] Contract validation
+- [ ] Error handling
+- [ ] Deterministic behavior
+- [ ] Unit/integration tests
+- [ ] Documentation updated
+- [ ] Report artifact added
+
+## Dependencies
+- Upstream tickets:
+- Blocked by:
+
+## Owner
+- Human owner:
+- AI agent:
+
+## Evidence required
+- Commands:
+- Reports:
+
+## Risks and assumptions
+- 
+
+
+================================================================================
+ПРИЛОЖЕНИЕ E. GITHUB PULL REQUEST TEMPLATE
+================================================================================
+
+Title: [PHASE-X][AREA] REQ-XXX — concise change
+
+## Summary
+Что изменено и зачем.
+
+## Requirements addressed
+- [ ] REQ-XXX
+- [ ] Linked issue closed/updated
+
+## Design
+Какие решения приняты и почему.
+
+## Files and API
+- Added:
+- Changed:
+- Removed:
+- Public API impact:
+- Contract impact (CR required):
+
+## Verification evidence
+| Command | Actual result | Artifact |
+|---------|---------------|----------|
+
+## Determinism and security
+- [ ] No truth/seed/provenance leak
+- [ ] No forbidden import
+- [ ] No real private data
+- [ ] No network dependency added to core
+- [ ] Money/time rules respected
+- [ ] Replay behavior checked if affected
+
+## Documentation
+- [ ] README / API docs updated
+- [ ] DECISIONS.md updated if needed
+- [ ] CURRENT_STATE.md updated if needed
+- [ ] Task report attached
+
+## Known limitations
+Что не было проверено или что осталось provisional.
+
+## Reviewer checklist
+- [ ] Scope is limited
+- [ ] Tests are meaningful and not weakened
+- [ ] Contracts remain compatible
+- [ ] No unrelated changes
+
+
+================================================================================
+ПРИЛОЖЕНИЕ F. ПАКЕТ КОНТЕКСТА ДЛЯ НОВОГО ИИ-АГЕНТА
+================================================================================
+
+Это ключевой раздел для переноса работы из одного ИИ-инструмента в другой.
+Новый агент не должен полагаться на память предыдущего чата. Источником правды
+является repository state и перечисленные ниже файлы.
+
+F.1. Обязательный порядок чтения
+--------------------------------
+  1. AGENTS.md
+  2. docs/PROJECT_CONTEXT.md
+  3. docs/CURRENT_STATE.md
+  4. docs/STATUS.md
+  5. docs/DECISIONS.md
+  6. docs/QUESTIONS.md
+  7. contracts/ relevant to next task
+  8. relevant source modules
+  9. latest phase report
+ 10. latest handoff
+ 11. linked GitHub Issue/PR
+
+F.2. PROJECT_CONTEXT.md — обязательное содержание
+-------------------------------------------------
+  - Full TwinLedger mission and intended users.
+  - What hackathon evaluates and which parts are provisional.
+  - Architecture diagram and trust boundaries.
+  - Data flow clean twin -> mutated twin -> diff -> verifier -> truth seal.
+  - Process roles: policy, env, harness, scorer, judge.
+  - Four anomaly definitions and affected-ID rules.
+  - Invariant catalog.
+  - Reward formula and its official/provisional status.
+  - Determinism and RNG namespace policy.
+  - Money, currency, FX and timezone policy.
+  - Test strategy and release blockers.
+  - Repository structure and ownership.
+  - Current official constraints and open questions.
+
+F.3. CURRENT_STATE.md — обязательное содержание
+------------------------------------------------
+  PROJECT STATUS: ACTIVE / FROZEN / RELEASE CANDIDATE / RELEASED
+  CURRENT PHASE: PHASE XX
+  LAST VERIFIED COMMIT: <hash>
+  BRANCH: <branch>
+  WORKTREE: CLEAN / DIRTY
+  LAST FULL VERIFY: <command, date, exit code>
+  CORE TESTS: PASS / FAIL / NOT RUN
+  OFFICIAL CONTRACT STATUS: CONFIRMED / PARTIAL / UNKNOWN
+  RELEASE BLOCKERS: list
+  ACTIVE OWNERS: list
+  NEXT TASK: single exact issue ID and action
+  KNOWN FAILURES: list
+  UNVERIFIED CLAIMS: list
+
+F.4. Передача в новый контекст
+-------------------------------
+Перед переключением ИИ-агента предыдущий агент обновляет:
+  - CURRENT_STATE.md;
+  - STATUS.md;
+  - task report;
+  - handoff;
+  - linked issue/PR description.
+
+В сообщении новому агенту передаётся:
+  - repository URL;
+  - branch and commit hash;
+  - issue ID;
+  - master spec path;
+  - handoff path;
+  - exact first action.
+
+Нельзя передавать только длинный текстовый пересказ без branch и commit hash.
+
+F.5. Контекстный prompt для продолжения в новом ИИ
+-------------------------------------------------
+«Продолжай проект TwinLedger из текущего GitHub repository. Сначала прочитай
+AGENTS.md, docs/PROJECT_CONTEXT.md, docs/CURRENT_STATE.md, docs/DECISIONS.md,
+указанный handoff и linked issue. Не полагайся на память предыдущего чата.
+Проверь branch, commit и git status. Продолжай ТОЛЬКО задачу [ISSUE-ID] в
+области [AREA]. Сначала сообщи текущий проверенный статус и краткий план.
+Не меняй чужие зоны и frozen contracts без CR. После работы добавь tests,
+запусти команды, сохрани реальные результаты, обнови GitHub и создай handoff.
+Не утверждай, что код работает, пока команда не выполнена».
+
+
+================================================================================
+ПРИЛОЖЕНИЕ G. СТАТУСЫ И ПРАВИЛА ДОКУМЕНТИРОВАНИЯ
+================================================================================
+
+Статусы задач:
+  TODO       работа не начиналась;
+  IN_PROGRESS работа идёт;
+  BLOCKED    есть конкретный блокер;
+  PARTIAL    часть scope завершена;
+  DONE       все acceptance criteria проверены;
+  DEFERRED   сознательно отложено с причиной;
+  REJECTED   решение не реализовывать с обоснованием.
+
+Статусы тестов:
+  PASS       выполнен и успешно завершился;
+  FAIL       выполнен и выявил проблему;
+  SKIPPED    намеренно не запущен/пропущен, причина записана;
+  BLOCKED    не мог быть запущен из-за внешнего препятствия;
+  FLAKY      результат нестабилен; требует расследования.
+
+Запрещено:
+  - помечать непроверенную задачу DONE;
+  - удалять failing test без CR;
+  - прятать test в комментариях;
+  - записывать «все тесты проходят» без полной команды;
+  - переносить незакрытый blocker в релиз без явного approval;
+  - обновлять только GitHub, оставляя CURRENT_STATE устаревшим;
+  - обновлять только CURRENT_STATE, не прикладывая отчёт.
+
+
+================================================================================
+ПРИЛОЖЕНИЕ H. ПРИМЕРЫ ПРОТОКОЛА И РЕЗУЛЬТАТОВ (ИЛЛЮСТРАТИВНЫЕ)
+================================================================================
+
+Важно: примеры ниже иллюстрируют форму сообщений. Их нельзя считать
+официальным API до сверки с организаторами.
+
+H.1. Пример tool request
+------------------------
+{
+  "protocol_version": "1.0",
+  "request_id": "req-0001",
+  "action": {
+    "tool": "list_records",
+    "args": {
+      "table": "payments",
+      "cursor": null,
+      "limit": 25,
+      "filters": {}
+    }
+  }
+}
+
+H.2. Пример tool response
+-------------------------
+{
+  "protocol_version": "1.0",
+  "request_id": "req-0001",
+  "ok": true,
+  "result": {
+    "rows": [],
+    "next_cursor": null
+  }
+}
+
+H.3. Пример finding
+-------------------
+{
+  "type": "FX_RATE_MISMATCH",
+  "affected_ids": ["JE:je_demo_001"],
+  "claimed_amount": 1250,
+  "currency": "KZT",
+  "evidence_ids": ["JE:je_demo_001", "FX:fx_demo_17", "INV:inv_demo_9"],
+  "explanation": "The booked rate differs from the policy-required rate.",
+  "confidence": 0.91
+}
+
+H.4. Пример verify result
+-------------------------
+{
+  "schema_version": "1.0",
+  "run_id": "verify-demo",
+  "status": "PASS_WITH_OPTIONAL_SKIPS",
+  "required_checks": {"passed": 80, "failed": 0, "blocked": 0},
+  "optional_checks": {"passed": 7, "skipped": 2},
+  "artifacts": [
+    "artifacts/reports/latest/verify_summary.json",
+    "artifacts/reports/latest/replay_report.json"
+  ],
+  "official_score_claimed": false
+}
+
+Эти JSON — иллюстративные fixtures, а не фактический результат работы.
+Не копировать demo IDs в production datasets.
+
+
+================================================================================
+ПРИЛОЖЕНИЕ I. ШАБЛОН ОТЧЁТА ПО ФАЗЕ
+================================================================================
+
+Файл: docs/PHASE_REPORTS/PHASE-XX.md
+
+# Phase XX — <Название>
+
+## Outcome
+DONE / PARTIAL / BLOCKED
+
+## Objectives
+Какие цели фазы планировались.
+
+## Requirements
+Список REQ IDs и официальный/предварительный статус.
+
+## Implementation summary
+Модули, интерфейсы и основные изменения.
+
+## GitHub traceability
+- Issues:
+- PRs:
+- Commits:
+- Release/branch:
+
+## Verification
+| Gate | Command | Result | Artifact |
+|------|---------|--------|----------|
+
+## Failed or skipped checks
+Каждый пункт с причиной, влиянием и владельцем.
+
+## Decisions and deviations
+Ссылки на DECISIONS.md / CR.
+
+## Risks
+Текущие риски и residual limitations.
+
+## Next phase readiness
+Что должно быть выполнено до старта следующей фазы.
+
+## Owner sign-off
+Человек-владелец зоны подтверждает фактический статус.
+
+
+================================================================================
+ПРИЛОЖЕНИЕ J. СТАРТОВОЕ СООБЩЕНИЕ НОВОМУ АГЕНТУ-ОРКЕСТРАТОРУ
+================================================================================
+
+Использовать после открытия проекта в новом ИИ-инструменте:
+
+«Ты назначен A0 Orchestrator проекта TwinLedger. Твоя задача — не начинать
+безусловно переписывать код, а восстановить реальное состояние repository.
+Прочитай master specification и файлы передачи контекста. Проверь официальный
+контракт, текущую ветку, последний проверенный commit и GitHub issues.
+Составь таблицу: completed / in progress / blocked / not started, привязав
+каждый статус к файлу, тесту, commit или report artifact. Отметь provisional
+предположения, которые ещё не подтверждены организаторами. Не называй
+внутренние тесты официальными проверками. Затем сформируй минимальный
+критический план оставшихся фаз, назначь владельцев зон, запрети параллельные
+изменения frozen contracts и выдай каждому агенту отдельную issue с точными
+acceptance criteria. После каждого завершённого блока требуй фактический test
+report и handoff. Не сообщай о готовности без воспроизводимого make verify на
+чистой копии repository».
+
+
+================================================================================
+ФИНАЛЬНЫЕ УКАЗАНИЯ ИИ-АГЕНТАМ
+================================================================================
+
+1. Этот файл — master specification, но официальное ТЗ организаторов имеет
+   приоритет в вопросах внешнего контракта, scoring и submission.
+2. Сначала корректность ядра, затем доказуемость, затем дополнительные функции.
+3. Ни одна уникальная функция не должна увеличивать риск нарушения рубрики.
+4. Любое утверждение о качестве должно иметь команду, commit и artifact.
+5. Каждый агент обязан обновлять GitHub issue/PR, task report, CURRENT_STATE
+   и handoff по завершении своего блока.
+6. Новый агент восстанавливает контекст из repository, а не просит пользователя
+   повторно описать проект, если сведения уже есть в docs/.
+7. Не гарантировать победу, 100/100 или отсутствие любых ошибок.
+8. Не скрывать неизвестные факты и пределы тестирования.
+
+КЛЮЧЕВАЯ ФОРМУЛИРОВКА ПРОЕКТА:
+
+TwinLedger — это воспроизводимая синтетическая среда бухгалтерского аудита,
+которая создаёт контрафактические пары книг, автоматически извлекает кандидаты
+истинных аномалий из diff, независимо подтверждает их через ProofGraph и
+достаточные доказательства, изолирует policy от truth и scorer, проверяет
+справедливость reward атаками и метаморфическими тестами, а затем публикует
+offline-verifiable receipts и полный отчёт одной командой.
+
+Главное преимущество TwinLedger — не количество функций и не эффектный интерфейс,
+а доказательная цепочка от исходной синтетической истории до финального reward.
+Каждое звено этой цепочки должно быть воспроизводимым, тестируемым и честно
+ограниченным.
+
+################################################################################
+# КОНЕЦ ЕДИНОГО MASTER-ТЕХНИЧЕСКОГО ЗАДАНИЯ TWINLEDGER v3.0                   #
+################################################################################

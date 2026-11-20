@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "episode_id": "EP-X7K2M9",
+  "episode_level": "L1",
+  "split": "dev",
+  "generator_version": "0.0.0",
+  "contract_version": "0.1.0",
+  "config_refs": [
+    "configs/generator/default.json",
+    "configs/scoring/reward.json"
+  ],
+  "config_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "public_files": [
+    {
+      "path": "public/company.json",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "bytes": 1024
+    },
+    {
+      "path": "public/payments.jsonl",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "bytes": 40960
+    }
+  ],
+  "public_manifest_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "truth_commitment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "salt_ref": "sealed/salt.hex",
+  "created_utc": "2026-11-20T00:00:00Z"
+}

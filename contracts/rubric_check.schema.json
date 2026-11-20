@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinledger://contracts/rubric_check.schema.json",
+  "title": "Rubric check result",
+  "description": "Machine-readable result of one verification check (§23.3). Internal checks are never presented as official rubric items.",
+  "schema_version": "1.0.0",
+  "status": "provisional",
+  "provisional_reason": "Derived from the TwinLedger v3.0 master technical specification. The organizer contract is not archived in this repository, therefore this schema is PROVISIONAL and isolated behind adapter/ (see docs/ASSUMPTIONS.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "check_id",
+    "block",
+    "title",
+    "official",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "common.defs.json#/$defs/schema_version"
+    },
+    "check_id": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,8}-[A-Z0-9]{1,16}-[0-9]{2}$"
+    },
+    "block": {
+      "type": "string",
+      "enum": [
+        "contract_isolation",
+        "data_truth",
+        "reward_robustness",
+        "reproducibility",
+        "engineering"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "official": {
+      "type": "boolean",
+      "const": false,
+      "description": "No official rubric check has been published to this repository; claiming otherwise is a release blocker."
+    },
+    "provisional": {
+      "type": "boolean"
+    },
+    "req_ids": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^REQ-[A-Z]+-[0-9]{3}$"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "FAIL",
+        "SKIPPED",
+        "BLOCKED",
+        "NOT_IMPLEMENTED"
+      ]
+    },
+    "command": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 300
+    },
+    "artifact": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 300
+    },
+    "reason": {
+      "type": "string",
+      "maxLength": 512
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "config_version": "1.0.0",
+  "status": "provisional",
+  "provisional": true,
+  "source": "Master specification §9.2. Provisional model: tolerance_minor = n_round * 1 minor unit.",
+  "assumption_ids": ["A-014"],
+  "rule_id": "ROUNDING_OPERATIONS_V1",
+  "formula": "tolerance_minor = rounding_ops * per_op_minor",
+  "per_op_minor": 1,
+  "rounding_ops_source": "sealed truth rounding_trace, produced by the generator",
+  "proof_obligation": "For every anomaly type the generator must prove that the maximal error is bounded by the declared number of real rounding operations; otherwise the rule is versioned up before data release.",
+  "forbidden": {
+    "widening_tolerance_after_observing_policy_results": true,
+    "tolerance_from_approximate_operation_count_guess": true
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinledger://contracts/truth.schema.json",
+  "title": "Sealed truth",
+  "description": "Sealed reference findings per episode (§8.7). Never readable by a policy process.",
+  "schema_version": "1.0.0",
+  "status": "provisional",
+  "provisional_reason": "Derived from the TwinLedger v3.0 master technical specification. The organizer contract is not archived in this repository, therefore this schema is PROVISIONAL and isolated behind adapter/ (see docs/ASSUMPTIONS.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "episode_id",
+    "truth_version",
+    "findings"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "common.defs.json#/$defs/schema_version"
+    },
+    "episode_id": {
+      "type": "string",
+      "pattern": "^EP-[A-Z0-9]{4,16}$"
+    },
+    "truth_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "episode_public_hash": {
+      "$ref": "common.defs.json#/$defs/sha256_hex"
+    },
+    "findings": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "truth_id",
+          "type",
+          "affected_ids",
+          "amount_minor",
+          "currency",
+          "tolerance_minor",
+          "evidence_sets",
+          "evidence_enumeration_complete",
+          "minimal_evidence_size",
+          "invariant_signature",
+          "operator_version"
+        ],
+        "properties": {
+          "truth_id": {
+            "type": "string",
+            "pattern": "^T-[A-Z0-9]{2,12}-[0-9]{2,4}$"
+          },
+          "type": {
+            "$ref": "common.defs.json#/$defs/anomaly_type"
+          },
+          "affected_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 32,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "common.defs.json#/$defs/namespaced_id"
+            },
+            "description": "Canonical sorted list (§8.7, REQ-ERR-005)."
+          },
+          "amount_minor": {
+            "$ref": "common.defs.json#/$defs/minor_amount"
+          },
+          "currency": {
+            "$ref": "common.defs.json#/$defs/currency_code"
+          },
+          "tolerance_minor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "evidence_sets": {
+            "$ref": "common.defs.json#/$defs/evidence_sets"
+          },
+          "evidence_enumeration_complete": {
+            "type": "boolean"
+          },
+          "minimal_evidence_size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 32
+          },
+          "optimal_steps_model_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 64
+          },
+          "optimal_steps": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "depends_on": {
+            "type": "array",
+            "maxItems": 16,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^T-[A-Z0-9]{2,12}-[0-9]{2,4}$"
+            }
+          },
+          "rounding_ops": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000,
+            "description": "Compact count of real rounding operations backing tolerance_minor (§9.2)."
+          },
+          "invariant_signature": {
+            "$ref": "common.defs.json#/$defs/invariant_signature"
+          },
+          "operator_version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+          }
+        }
+      }
+    }
+  }
+}

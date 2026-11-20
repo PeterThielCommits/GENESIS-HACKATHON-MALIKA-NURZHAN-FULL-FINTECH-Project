@@ -1,0 +1,760 @@
+{
+  "rubric_map_version": "0.1.0",
+  "status": "provisional",
+  "official_rubric_available": false,
+  "provisional": true,
+  "source": "TwinLedger master specification §0.3, §23.4. The block weights are preliminary (A-016, Q-012).",
+  "assumption_ids": [
+    "A-016"
+  ],
+  "rules": {
+    "internal_checks_are_not_official": "Every entry has official=false and must never change until an archived official rubric exists.",
+    "no_official_score_claim": "Reports may show an internal pass rate only; section 23.6 forbids presenting it as the jury score.",
+    "one_check_one_command": "Each check names a reproducible command and the artifact it produces.",
+    "req_traceability": "Every check cites REQ ids that exist in docs/REQUIREMENTS.json."
+  },
+  "blocks": [
+    {
+      "block": "contract_isolation",
+      "title": "Contract and isolation",
+      "provisional_points": 25,
+      "provisional_checks": 20,
+      "assumed_official_checks": 20
+    },
+    {
+      "block": "data_truth",
+      "title": "Data and reference",
+      "provisional_points": 25,
+      "provisional_checks": 20,
+      "assumed_official_checks": 20
+    },
+    {
+      "block": "reward_robustness",
+      "title": "Reward robustness",
+      "provisional_points": 25,
+      "provisional_checks": 20,
+      "assumed_official_checks": 20
+    },
+    {
+      "block": "reproducibility",
+      "title": "Reproducibility",
+      "provisional_points": 15,
+      "provisional_checks": 20,
+      "assumed_official_checks": 20
+    },
+    {
+      "block": "engineering",
+      "title": "Engineering",
+      "provisional_points": 10,
+      "provisional_checks": 8,
+      "assumed_official_checks": 5
+    }
+  ],
+  "internal_checks": [
+    {
+      "check_id": "CT-CONTRACTS-01",
+      "block": "contract_isolation",
+      "title": "Every contract schema accepts valid fixtures and rejects malformed ones",
+      "req_ids": [
+        "REQ-CONTRACT-002",
+        "REQ-CONTRACT-004"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-00",
+      "declared_state": "IMPLEMENTED",
+      "command": "python -m tools.validate_contracts",
+      "artifact": "artifacts/reports/latest/contracts_report.json",
+      "note": "35 fixture cases; each invalid case asserts the exact JSON pointer and keyword that must fail."
+    },
+    {
+      "check_id": "CT-CONTRACTS-02",
+      "block": "contract_isolation",
+      "title": "Schema set is self-consistent: versioned, $ref-resolvable, inside the supported keyword subset",
+      "req_ids": [
+        "REQ-CONTRACT-001",
+        "REQ-CONTRACT-004"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-00",
+      "declared_state": "IMPLEMENTED",
+      "command": "python -m unittest tests.contracts.test_schema_self_consistency",
+      "artifact": "artifacts/reports/latest/verify_summary.json",
+      "note": "Fails the build if a schema uses an unsupported keyword instead of silently ignoring it."
+    },
+    {
+      "check_id": "CT-CANON-01",
+      "block": "contract_isolation",
+      "title": "Canonical JSON is key-order independent and rejects floats, NaN and duplicate keys",
+      "req_ids": [
+        "REQ-CONTRACT-010",
+        "REQ-CONTRACT-011",
+        "REQ-CONTRACT-012"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-00",
+      "declared_state": "IMPLEMENTED",
+      "command": "python -m unittest tests.unit.test_canonical_json",
+      "artifact": "artifacts/reports/latest/verify_summary.json",
+      "note": "Golden vectors plus permutation and rejection cases."
+    },
+    {
+      "check_id": "CT-ADAPTER-01",
+      "block": "contract_isolation",
+      "title": "Unbound adapter fails closed and unsupported profile versions are rejected",
+      "req_ids": [
+        "REQ-ADAPTER-001",
+        "REQ-ADAPTER-002",
+        "REQ-ADAPTER-003"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-00",
+      "declared_state": "IMPLEMENTED",
+      "command": "python -m unittest tests.unit.test_adapter_compatibility",
+      "artifact": "artifacts/reports/latest/verify_summary.json",
+      "note": "No silent fallback: ADAPTER_NOT_BOUND and ADAPTER_VERSION_UNSUPPORTED are bounded errors."
+    },
+    {
+      "check_id": "CT-BOUNDARY-01",
+      "block": "contract_isolation",
+      "title": "Import-boundary scan rejects forbidden cross-zone imports",
+      "req_ids": [
+        "REQ-ARC-001",
+        "REQ-ARC-002",
+        "REQ-ARC-003"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-00",
+      "declared_state": "IMPLEMENTED",
+      "command": "python -m tools.check_import_boundaries",
+      "artifact": "artifacts/reports/latest/import_boundaries_report.json",
+      "note": "AST-based; applies the §6 layer rules to every .py file that exists."
+    },
+    {
+      "check_id": "CT-ENV-01",
+      "block": "contract_isolation",
+      "title": "reset/step lifecycle, budget accounting and termination are implemented and contract-tested",
+      "req_ids": [
+        "REQ-ENV-001",
+        "REQ-ENV-002",
+        "REQ-ENV-003",
+        "REQ-ENV-004"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-05",
+      "declared_state": "PLANNED",
+      "command": "make test",
+      "artifact": "artifacts/reports/latest/verify_summary.json",
+      "note": "Blocked: needs env/ which is Phase 5."
+    },
+    {
+      "check_id": "CT-ENV-02",
+      "block": "contract_isolation",
+      "title": "Tool allowlist, argument validation and bounded errors are enforced on every path",
+      "req_ids": [
+        "REQ-ENV-010",
+        "REQ-ENV-011",
+        "REQ-ENV-012",
+        "REQ-ENV-013"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-05",
+      "declared_state": "PLANNED",
+      "command": "make test",
+      "artifact": "artifacts/reports/latest/verify_summary.json",
+      "note": "Phase 5."
+    },
+    {
+      "check_id": "CT-ENV-03",
+      "block": "contract_isolation",
+      "title": "Calculator uses an AST allowlist; no eval/exec; fuzz-tested against hostile strings",
+      "req_ids": [
+        "REQ-ENV-020",
+        "REQ-ENV-021",
+        "REQ-ENV-022",
+        "REQ-ENV-023"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-05",
+      "declared_state": "PLANNED",
+      "command": "make test",
+      "artifact": "artifacts/reports/latest/verify_summary.json",
+      "note": "Phase 5."
+    },
+    {
+      "check_id": "CT-SEAL-01",
+      "block": "contract_isolation",
+      "title": "CLOSED_EVAL hides reward and truth, and cannot be flipped by an environment variable",
+      "req_ids": [
+        "REQ-ENV-030",
+        "REQ-ENV-031",
+        "REQ-ENV-032",
+        "REQ-SEAL-004"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-08",
+      "declared_state": "PLANNED",
+      "command": "make verify",
+      "artifact": "artifacts/reports/latest/verify_summary.json",
+      "note": "Mode defaults exist now; process-level evidence requires the harness (Phase 8)."
+    },
+    {
+      "check_id": "CT-SEAL-02",
+      "block": "contract_isolation",
+      "title": "Policy and environment processes cannot read sealed paths or the scorer",
+      "req_ids": [
+        "REQ-SEAL-001",
+        "REQ-SEAL-002",
+        "REQ-SEAL-003",
+        "REQ-SEAL-005"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-08",
+      "declared_state": "PLANNED",
+      "command": "make verify",
+      "artifact": "artifacts/reports/latest/security_report.json",
+      "note": "Depends on the platform security profile; unenforced controls must be listed in LIMITATIONS."
+    },
+    {
+      "check_id": "DT-MONEY-01",
+      "block": "data_truth",
+      "title": "Currency exponents, minor-unit conversion and rounding are exact and hand-verified (KZT/USD/JPY/KWD)",
+      "req_ids": [
+        "REQ-MONEY-001",
+        "REQ-MONEY-002",
+        "REQ-MONEY-003",
+        "REQ-MONEY-004",
+        "REQ-MONEY-005",
+        "REQ-MONEY-006"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-02",
+      "declared_state": "PLANNED",
+      "command": "make test",
+      "artifact": "artifacts/reports/latest/verify_summary.json",
+      "note": "Exponent registry exists (contracts/currency.json); primitives are Phase 2."
+    },
+    {
+      "check_id": "DT-TIME-01",
+      "block": "data_truth",
+      "title": "Timezone, period cut-off and DST boundaries are unambiguous and tested",
+      "req_ids": [
+        "REQ-TIME-001",
+        "REQ-TIME-002",
+        "REQ-TIME-003",
+        "REQ-TIME-004",
+        "REQ-TIME-005"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-02",
+      "declared_state": "PLANNED",
+      "command": "make test",
+      "artifact": "artifacts/reports/latest/verify_summary.json",
+      "note": "Phase 2."
+    },
+    {
+      "check_id": "DT-GEN-01",
+      "block": "data_truth",
+      "title": "Same seed and config produce byte-identical public data",
+      "req_ids": [
+        "REQ-PROD-001",
+        "REQ-GEN-001",
+        "REQ-GEN-002",
+        "REQ-GEN-005"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-03",
+      "declared_state": "PLANNED",
+      "command": "make build-episodes && make replay",
+      "artifact": "artifacts/reports/latest/replay_report.json",
+      "note": "Phase 3."
+    },
+    {
+      "check_id": "DT-GEN-02",
+      "block": "data_truth",
+      "title": "RNG streams are namespaced and isolated; adding a mutation does not change the clean twin",
+      "req_ids": [
+        "REQ-GEN-003",
+        "REQ-GEN-004",
+        "REQ-ERR-002"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-03",
+      "declared_state": "PLANNED",
+      "command": "make test-property",
+      "artifact": "artifacts/reports/latest/metamorphic_report.json",
+      "note": "Phase 3."
+    },
+    {
+      "check_id": "DT-ERR-01",
+      "block": "data_truth",
+      "title": "All four anomaly operators are deterministic, realistic and confined to allowed side effects",
+      "req_ids": [
+        "REQ-ERR-001",
+        "REQ-ERR-003",
+        "REQ-ERR-004",
+        "REQ-ERR-005",
+        "REQ-ERR-020",
+        "REQ-ERR-021",
+        "REQ-ERR-022"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-04",
+      "declared_state": "PLANNED",
+      "command": "make test",
+      "artifact": "artifacts/reports/latest/episode_matrix.csv",
+      "note": "Phase 4."
+    },
+    {
+      "check_id": "DT-TRUTH-01",
+      "block": "data_truth",
+      "title": "Truth is derived from the clean/mutated diff and independently validated against invariants",
+      "req_ids": [
+        "REQ-INV-001",
+        "REQ-INV-002",
+        "REQ-INV-003"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-04",
+      "declared_state": "PLANNED",
+      "command": "make verify",
+      "artifact": "artifacts/reports/latest/invariants_report.json",
+      "note": "Phase 4."
+    },
+    {
+      "check_id": "DT-TRUTH-02",
+      "block": "data_truth",
+      "title": "Every invariant has at least five hand-authored positive/negative vectors",
+      "req_ids": [
+        "REQ-INV-004",
+        "REQ-INV-005"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-02",
+      "declared_state": "PLANNED",
+      "command": "make test",
+      "artifact": "artifacts/reports/latest/invariants_report.json",
+      "note": "Phase 2/4."
+    },
+    {
+      "check_id": "DT-VER-01",
+      "block": "data_truth",
+      "title": "Independent verifier reproduces every published dev episode with exact IDs and amounts",
+      "req_ids": [
+        "REQ-VER-001",
+        "REQ-VER-002",
+        "REQ-VER-020",
+        "REQ-VER-021",
+        "REQ-VER-022"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-06",
+      "declared_state": "PLANNED",
+      "command": "make verify",
+      "artifact": "artifacts/reports/latest/verifier_report_index.json",
+      "note": "Phase 6."
+    },
+    {
+      "check_id": "DT-VER-02",
+      "block": "data_truth",
+      "title": "Evidence sets are reachable, sufficient and minimal (ablation-tested)",
+      "req_ids": [
+        "REQ-VER-003",
+        "REQ-VER-004",
+        "REQ-VER-005",
+        "REQ-VER-010",
+        "REQ-VER-011",
+        "REQ-VER-012",
+        "REQ-VER-013",
+        "REQ-VER-014"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-06",
+      "declared_state": "PLANNED",
+      "command": "make verify",
+      "artifact": "artifacts/reports/latest/verifier_report_index.json",
+      "note": "Phase 6."
+    },
+    {
+      "check_id": "DT-LEAK-01",
+      "block": "data_truth",
+      "title": "Metadata-only classifier cannot separate clean from mutated episodes above the accepted threshold",
+      "req_ids": [
+        "REQ-DATA-002",
+        "REQ-DATA-020",
+        "REQ-LEAK-001",
+        "REQ-LEAK-002"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-12",
+      "declared_state": "PLANNED",
+      "command": "make audit-shortcuts",
+      "artifact": "artifacts/reports/latest/shortcut_audit.json",
+      "note": "Level B; Phase 12."
+    },
+    {
+      "check_id": "RW-MATCH-01",
+      "block": "reward_robustness",
+      "title": "Matcher implements the exact match condition and one-truth-one-finding rule",
+      "req_ids": [
+        "REQ-SCORE-001",
+        "REQ-SCORE-002",
+        "REQ-SCORE-003",
+        "REQ-SCORE-004",
+        "REQ-SCORE-005"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-09",
+      "declared_state": "PLANNED",
+      "command": "make test",
+      "artifact": "artifacts/reports/latest/verify_summary.json",
+      "note": "Phase 9."
+    },
+    {
+      "check_id": "RW-MATCH-02",
+      "block": "reward_robustness",
+      "title": "Maximum matching and tie-break agree with an exhaustive reference matcher",
+      "req_ids": [
+        "REQ-SCORE-002",
+        "REQ-SCORE-004"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-09",
+      "declared_state": "PLANNED",
+      "command": "make test",
+      "artifact": "artifacts/reports/latest/reward_strategy_report.json",
+      "note": "Phase 9."
+    },
+    {
+      "check_id": "RW-SANITY-01",
+      "block": "reward_robustness",
+      "title": "All ten published sanity examples execute and match their expected F1/reward",
+      "req_ids": [
+        "REQ-SCORE-001",
+        "REQ-PROD-011"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-09",
+      "declared_state": "PLANNED",
+      "command": "python -m unittest tests.scoring.test_sanity_examples",
+      "artifact": "artifacts/reports/latest/reward_strategy_report.json",
+      "note": "Phase 9."
+    },
+    {
+      "check_id": "RW-PROP-01",
+      "block": "reward_robustness",
+      "title": "The five reward properties hold across anomaly types and clean episodes",
+      "req_ids": [
+        "REQ-SCORE-003",
+        "REQ-SCORE-004",
+        "REQ-PROD-007"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-09",
+      "declared_state": "PLANNED",
+      "command": "make test",
+      "artifact": "artifacts/reports/latest/reward_strategy_report.json",
+      "note": "Phase 9."
+    },
+    {
+      "check_id": "RW-MUT-01",
+      "block": "reward_robustness",
+      "title": "At least 25 scorer mutants are killed by the reward test suite",
+      "req_ids": [
+        "REQ-PROD-025",
+        "REQ-TEST-002"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-13",
+      "declared_state": "PLANNED",
+      "command": "make mutation-test",
+      "artifact": "artifacts/reports/latest/mutation_test_report.json",
+      "note": "Phase 13."
+    },
+    {
+      "check_id": "RW-ATTACK-01",
+      "block": "reward_robustness",
+      "title": "Duplicate, split, merge, flag-all and silent strategies cannot beat an honest policy",
+      "req_ids": [
+        "REQ-PROD-005",
+        "REQ-PROD-006",
+        "REQ-PROD-007",
+        "REQ-ARENA-001",
+        "REQ-ARENA-002"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-12",
+      "declared_state": "PLANNED",
+      "command": "make test",
+      "artifact": "artifacts/reports/latest/reward_strategy_report.json",
+      "note": "Phase 12."
+    },
+    {
+      "check_id": "RW-DIAG-01",
+      "block": "reward_robustness",
+      "title": "Explanation and confidence never influence the base reward; experimental scores are separated",
+      "req_ids": [
+        "REQ-SCORE-001",
+        "REQ-PROD-011"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-09",
+      "declared_state": "PLANNED",
+      "command": "make test",
+      "artifact": "artifacts/reports/latest/reward_strategy_report.json",
+      "note": "Phase 9."
+    },
+    {
+      "check_id": "RW-TOL-01",
+      "block": "reward_robustness",
+      "title": "Tolerance is derived from real rounding operations and proven per anomaly type",
+      "req_ids": [
+        "REQ-MONEY-005",
+        "REQ-PROD-003"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-09",
+      "declared_state": "PLANNED",
+      "command": "make verify",
+      "artifact": "artifacts/reports/latest/reward_strategy_report.json",
+      "note": "Proof obligation recorded in configs/scoring/tolerance.json; widening after observing results is forbidden."
+    },
+    {
+      "check_id": "RP-DET-01",
+      "block": "reproducibility",
+      "title": "Public episode bytes are reproducible from config, versions and seed",
+      "req_ids": [
+        "REQ-PROD-001",
+        "REQ-DATA-021"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-03",
+      "declared_state": "PLANNED",
+      "command": "make build-episodes && make replay",
+      "artifact": "artifacts/reports/latest/replay_report.json",
+      "note": "Phase 3."
+    },
+    {
+      "check_id": "RP-REPLAY-01",
+      "block": "reproducibility",
+      "title": "Replay reproduces response bytes, event hashes, trajectory head and reward",
+      "req_ids": [
+        "REQ-SEAL-030",
+        "REQ-SEAL-031",
+        "REQ-SEAL-021"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-08",
+      "declared_state": "PLANNED",
+      "command": "make replay",
+      "artifact": "artifacts/reports/latest/replay_report.json",
+      "note": "Phase 8."
+    },
+    {
+      "check_id": "RP-SEAL-01",
+      "block": "reproducibility",
+      "title": "Commit-reveal and Merkle receipts verify offline and detect tampering",
+      "req_ids": [
+        "REQ-SEAL-010",
+        "REQ-SEAL-011",
+        "REQ-SEAL-012",
+        "REQ-SEAL-020",
+        "REQ-SEAL-022",
+        "REQ-SEAL-023"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-08",
+      "declared_state": "PLANNED",
+      "command": "make verify",
+      "artifact": "artifacts/reports/latest/seal_report.json",
+      "note": "Phase 8."
+    },
+    {
+      "check_id": "RP-META-01",
+      "block": "reproducibility",
+      "title": "Metamorphic transformations preserve semantic oracle results",
+      "req_ids": [
+        "REQ-PROD-001",
+        "REQ-PROD-009"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-13",
+      "declared_state": "PLANNED",
+      "command": "make test-property",
+      "artifact": "artifacts/reports/latest/metamorphic_report.json",
+      "note": "Phase 13."
+    },
+    {
+      "check_id": "RP-ENVISO-01",
+      "block": "reproducibility",
+      "title": "Interleaved episodes do not share state",
+      "req_ids": [
+        "REQ-PROD-009",
+        "REQ-TEST-004"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-08",
+      "declared_state": "PLANNED",
+      "command": "make test",
+      "artifact": "artifacts/reports/latest/verify_summary.json",
+      "note": "Phase 8."
+    },
+    {
+      "check_id": "EN-VERIFY-01",
+      "block": "engineering",
+      "title": "One command runs the required suite, reports PASS/FAIL/SKIPPED/BLOCKED and exits non-zero on failure",
+      "req_ids": [
+        "REQ-JUDGE-001",
+        "REQ-JUDGE-002",
+        "REQ-JUDGE-003"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-00",
+      "declared_state": "IMPLEMENTED",
+      "command": "make verify",
+      "artifact": "artifacts/reports/latest/verify_summary.json",
+      "note": "Phase 0 subset of checks; the full rubricator arrives in Phase 14 with the same runner."
+    },
+    {
+      "check_id": "EN-GOV-01",
+      "block": "engineering",
+      "title": "Governance records are consistent: assumptions, questions, decisions, requirements and rubric map agree",
+      "req_ids": [
+        "REQ-ORG-010",
+        "REQ-ORG-014",
+        "REQ-GH-006",
+        "REQ-CONTRACT-005"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-00",
+      "declared_state": "IMPLEMENTED",
+      "command": "python -m tools.check_governance",
+      "artifact": "artifacts/reports/latest/governance_report.json",
+      "note": "Every UNRESOLVED assumption has an existing isolation point, an open question and a decision; no provisional item claims official status."
+    },
+    {
+      "check_id": "EN-DOCS-01",
+      "block": "engineering",
+      "title": "Documentation matches the actual repository: commands exist, claims are labelled, no invented files",
+      "req_ids": [
+        "REQ-CONTRACT-005",
+        "REQ-GH-006",
+        "REQ-JUDGE-005"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-00",
+      "declared_state": "IMPLEMENTED",
+      "command": "python -m tools.check_governance",
+      "artifact": "artifacts/reports/latest/governance_report.json",
+      "note": "README/Makefile cross-check plus a scan for official-status claims and truth/seed leakage in docs."
+    },
+    {
+      "check_id": "EN-ARCHIVE-01",
+      "block": "engineering",
+      "title": "Archived master specification is byte-identical to its recorded SHA-256",
+      "req_ids": [
+        "REQ-ADAPTER-001",
+        "REQ-GH-007"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-00",
+      "declared_state": "IMPLEMENTED",
+      "command": "python -m tools.check_governance",
+      "artifact": "artifacts/reports/latest/governance_report.json",
+      "note": "Guards every citation in DECISIONS.md and QUESTIONS.md."
+    },
+    {
+      "check_id": "EN-OFFLINE-01",
+      "block": "engineering",
+      "title": "Mandatory path imports no network module and no third-party package",
+      "req_ids": [
+        "REQ-OPS-001",
+        "REQ-OPS-002"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-00",
+      "declared_state": "IMPLEMENTED",
+      "command": "python -m tools.check_import_boundaries",
+      "artifact": "artifacts/reports/latest/dependency_report.json",
+      "note": "Static import scan; runtime network use is re-checked with socket blocking in Phase 16."
+    },
+    {
+      "check_id": "EN-DATA-01",
+      "block": "engineering",
+      "title": "Generated, sealed and hidden data cannot be committed; the policy is enforced by .gitignore",
+      "req_ids": [
+        "REQ-DATA-022",
+        "REQ-GH-007"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-00",
+      "declared_state": "IMPLEMENTED",
+      "command": "python -m unittest tests.phase0.test_git_data_policy",
+      "artifact": "artifacts/reports/latest/verify_summary.json",
+      "note": "D-0008."
+    },
+    {
+      "check_id": "EN-REPORT-01",
+      "block": "engineering",
+      "title": "Every phase produces a human and machine readable report with actual command output",
+      "req_ids": [
+        "REQ-GH-003",
+        "REQ-JUDGE-002"
+      ],
+      "official": false,
+      "provisional": true,
+      "phase": "PHASE-00",
+      "declared_state": "IMPLEMENTED",
+      "command": "python -m unittest tests.phase0.test_phase_report",
+      "artifact": "artifacts/reports/latest/verify_summary.json",
+      "note": "Applies to PHASE-00 now and to every later phase."
+    }
+  ],
+  "check_states": [
+    "IMPLEMENTED",
+    "PLANNED"
+  ],
+  "notes": [
+    "Provisional check counts are our own internal split and are not an official mapping.",
+    "When the official rubric is published, each official check gets a mirrored internal test and this file gains `official: true` entries with a quoted source.",
+    "PLANNED checks appear in `make verify` as BLOCKED with a reason, never as PASS."
+  ]
+}
