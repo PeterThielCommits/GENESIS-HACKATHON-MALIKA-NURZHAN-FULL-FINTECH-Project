@@ -64,3 +64,66 @@ Monthly and quarterly periods use month-aligned fiscal calendars; quarters are
 labelled by fiscal start year. Reject gaps; reject folds unless explicitly resolved.
 A date without time is a company business date, not a machine-local instant.
 Aging labels and open/partial/paid statuses are MVP group semantics, not organizer rules.
+
+## D-06-00 (2026-11-21) — Phase 6 base line: frozen-contract stack of PR #1/#2
+
+Phase 6 (matcher + base reward) is implemented on top of the Phase 1 +
+Phase 2 stack (branch `arena/2a69516d-...`, commits ae5650e..ef15218,
+fast-forwarded into the session branch), which carries the first
+contract freeze v1.0.0 (D-01-01). Parallel session branches (`arena/
+6e3d45bc-...` Phase 0/1 alternative, `arena/280879b6-...` Phase 3,
+`arena/d94e8b76-...` Phase 4, `arena/eb1e0f8a-...` Phase 5) claim
+incompatible v1.0.0 schema sets (see CR-05-01 follow-up and issue #3).
+Per the priority rules, the earliest frozen contract (D-01-01) wins
+until A0 issues an approved CR; Phase 6 consumes domain models only and
+does not touch any disputed wire format. Owner: A0. Closure: issue #3
+disposition + merged contract line. Draft CR: `docs/CR/CR-06-01.md`.
+
+## D-06-01 (2026-11-21) — Finding/truth schemas adopted as scoring boundary
+
+Task 6.1: `contracts/finding.schema.json` v1.0.0 (schema_version,
+type, typed affected_ids, claimed_amount int minor units, currency,
+evidence_ids) and `contracts/truth.schema.json` v1.0.0 (amount_minor,
+tolerance_minor, evidence_sets) are confirmed as the scoring input
+boundary. No schema file was modified. Status: PROVISIONAL pending the
+official organiser contract (Q-003). Scoring validates every input at
+its module boundary (REQ-CONTRACT-002) and re-validates canonicalised
+round-trips.
+
+## D-06-02 (2026-11-21) — Empty-denominator conventions for precision/recall/F1
+
+TZ 15.4 requires explicitly established special rules. Conventions
+(kept in `scoring/reward.py`, all executable in tests): clean book +
+empty submission => F1 = 1; precision = 1 for an empty submission;
+recall = 1 for an empty truth; otherwise F1 = 2TP/(2TP+FP+FN). These
+match every sanity example A-J of TZ 15.6. PROVISIONAL until the
+official rubric is published (Q-005).
+
+## D-06-03 (2026-11-21) — Exact rational reward, display-only decimals
+
+Reward, F1, precision, recall and penalty are computed as exact
+`fractions.Fraction` values; eta is parsed from the config literal text
+(Decimal-from-string, never binary float). Decimal strings are
+rendered only for display (ROUND_HALF_EVEN, 7 places); raw values are
+stored exactly (TZ 15.5). `steps_used` must satisfy
+0 <= steps_used <= max_steps (bounded error otherwise).
+
+## D-06-04 (2026-11-21) — Formalised tie-break of the matcher
+
+Among all matchings with maximum cardinality and minimum total absolute
+amount error, `scoring/matcher.py` selects the lexicographically
+smallest sorted pair tuple ``(finding_index, truth_index)``. Implemented
+as greedy pair locking with exact min-cost-flow feasibility checks on
+top of a min-cost max-flow solve; the original input index is used only
+as this final tie-break (REQ-SCORE-002). Bounded error above 4096
+candidate edges instead of a silent determinism downgrade.
+
+## D-06-05 (2026-11-21) — Match predicate scope and experimental column
+
+The match predicate is exactly the six conditions of TZ 15.2
+(PROVISIONAL pending Q-005); explanation/confidence never influence
+matching or reward. `experimental_grounded_score` (TZ 15.8) is computed
+only from caller-supplied requested evidence IDs, is labelled
+EXPERIMENTAL and lives in a separate diagnostics column that never
+feeds the reward. Explanation-consistency (Phase 10) and verifier
+quality (Phase 8) diagnostics are explicit NOT_AVAILABLE markers.
