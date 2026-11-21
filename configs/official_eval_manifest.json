@@ -1,0 +1,77 @@
+{
+  "manifest_version": "1.0.0",
+  "official_spec_reference": "spec/official_fintech_checks_2026-11-20.md",
+  "spec_published_date": "2026-11-20",
+  "python_version_required": "3.11",
+  "runtime_dependencies": "stdlib-only (zero external pip installs required)",
+  "adapter_entrypoint": "judge_adapter.py",
+  "adapter_functions": [
+    "generate_episode(seed: int, config: dict, output_dir: str) -> None",
+    "make_env() -> OfficialJudgeEnv",
+    "score_episode(episode_dir: str, findings: dict, inspection_steps: int) -> dict"
+  ],
+  "generator_version": "twinledger-gen@1.0.0",
+  "verifier_version": "1.0.0",
+  "schema_version": "1.0.0",
+  "protocol_parameters": {
+    "max_actions": 100,
+    "submit_counts_in_action_limit": true,
+    "submit_counts_in_inspection_steps": false,
+    "max_page_size": 50,
+    "time_limit_seconds": 60.0,
+    "max_findings_pre_dedup": 30,
+    "max_evidence_ids_pre_dedup": 10,
+    "max_explanation_unicode_codepoints": 1000,
+    "default_amount_tolerance_minor": 0,
+    "reward_formula": "clip([-1, 1], 2 * F1 - 1 - 0.2 * inspection_steps / 100)",
+    "clean_book_empty_findings_rule": "TP=FP=FN=0 -> P=0, R=0, F1=1",
+    "closed_mode_step_reward": 0
+  },
+  "canonical_tables": [
+    "ledger",
+    "invoices",
+    "payments",
+    "fx"
+  ],
+  "supporting_tables": [
+    "credit_notes",
+    "bank_lines",
+    "counterparties",
+    "accounts",
+    "opening_balances",
+    "period_calendar"
+  ],
+  "anomaly_types": [
+    "DUPLICATE_PAYMENT",
+    "PARTIAL_PAYMENT_ALLOCATION",
+    "FX_RATE_MISMATCH",
+    "PERIOD_CUTOFF"
+  ],
+  "documented_interaction_scenarios": {
+    "interaction_1": {
+      "name": "FX_PERIOD_INTERACTION",
+      "episodes": ["D16", "D17", "D18"],
+      "anomalies": ["FX_RATE_MISMATCH", "PERIOD_CUTOFF"],
+      "description": "Cross-border invoices on period boundaries combining FX rate/quote-convention/date-rule mismatches with fiscal period cutoff errors across multiple currencies and timezones."
+    },
+    "interaction_2": {
+      "name": "PAYMENT_ALLOCATION_INTERACTION",
+      "episodes": ["D19", "D20"],
+      "anomalies": ["DUPLICATE_PAYMENT", "PARTIAL_PAYMENT_ALLOCATION"],
+      "description": "Payment-rich books combining duplicate payment settlements with missing or premature partial payment allocations alongside legitimate split, refund, and credit-note distractors."
+    }
+  },
+  "baseline_policies": [
+    {"name": "random", "module": "arena/policies/random_policy.py", "isolation": "OS subprocess via arena.policies.worker"},
+    {"name": "simple_reconciliation", "module": "arena/policies/simple_reconciliation.py", "isolation": "OS subprocess via arena.policies.worker"},
+    {"name": "mass_flagging", "module": "arena/policies/mass_flagging.py", "isolation": "OS subprocess via arena.policies.worker"},
+    {"name": "oracle", "module": "judge/oracle_policy.py", "isolation": "judge-side sealed reference"}
+  ],
+  "reproduction": {
+    "single_command": "make verify",
+    "baseline_eval_command": "make official-eval",
+    "docker_command": "make docker-check",
+    "default_master_seed": 2026,
+    "trajectories_artifact": "artifacts/trajectories/trajectories.jsonl"
+  }
+}

@@ -655,9 +655,12 @@ def generate_clean_twin(spec: CleanTwinSpec) -> CleanTwin:
             }
         )
 
-        # Compute exact target FX date per policy
+        # Compute exact target FX date per policy (spec/policy_semantics.md)
+        je_ts = _iso_local(iss_d, 13, 0, spec.timezone)
         if spec.rate_date_rule == "document_date":
             fx_target = instant(iss_ts).astimezone(ZoneInfo(spec.timezone)).date()
+        elif spec.rate_date_rule == "operation_date":
+            fx_target = instant(je_ts).astimezone(ZoneInfo(spec.timezone)).date()
         else:
             fx_target = instant(svc_ts).astimezone(ZoneInfo(spec.timezone)).date()
         permitted = select_permitted_fx(twin.fx_rates, fcur, spec.functional_currency, fx_target, policy)
@@ -676,7 +679,7 @@ def generate_clean_twin(spec: CleanTwinSpec) -> CleanTwin:
         twin.journal_entries.append(
             make_balanced_je(
                 je_id=je_fx_id,
-                timestamp=_iso_local(iss_d, 13, 0, spec.timezone),
+                timestamp=je_ts,
                 posting_period=rec_period,
                 source_document_id=inv_id,
                 description=f"Foreign invoice recognition {inv_id}",

@@ -33,6 +33,7 @@ CHECKS: list[tuple[str, str, list[str], bool]] = [
     ("RC-001", "REQ-CONTRACT-001", [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-t", ".", "-v"], True),
     ("RC-002", "REQ-ARC-001", [sys.executable, "tools/check_import_boundaries.py"], True),
     ("RC-003", "REQ-CONTRACT-010", [sys.executable, "-m", "unittest", "tests.unit.test_canonical", "-v"], True),
+    ("RC-004", "OFFICIAL-2026-11-20", [sys.executable, "-m", "unittest", "discover", "-s", "tests/official", "-t", ".", "-v"], True),
 ]
 
 
