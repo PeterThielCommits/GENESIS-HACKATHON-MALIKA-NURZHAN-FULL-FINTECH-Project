@@ -1,35 +1,47 @@
-# Architecture Snapshot (Phase 6)
+# Architecture Snapshot (Phase 8)
 
 ```
-contracts/   schemas + canonical + models + validator (frozen v1.0.0)
+contracts/   schemas + canonical + models + validator + currency (frozen v1.0.0)
 adapter/     organiser protocol adapter (Phase 5+, provisional A-*)
-gen/         clean twins + operators + diff truth (Phase 3-4, Zone 1)
-spec/        normative accounting rules (shared spec only)
+gen/         clean twins + operators + diff truth (Phase 3-4, 7, Zone 1)
+spec/        normative accounting rules + frozen verifier_algorithm.md (v1.0.0)
 invariants/  INV-01..INV-17 checks (Phase 2)
-verifier/    public-only discovery + ProofGraph (Phase 8, Zone 3)
+verifier/    independent public-only discovery + ProofGraph + ablation (Phase 8, Zone 3)
 env/         reset/step + tools (Phase 5, Zone 2)
 harness/     JSONL + trajectory + replay (Phase 9, Zone 2)
-scoring/     canon + matcher + reward + diagnostics + exhaustive (Phase 6, Zone 2)
+scoring/     canon + matcher + reward + diagnostics + exhaustive + crosscheck (Phase 6 & 8, Zone 2)
 seal/        commit-reveal + Merkle + receipts (Phase 9, Zone 2)
 arena/       baselines + attacks (Phase 12, Zone 3)
 metamorphic/ M-01..M-07 (Phase 13)
 judge/       verify CLI + rubric map + reports (Phase 14, Zone 4)
 tools/       dataset/inspect/manifest/boundaries/freeze
 configs/     versioned configs (generator/environment/scoring/arena/rubric)
-tests/       unit + contracts + scoring (Phase 6: 131 tests)
+tests/       unit + contracts + scoring + generator + verifier (Phase 8: 197 + 3 property tests)
 episodes/    train/dev (+ hidden, git-ignored sealed)
-docs/        context, tasks, handoffs, phase reports, agent reports, CR
+docs/        context, tasks, handoffs, phase reports, agent reports, CR, INDEPENDENCE.md
 ```
 
-Phase 6 scoring internals (Zone 2, contracts + stdlib only):
-`canon.py` typed-ID canonicalisation + boundary validation;
-`matcher.py` predicate (TZ 15.2) + three-level optimal matching
-(TZ 15.3, single source of TP/FP/FN); `reward.py` exact rational
-F1/reward (TZ 15.4-15.6); `diagnostics.py` TZ 15.8/15.9 payload +
-P1..P5 property matrix; `exhaustive.py` brute-force differential
-oracle (<=7x7).
+Phase 8 verifier internals (Zone 3, `contracts/` + Python 3.11 stdlib only;
+zero `gen/`, `core/`, `invariants/`, or `scoring/` imports):
+`public_loader.py` allowlisted public loader + canonical `episode_public_hash` +
+`subset_public_episode()`; `money_time.py` independent exact `Fraction` FX
+conversion (direct & inverse ISO pairs) and `ZoneInfo` fiscal periods;
+`proof_graph.py` deterministic 5-node/5-edge ProofGraph DAG + acyclicity &
+traceability validation; `duplicate_payment.py`, `partial_allocation.py`,
+`fx_mismatch.py`, `period_cutoff.py` independent detectors + 16 minimum
+distractor exclusions (`D-DUP/PART/FX/CUT-01..04`); `evidence.py` public-tool
+reachability + `max_evidence_ids`; `minimal_sets.py` sufficiency + greedy
+minimizer + single-element/full-set deletion ablation; `validate.py`,
+`discover.py`, `__main__.py` Stage-1 discovery + pre-committed `report_digest`.
+
+Phase 6 + Stage-2 Phase 8 scoring internals (Zone 2, `contracts/` + stdlib only):
+`canon.py`, `matcher.py`, `reward.py`, `diagnostics.py`, `exhaustive.py`, and
+`crosscheck.py` (Stage-2 post-discovery verification against sealed truth with
+`report_digest` lock, non-union per-set evidence matching, exact `Fraction`
+TZ §13.7 metrics, and `release_blocked` gating).
 
 Import rules (machine-checked): `env` ↛ gen/verifier/scoring/seal;
-`verifier` ↛ gen; `arena/policies|attacks` ↛ private internals;
-`scoring` → contracts/seal; `seal` → contracts/stdlib;
+`verifier` ↛ gen (and AST-checked ↛ core/invariants/scoring/env/harness/seal/arena);
+`arena/policies|attacks` ↛ private internals;
+`scoring` → contracts/seal (↛ gen/verifier/env/harness); `seal` → contracts/stdlib;
 `gen` ↛ verifier/scoring/seal; `harness` ↛ gen/verifier/scoring/seal.

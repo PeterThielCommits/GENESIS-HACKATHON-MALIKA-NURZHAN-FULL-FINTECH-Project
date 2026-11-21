@@ -135,3 +135,41 @@ an episode schema or affected-ID translation. For FX select the latest allowed
 quote date only under the declared fallback policy; reject distinct permitted
 booked amounts rather than guessing a source-priority rule. Keep official
 semantics open under Q-004/Q-006; integrate only after A0 resolves CR-06-01.
+
+## D-08-01 (2026-11-21) — Zero common-mode verifier implementation
+
+`verifier/` imports only Python 3.11 stdlib and `contracts/` (schemas,
+canonical JSON, ISO-4217 currency exponents). It deliberately does **not**
+import `core/`, `invariants/`, `gen/`, or `scoring/`. FX conversion is
+independently implemented in `verifier/money_time.py` using exact
+`fractions.Fraction` intermediate arithmetic with a single final rounding step
+(`half_even`/`half_up`) and inverse-pair support; company-local date and fiscal
+period mapping is independently implemented via `zoneinfo.ZoneInfo`. This
+eliminates common-mode helper bugs between generator/invariants and the
+independent verifier (TZ §12.4, §13.1).
+
+## D-08-02 (2026-11-21) — Stage-1/Stage-2 crosscheck separation & digest lock
+
+To satisfy REQ-ORG-003, REQ-ARC-001, and REQ-VER-020..022 without letting
+`verifier/` see sealed truth or letting `scoring/` import `verifier/`, Stage-1
+discovery (`verifier.discover`) outputs a schema-valid `verifier_report` and
+pre-committed SHA-256 `report_digest` from `public/` alone, while Stage-2
+crosscheck (`scoring/crosscheck.py`) consumes the serialized `verifier_report`
+dict, verifies `expected_report_digest`, delegates TP/FP/FN to
+`scoring.matcher.optimal_matching` with strict per-set (non-union) evidence
+sufficiency checks, and sets `release_blocked=True` on any mismatch,
+ambiguity, insufficiency, or ablation failure. `scoring/diagnostics.py` retains
+its explicit `verifier_quality: NOT_AVAILABLE` marker for agent scoring until
+episode pipeline integration.
+
+## D-08-03 (2026-11-21) — Frozen independent verifier spec & honest PARTIAL gate
+
+`spec/verifier_algorithm.md` (v1.0.0) freezes the independent verifier
+algorithm, ProofGraph DAG contract, minimal-evidence ablation protocol, and
+16-distractor exclusion rules without reading `gen/` (Task 8.1). Provisional
+public-episode `affected_ids` and amount conventions follow
+`spec/anomaly_catalog.yaml` and `docs/DATA_DICTIONARY.md` (pending Q-004/Q-006
+and CR-06-01). Because `episodes/dev` and `episodes/train` currently contain 0
+generated episodes (upstream Phases 3–4 unmerged, issue #3 open), EXIT GATE 8
+("100% generated release episodes independently verified") is honestly recorded
+as **PARTIAL** until generated episodes are available for batch verification.
