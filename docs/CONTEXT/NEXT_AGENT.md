@@ -1,8 +1,10 @@
-# Next agent — Phase 15 handoff (after Phase 14 re-audit)
+# Next agent — Phase 15 handoff (Phase 14 re-audit merged)
 
 Read `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/PHASE_REPORTS/PHASE-14.md` / `.json`, and decisions `D-14-02`, `D-14-03` before changing anything.
 
 ## Where the project stands
+Phase 14 re-audit is **merged into `main`**: PR #18, head `baa5b67`, merge commit `99df116`. Start Phase 15 from `main` @ `99df116` on a fresh branch.
+
 Phase 14 re-audit is **DONE** and EXIT GATE 14 is verified the way TZ §24 defines it — in a **clean checkout**, not a dirty tree: a copy built from `git ls-files` with `artifacts/reports/latest/` holding only `.gitkeep` runs `make verify` → exit 0, 12/12 gates in ~62 s, 21 complete artifacts, replay 5/5, offline `report.html` with 0 external references.
 
 Measured on branch `arena/102582b5-genesis-hackathon-malika-nurzh` (base `e9a4239`):

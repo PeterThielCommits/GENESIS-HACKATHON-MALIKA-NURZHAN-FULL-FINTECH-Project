@@ -53,4 +53,4 @@ Negative exit-code checks: malformed rubric map → 2; missing `verify_summary.j
 Phase 15: update `README.md` claims to measured values and link each claim to a report artifact.
 
 ## Commit
-NOT COMMITTED by this session (branch changes are persisted in the workspace).
+Committed as `baa5b67`, pushed to `arena/102582b5-genesis-hackathon-malika-nurzh`, merged via **PR #18** into `main` as merge commit `99df116` (2026-11-21T23:43:03Z). CI `core` + `docker-offline` PASS; post-merge `make verify` on `main` PASS 12/12.

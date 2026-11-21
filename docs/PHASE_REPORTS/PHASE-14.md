@@ -149,4 +149,20 @@ No `contracts/*`, no `configs/*`, no `judge/rubric_map.json`, no Master TZ chang
 - `report.html` renders real replay counts and all 12 gates — usable as a jury artifact.
 - README's stale "317 tests / 21 artifacts" claim should be corrected in Phase 15 against measured 410 tests.
 
-**Sign-off:** Phase 14 re-audit complete. EXIT GATE 14 PASS on clean checkout with recorded command output above. Release/tag authority remains outside this phase.
+## 9. Merge record
+
+| Item | Value |
+|---|---|
+| Pull request | **#18** — *Phase 14 re-audit: Judge Kit & full report — EXIT GATE 14 verified on clean checkout* |
+| Branch | `arena/102582b5-genesis-hackathon-malika-nurzh` → `main` |
+| Head commit | `baa5b67` |
+| Merge commit | `99df116` (merged 2026-11-21T23:43:03Z) |
+| Merge strategy | merge commit (history preserved) |
+| CI | `core` PASS (1m33s), `docker-offline` PASS (1m56s) |
+| Tree equality | merged `main` tree `1a451cb8…` == verified branch tree `1a451cb8…` (byte-identical) |
+| Post-merge `make verify` on `main` | **PASS**, 12/12, 50.1 s, 21 artifacts |
+| Post-merge `freeze_release --verify` | 30 frozen files intact (`0747baf0…`) |
+
+The merged tree is byte-identical to the verified head commit, so the clean-checkout EXIT GATE 14 evidence above applies unchanged to `main` at `99df116`.
+
+**Sign-off:** Phase 14 re-audit complete and merged. EXIT GATE 14 PASS on clean checkout with recorded command output above. Release/tag authority remains outside this phase.
