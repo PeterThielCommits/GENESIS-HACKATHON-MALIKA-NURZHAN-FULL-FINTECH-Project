@@ -19,6 +19,9 @@ Transformations implemented:
   - ``M-07`` ``jsonl_serialization_variants``: non-semantic whitespace formatting
     variants across JSON and JSONL files
 
+Each transform is checked on 4 scenarios (clean, dup+fx, partial+cutoff,
+compound_all4) = 28 pairs, with a non-vacuous guard (public bytes must differ).
+
 Writes ``artifacts/reports/latest/metamorphic_report.json``.
 """
 
@@ -234,11 +237,15 @@ def run_metamorphic_suite(*, output_path: Path | str | None = None) -> dict[str,
 
     with tempfile.TemporaryDirectory(prefix="tl_metamorphic_m01_m07_") as td:
         root = Path(td)
-        # Build representative clean + multi-anomaly episodes in non-UTC timezone (Asia/Almaty)
+        # Build representative clean + multi-anomaly episodes in non-UTC timezone (Asia/Almaty).
+        # D-13-01 adds the compound_all4 scenario (all four anomaly types) so
+        # interactions are covered, not only pairwise combinations: 4 scenarios
+        # x 7 transforms = 28 pairs.
         scenarios = (
             ("ep_meta_clean", ()),
             ("ep_meta_dup_fx", ("DUPLICATE_PAYMENT", "FX_RATE_MISMATCH")),
             ("ep_meta_part_cut", ("PARTIAL_PAYMENT_ALLOCATION", "PERIOD_CUTOFF")),
+            ("ep_meta_compound", ("DUPLICATE_PAYMENT", "PARTIAL_PAYMENT_ALLOCATION", "FX_RATE_MISMATCH", "PERIOD_CUTOFF")),
         )
         base_dirs: list[Path] = []
         for idx, (ep_id, anoms) in enumerate(scenarios):
@@ -253,6 +260,18 @@ def run_metamorphic_suite(*, output_path: Path | str | None = None) -> dict[str,
             )
             gen = build_episode(EpisodeRecipe(twin_spec=spec, anomalies=anoms), root / "base")
             base_dirs.append(gen.episode_dir)
+
+        def _public_bytes_differ(base_ep: Path, trans_ep: Path) -> bool:
+            # Non-vacuous guard (D-13-01): a transform that leaves all public
+            # bytes identical would pass trivially. Require at least one file
+            # to differ, proving the transform actually exercised the episode.
+            base_pub = base_ep / "public"
+            trans_pub = trans_ep / "public"
+            base_files = sorted(p.name for p in base_pub.iterdir() if p.is_file())
+            trans_files = sorted(p.name for p in trans_pub.iterdir() if p.is_file())
+            if base_files != trans_files:
+                return True
+            return any((base_pub / n).read_bytes() != (trans_pub / n).read_bytes() for n in base_files)
 
         for tid, tname in transforms:
             t_pass = True
@@ -270,7 +289,8 @@ def run_metamorphic_suite(*, output_path: Path | str | None = None) -> dict[str,
                 rew_trans = _eval_budget_aware_reward(dst_ep)
                 rew_eq = rew_orig == rew_trans
 
-                ok = ver_eq and rew_eq
+                bytes_diff = _public_bytes_differ(base_ep, dst_ep)
+                ok = ver_eq and rew_eq and bytes_diff
                 t_pass = t_pass and ok
                 checked_pairs += 1
                 pair_details.append(
@@ -278,6 +298,7 @@ def run_metamorphic_suite(*, output_path: Path | str | None = None) -> dict[str,
                         "episode_id": base_ep.name,
                         "verifier_equivariant": ver_eq,
                         "reward_invariant": rew_eq,
+                        "bytes_differ": bytes_diff,
                         "base_reward": render_decimal(rew_orig),
                         "transformed_reward": render_decimal(rew_trans),
                     }
