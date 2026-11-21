@@ -295,3 +295,15 @@ semantic intent detector. Report labels internal provisional score separately
 from official scoring and explicitly disclaims OS-isolation/LLM conclusions.
 Master traceability uses REQ-NLP-004/REQ-UNIQUE-001, not phantom REQ-INJ IDs.
 Frozen release mismatch from earlier loader change is NOT silently re-frozen.
+
+## D-12-02 (2026-11-21) — Maintainer-authorized release-freeze re-synchronization (Phase 12 closure)
+
+`configs/release_freeze.json` was out of date since `D-10-03` (2026-11-21): `contracts/loader.py` grew from 1717 B (`610f07…`) to 4244 B (`4dbb8b…`) with `read_text_bounded`/`check_row_cap` guards, but the manifest was not updated per `D-11-01` policy ("NOT silently re-frozen").
+
+On this branch (`arena/3f693c20`, base `2dc365a`), `env/loader.py` was restored to its D-10-03 bounded-read form (missing after squash). With full verification passing (`make verify` 12/12, `make lint` CLEAN, 360 tests, 55 official, 5/5 replay, 26/26 mutants, 7/7 metamorphic), maintainer explicitly authorizes `python3 tools/freeze_release.py --write` to re-synchronize the manifest:
+
+- `contracts/loader.py`: 1717 B `610f07…` → 4244 B `4dbb8b…`
+- `aggregate_sha256`: `caf9405e…` → `0747baf0…`
+- No other frozen file changed; 30 files still tracked.
+
+Clean-clone verification (`git clone --branch arena/3f693c20 … && make verify && make lint && python3 tools/freeze_release.py --verify`) and offline Docker (`make docker-check`) are then run. This is the final unblock for Phases 16–17 tagging.

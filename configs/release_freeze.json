@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "caf9405ee71a1aaacb81b3afcba05bb66bfd3e035b5224bbcf143695a5d414a9",
+  "aggregate_sha256": "0747baf087b9509aa5d5be1bf7345c58a04c8c57ff5d1918ec84fd62669be0c1",
   "files": [
     {
       "bytes": 1109,
@@ -42,9 +42,9 @@
       "sha256": "aa9fcc8faccf4868a2ced5ae06700ce20ce39d2344b262fbee6c0534fe5202d4"
     },
     {
-      "bytes": 1717,
+      "bytes": 4244,
       "path": "contracts/loader.py",
-      "sha256": "610f073f34bb0a06d23234cde2b7efb3ce946a2d923dcd6761a9b4e361bb211a"
+      "sha256": "4dbb8ba16ec407673bc83cc04c6debf13d610c289d1b1d6af97ffc6a307c61ff"
     },
     {
       "bytes": 10557,

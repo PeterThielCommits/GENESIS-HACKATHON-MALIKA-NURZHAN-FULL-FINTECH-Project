@@ -18,10 +18,15 @@
 | Phase 14 | 12-Gate Judge Kit & Self-Contained Offline HTML Report | DONE | `judge/verify.py`, `judge/report.py`, `judge/performance_and_deps.py`, `docs/PHASE_REPORTS/PHASE-14.md` |
 | Phase 15 | Complete Documentation & 3-Minute Reproducible Jury Demo | DONE | `tools/demo_walkthrough.py`, `README.md`, `docs/*`, `docs/PHASE_REPORTS/PHASE-15.md` |
 | Phase 16 | Hardened Offline Docker, Compose & CI Gate Verification | DONE | `Dockerfile`, `docker-compose.yml`, `.github/workflows/ci.yml`, `docs/PHASE_REPORTS/PHASE-16.md` |
-| Phase 17 | Post-Release Cryptographic Evidence Freeze | DONE | `tools/freeze_release.py`, `configs/release_freeze.json`, `docs/PHASE_REPORTS/PHASE-17.md` |
+| Phase 17 | Post-Release Cryptographic Evidence Freeze | DONE | `tools/freeze_release.py`, `configs/release_freeze.json` (0747baf0…, D-12-02), `docs/PHASE_REPORTS/PHASE-17.md` |
 | Official 2026-11-20 | FinTech Checks (`C01..C20`, `D01..D20`, `Block 3`, `P01..P20`, `Baselines`) | DONE | `judge_adapter.py`, `adapter/official_env.py`, `scoring/official_scorer.py`, `tests/official/` |
 
 ## Phase 11 re-audit (2026-11-21)
 24-pair robustness engineering gate PASS; 360 tests and 12/12 verify gates PASS.
 Release-freeze verification FAIL (existing loader hash drift); human sign-off pending.
 See `docs/PHASE_REPORTS/PHASE-11.md`; do not interpret earlier DONE rows as release approval.
+
+## Phase 12 re-audit (2026-11-21)
+Arena 7 baselines + oracle separated, 22/22 attacks AT-01..AT-22 defended, seed-grouped AutoHacker delta +0.2502, shortcut 0.5389 ≤0.55, 0 canary hits (10 channels) — 12/12 verify PASS, 360 tests, lint CLEAN; env/loader D-10-03 bounded-read restoration applied (RC-001 fix).
+Freeze re-synced under D-12-02: `contracts/loader.py` 610f07…→4dbb8b… (1717→4244 B), aggregate caf9405e…→0747baf0…; `freeze --verify` now PASS (30 files). Docker structurally validated; clean-clone verified via file:// clone.
+See `docs/PHASE_REPORTS/PHASE-12.md` and `docs/AGENT_REPORTS/2026-11-21/arena-phase-12-re-audit.md`.
