@@ -1,33 +1,25 @@
 {
   "phase": 11,
-  "title": "PROMPT-INJECTION ROBUSTNESS TRACK & PAIRED TWIN EVALUATION",
+  "title": "ROBUSTNESS / PROMPT-INJECTION TRACK",
   "outcome": "DONE",
-  "exit_gate_11": "DONE",
-  "exit_gate_note": "EXIT GATE 11 PASS: Benign prompt-injection generator stream ('injection_layer'), untrusted-text detector (nlp/injection_guard.py), and paired Clean vs Injected robustness audit (honest_policy_injection_follow_rate == 0).",
-  "date": "2026-11-21",
-  "branch": "arena/3a99279e-genesis-hackathon-malika-nurzh",
-  "base_commit": "da42d26008f948c294920ae8b02a30b08f541732",
-  "master_tz_sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36",
-  "req_ids": [
-    "REQ-INJ-001",
-    "REQ-INJ-002",
-    "REQ-INJ-003",
-    "REQ-INJ-004"
-  ],
+  "human_signoff": "PENDING",
+  "engineering_gate": "PASS",
   "tasks": {
-    "11.1": "DONE",
-    "11.2": "DONE",
-    "11.3": "DONE",
-    "11.4": "DONE"
+    "11.1": "PASS",
+    "11.2": "PASS",
+    "11.3": "PASS",
+    "11.4": "PASS",
+    "11.5": "PASS"
   },
-  "decisions": [
-    "D-10-01"
-  ],
-  "files": [
-    "configs/robustness/default.json",
-    "nlp/injection_guard.py",
-    "judge/robustness_audit.py",
-    "tests/nlp/test_phase10_nlp_and_injection.py"
-  ],
-  "gate_evidence": "RC-006 -> artifacts/reports/latest/robustness_report.json PASS (naive_text_only degraded under injection while rule_based_auditor achieves injection_follow_rate=0 and reward_delta=0)."
+  "pairs": 24,
+  "tests": 360,
+  "full_verify_gates": "12/12 PASS",
+  "release_freeze": "FAIL (pre-existing loader drift)",
+  "issue": "https://github.com/PeterThielCommits/GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project/issues/13",
+  "requirements": [
+    "REQ-NLP-001",
+    "REQ-NLP-004",
+    "REQ-NLP-005",
+    "REQ-UNIQUE-001"
+  ]
 }

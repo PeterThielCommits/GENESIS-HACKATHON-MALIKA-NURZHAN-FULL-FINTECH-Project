@@ -20,3 +20,8 @@
 | Phase 16 | Hardened Offline Docker, Compose & CI Gate Verification | DONE | `Dockerfile`, `docker-compose.yml`, `.github/workflows/ci.yml`, `docs/PHASE_REPORTS/PHASE-16.md` |
 | Phase 17 | Post-Release Cryptographic Evidence Freeze | DONE | `tools/freeze_release.py`, `configs/release_freeze.json`, `docs/PHASE_REPORTS/PHASE-17.md` |
 | Official 2026-11-20 | FinTech Checks (`C01..C20`, `D01..D20`, `Block 3`, `P01..P20`, `Baselines`) | DONE | `judge_adapter.py`, `adapter/official_env.py`, `scoring/official_scorer.py`, `tests/official/` |
+
+## Phase 11 re-audit (2026-11-21)
+24-pair robustness engineering gate PASS; 360 tests and 12/12 verify gates PASS.
+Release-freeze verification FAIL (existing loader hash drift); human sign-off pending.
+See `docs/PHASE_REPORTS/PHASE-11.md`; do not interpret earlier DONE rows as release approval.
