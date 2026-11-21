@@ -282,3 +282,16 @@ Remediates two code-review findings on `main` @ `7f47638`:
 - **Unbounded reads (robustness gap):** `adapter/official_env.py` (records, metadata, `public/documents/` — which also double-read files), `env/loader.py`, `scoring/official_scorer.py`, and `verifier/public_loader.py` read whole episode files into memory without size/count limits. Fixed with shared guards in `contracts/loader.py`: `read_text_bounded()` (`MAX_INPUT_FILE_BYTES = 16 MiB`, read cap enforced at `cap + 1` bytes) and `check_row_cap()` (`MAX_INPUT_ROWS = 100_000`), translated into each zone's bounded error type (`EnvError("LIMIT", ...)` / `PublicEpisodeError` / `ValueError`). Caps chosen against measured workloads (largest generated public file ~27 KiB; largest table 292 rows; README documents a 4 950-row scan ceiling) with >20x–500x headroom; documented as limitation `L7`. Locked by `tests/env/test_loader_order_and_bounds.py::TestBoundedEpisodeReads`.
 
 No frozen schema, reward formula, or public tool contract changed; `make test-official` (55/55, incl. `P01..P20` paired invariance), `make replay`, `make test-property`, `make lint` all PASS.
+
+## D-11-01 (2026-11-21) — Measured, fail-closed Phase 11 robustness evidence
+Retain frozen v1 config and generator/policy/scorer behavior. Runner validates
+exact supported coverage lists/version/invariance settings and integer seed;
+unsupported custom suites fail rather than silently ignoring config. Expand to
+24 neutral/injected pairs including clean and partial-allocation cases. Compare
+all accounting fields except the three explicitly permitted text leaves, truth
+bytes, verifier finding lists, honest action digests, findings and step counts.
+The legacy follow-rate field is a measured behavioral-change proxy, not a
+semantic intent detector. Report labels internal provisional score separately
+from official scoring and explicitly disclaims OS-isolation/LLM conclusions.
+Master traceability uses REQ-NLP-004/REQ-UNIQUE-001, not phantom REQ-INJ IDs.
+Frozen release mismatch from earlier loader change is NOT silently re-frozen.

@@ -28,3 +28,6 @@ episodes/hidden/
 .DS_Store
 .idea/
 .vscode/
+
+# Generated verification logs
+artifacts/reports/latest/*.log
