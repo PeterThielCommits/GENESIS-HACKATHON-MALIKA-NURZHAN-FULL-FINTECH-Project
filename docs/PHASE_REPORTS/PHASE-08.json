@@ -1,15 +1,17 @@
 {
   "phase": 8,
   "title": "НЕЗАВИСИМЫЙ VERIFIER И PROOFGRAPH",
-  "outcome": "PARTIAL",
-  "exit_gate_8": "PARTIAL",
-  "exit_gate_note": "Tasks 8.1-8.7 implemented and verified (60 new verifier/crosscheck/boundary tests PASS; 197 unit/contract + 3 property tests PASS; make verify PASS). 100% generated release episode verification blocked because episodes/dev and episodes/train contain 0 generated episodes (upstream Phases 3-4 unmerged, issue #3 / draft CR-06-01 open).",
+  "outcome": "DONE",
+  "exit_gate_8": "DONE",
+  "exit_gate_note": "Tasks 8.1-8.7 DONE and EXIT GATE 8 PASS: 10/10 generated release episodes (episodes/dev: 6/6, episodes/train: 4/4) verified via manifest SHA-256, Stage-1 public-only verifier.discover, Stage-2 scoring.crosscheck (release_blocked=False, F1=1, evidence_minimality=1, distractor_FP=0), and TwinLedgerEnv public reachability. External organiser items (Q-003..Q-006) remain explicitly provisional.",
   "date": "2026-11-21",
-  "branch": "arena/bbc43571-genesis-hackathon-malika-nurzh",
-  "base_commit": "62d7b9e00a529e2e47b3b851f74e7865e9c262ea",
+  "branch": "arena/7a1327ee-genesis-hackathon-malika-nurzh",
+  "base_commit": "be114f00b4a250529f7038af7747520215ca9994",
   "master_tz_sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36",
   "req_ids": [
-    "REQ-ARC-001", "REQ-ARC-007",
+    "REQ-ARC-001", "REQ-ARC-002", "REQ-ARC-006", "REQ-ARC-007",
+    "REQ-DATA-020", "REQ-DATA-021",
+    "REQ-ENV-001", "REQ-ENV-012", "REQ-ENV-020",
     "REQ-ORG-001", "REQ-ORG-002", "REQ-ORG-003", "REQ-ORG-004",
     "REQ-VER-001", "REQ-VER-002", "REQ-VER-003", "REQ-VER-004", "REQ-VER-005",
     "REQ-VER-010", "REQ-VER-011", "REQ-VER-012", "REQ-VER-013", "REQ-VER-014",
@@ -24,44 +26,22 @@
     "8.6": "DONE",
     "8.7": "DONE"
   },
+  "generated_episodes_verified": {
+    "dev": "6/6",
+    "train": "4/4",
+    "total": "10/10",
+    "release_blocked_count": 0
+  },
   "checks": [
-    {"command": "make setup", "exit": 0, "status": "PASS"},
     {"command": "make lint", "exit": 0, "status": "PASS"},
-    {"command": "python3 -m unittest discover -s tests/verifier -t . -v", "exit": 0, "status": "PASS", "tests": 60},
-    {"command": "make test", "exit": 0, "status": "PASS", "tests": 197},
+    {"command": "python3 tools/make_dataset.py --split all", "exit": 0, "status": "PASS", "verified_episodes": 10},
+    {"command": "make test", "exit": 0, "status": "PASS", "tests": 214},
     {"command": "make test-property", "exit": 0, "status": "PASS", "tests": 3},
     {"command": "make verify", "exit": 0, "status": "PASS"},
     {"command": "make report", "exit": 0, "status": "PASS"},
     {"command": "make docker-check", "status": "NOT RUN", "reason": "Docker unavailable in session sandbox"}
   ],
-  "distractors_verified": [
-    "D-DUP-01", "D-DUP-02", "D-DUP-03", "D-DUP-04",
-    "D-PART-01", "D-PART-02", "D-PART-03", "D-PART-04",
-    "D-FX-01", "D-FX-02", "D-FX-03", "D-FX-04",
-    "D-CUT-01", "D-CUT-02", "D-CUT-03", "D-CUT-04"
-  ],
-  "artifacts": [
-    "spec/verifier_algorithm.md",
-    "verifier/__init__.py",
-    "verifier/__main__.py",
-    "verifier/public_loader.py",
-    "verifier/money_time.py",
-    "verifier/proof_graph.py",
-    "verifier/result.py",
-    "verifier/duplicate_payment.py",
-    "verifier/partial_allocation.py",
-    "verifier/fx_mismatch.py",
-    "verifier/period_cutoff.py",
-    "verifier/evidence.py",
-    "verifier/minimal_sets.py",
-    "verifier/validate.py",
-    "verifier/discover.py",
-    "scoring/crosscheck.py",
-    "docs/INDEPENDENCE.md",
-    "docs/PHASE_REPORTS/PHASE-08.md",
-    "docs/PHASE_REPORTS/PHASE-08.json",
-    "docs/AGENT_REPORTS/2026-11-21/arena-phase-08.md"
-  ],
-  "decisions": ["D-08-01", "D-08-02", "D-08-03"],
-  "open_items": ["issue #3", "CR-06-01 (draft)", "Q-004", "Q-005", "Q-006", "generated release episodes = 0"]
+  "decisions": ["D-08-01", "D-08-02", "D-08-03", "D-08-04"],
+  "closed_items": ["CR-06-01 (resolved on frozen v1.0.0)", "EXIT GATE 8 (10/10 verified)", "Phases 3-5 & 7 integration"],
+  "open_external_items": ["Q-003", "Q-004", "Q-005", "Q-006", "make docker-check (no Docker in sandbox)"]
 }

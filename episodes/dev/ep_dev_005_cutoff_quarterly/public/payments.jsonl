@@ -1,0 +1,12 @@
+{"allocations":[{"allocation_id":"AL-E443FA30E470E6008C579D69","allocation_timestamp":"2025-04-07T14:00:00+05:00","amount_minor":502000,"document_id":"INV-8A3A9F46B90768A213259638"}],"amount_minor":502000,"bank_reference":"BANK-16AA8F131925DBC9CF19EB66","counterparty_id":"CP-4748A9E5D353EDE98178AE96","currency":"KZT","pay_id":"PAY-119DECA75F7C88ABFBA57D96","payment_channel":"wire","timestamp":"2025-04-07T14:00:00+05:00"}
+
+{"allocations":[{"allocation_id":"AL-FA3586B202A19BA4DDF79413","allocation_timestamp":"2025-04-09T14:00:00+05:00","amount_minor":897000,"document_id":"INV-231B04C7A40B4B4C769173E2"}],"amount_minor":897000,"bank_reference":"BANK-8A5E2FD4993B7B4AEDEC0947","counterparty_id":"CP-2B6E3ACB2946B4B822A9095A","currency":"KZT","pay_id":"PAY-331CFD5BCDEA713195B57D1D","payment_channel":"wire","timestamp":"2025-04-09T14:00:00+05:00"}
+
+{"allocations":[{"allocation_id":"AL-62A2C1C2933E57D42C1E7446","allocation_timestamp":"2025-04-10T14:00:00+05:00","amount_minor":184000,"document_id":"INV-D8E1550CEB59654EAD57CD54"}],"amount_minor":184000,"bank_reference":"BANK-BBBA0B03B25BA435DD968B09","counterparty_id":"CP-733E6059FDB784F6E9E6D189","currency":"KZT","pay_id":"PAY-6247092B320BAC5F7CF30EDC","payment_channel":"wire","timestamp":"2025-04-10T14:00:00+05:00"}
+
+{"allocations":[{"allocation_id":"AL-5C3B529FE610AFB6AAA9D0C1","allocation_timestamp":"2025-04-12T14:00:00+05:00","amount_minor":342000,"document_id":"INV-3FBC7CC38E6BC36DA68262A4"}],"amount_minor":342000,"bank_reference":"BANK-1DDA7C50CF3FDA98F334ADC5","counterparty_id":"CP-5C645E79E49E60D67B06F468","currency":"KZT","pay_id":"PAY-87B4075E82D28CC55CA68708","payment_channel":"wire","timestamp":"2025-04-12T14:00:00+05:00"}
+
+{"allocations":[{"allocation_id":"AL-D745A619BA6FFDC3BE58FCC3","allocation_timestamp":"2025-04-14T14:00:00+05:00","amount_minor":398000,"document_id":"INV-D143D65DE58C846505270708"}],"amount_minor":398000,"bank_reference":"BANK-26638044F4F0E2E93207E1D5","counterparty_id":"CP-E8AEC43924CDD7532D767266","currency":"KZT","pay_id":"PAY-ACE63F37D95B5084CADF5BC9","payment_channel":"wire","timestamp":"2025-04-14T14:00:00+05:00"}
+
+{"allocations":[{"allocation_id":"AL-596408DBFD062282B2683442","allocation_timestamp":"2025-04-05T14:00:00+05:00","amount_minor":384000,"document_id":"INV-D6F7978A5805FA4C45C3E380"}],"amount_minor":384000,"bank_reference":"BANK-7158F073F7C1FF89081509A3","counterparty_id":"CP-1C2FBA935B909A2C843E23B3","currency":"KZT","pay_id":"PAY-ED237D7635A9860529B9C6EF","payment_channel":"wire","timestamp":"2025-04-05T14:00:00+05:00"}
+

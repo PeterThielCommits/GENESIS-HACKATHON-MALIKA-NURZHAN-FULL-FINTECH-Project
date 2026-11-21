@@ -162,14 +162,34 @@ ambiguity, insufficiency, or ablation failure. `scoring/diagnostics.py` retains
 its explicit `verifier_quality: NOT_AVAILABLE` marker for agent scoring until
 episode pipeline integration.
 
-## D-08-03 (2026-11-21) — Frozen independent verifier spec & honest PARTIAL gate
+## D-08-03 (2026-11-21) — Frozen independent verifier spec & provisional semantics
 
 `spec/verifier_algorithm.md` (v1.0.0) freezes the independent verifier
 algorithm, ProofGraph DAG contract, minimal-evidence ablation protocol, and
 16-distractor exclusion rules without reading `gen/` (Task 8.1). Provisional
 public-episode `affected_ids` and amount conventions follow
-`spec/anomaly_catalog.yaml` and `docs/DATA_DICTIONARY.md` (pending Q-004/Q-006
-and CR-06-01). Because `episodes/dev` and `episodes/train` currently contain 0
-generated episodes (upstream Phases 3–4 unmerged, issue #3 open), EXIT GATE 8
-("100% generated release episodes independently verified") is honestly recorded
-as **PARTIAL** until generated episodes are available for batch verification.
+`spec/anomaly_catalog.yaml` and `docs/DATA_DICTIONARY.md` (pending external
+organiser clarifications `Q-004/Q-006`).
+
+## D-08-04 (2026-11-21) — Resolution of CR-06-01 & Phases 3–5/7–8 full integration
+
+Resolved `docs/CR/CR-06-01.md` on the frozen Phase 1 v1.0.0 contract line
+(`D-01-01`, zero frozen schema edits):
+- Integrated deterministic Clean Twin generator (`gen/core/clean_twin.py`,
+  `gen/core/rng.py`, `gen/distractors/catalog.py`) and all 4 anomaly operators
+  + structural diff + salted truth commitment + manifest serializer
+  (`gen/errors/operators.py`, `gen/truth.py`, `gen/serialize.py`,
+  `gen/pipeline.py`), reusing Phase 7's `gen/errors/fx_cutoff.py`.
+- Integrated frozen-contract-compliant public-only `env/` (`list_records`,
+  `get_record`, `get_document`, safe AST `calc`, `submit`, opaque HMAC cursors,
+  `CLOSED_EVAL`, JSONL stdio server) and provisional `adapter/organizer.py`.
+- Added `episodes/*/*/sealed/` to `.gitignore` so sealed truth/provenance
+  directories under `episodes/dev/<ep_id>/` and `episodes/train/<ep_id>/` are
+  never committed to Git while remaining deterministically regenerable via
+  `tools/make_dataset.py --split all`.
+- Generated 10 episodes (6 `dev` + 4 `train`) and verified 100% (10/10) through
+  manifest SHA-256 checks, Stage-1 public-only `verifier.discover`, Stage-2
+  `scoring.crosscheck` (`release_blocked=False`), and `TwinLedgerEnv` public
+  tool reachability — promoting EXIT GATE 8 to **DONE** (internal provisional
+  contract line; external organiser items `Q-003..Q-006` and `make docker-check`
+  remain explicitly documented).

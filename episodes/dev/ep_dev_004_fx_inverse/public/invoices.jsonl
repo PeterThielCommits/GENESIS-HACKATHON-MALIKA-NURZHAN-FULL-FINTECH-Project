@@ -1,0 +1,32 @@
+{"counterparty_id":"093716577957611781332527109106","currency":"USD","doc_id":"076802359082145610321260209070","due_timestamp":"2025-04-29T18:00:00+05:00","issue_timestamp":"2025-04-09T11:00:00+05:00","line_items":[{"amount_minor":20900,"description":"Cross-border service #5"}],"service_end":null,"service_start":"2025-04-07T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":20900}
+
+{"counterparty_id":"133351525247484306799637246702","currency":"KWD","doc_id":"120284458012176080414260827701","due_timestamp":"2025-04-22T18:00:00+05:00","issue_timestamp":"2025-04-07T11:00:00+05:00","line_items":[{"amount_minor":5930000,"description":"Synthetic service #2"}],"service_end":null,"service_start":"2025-04-06T10:00:00+05:00","status":"paid","tax_minor":0,"total_minor":5930000}
+
+{"counterparty_id":"093716577957611781332527109106","currency":"KWD","doc_id":"178310686738624309333666468371","due_timestamp":"2025-04-26T18:00:00+05:00","issue_timestamp":"2025-04-11T11:00:00+05:00","line_items":[{"amount_minor":7350000,"description":"Synthetic service #6"}],"service_end":null,"service_start":"2025-04-10T10:00:00+05:00","status":"paid","tax_minor":0,"total_minor":7350000}
+
+{"counterparty_id":"285910572237134536697114448983","currency":"USD","doc_id":"233342768786072052151404543134","due_timestamp":"2025-05-15T18:00:00+05:00","issue_timestamp":"2025-04-12T10:00:00+05:00","line_items":[{"amount_minor":12500,"description":"Standard service delivery"}],"service_end":null,"service_start":"2025-04-12T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":12500}
+
+{"counterparty_id":"439608425273579077619682549215","currency":"KWD","doc_id":"370061787280819174170443862965","due_timestamp":"2025-04-19T18:00:00+05:00","issue_timestamp":"2025-04-04T11:00:00+05:00","line_items":[{"amount_minor":3420000,"description":"Synthetic service #3"}],"service_end":null,"service_start":"2025-03-27T10:00:00+05:00","status":"paid","tax_minor":0,"total_minor":3420000}
+
+{"counterparty_id":"285910572237134536697114448983","currency":"USD","doc_id":"421545898478347859314964489575","due_timestamp":"2025-05-15T18:00:00+05:00","issue_timestamp":"2025-04-10T10:00:00+05:00","line_items":[{"amount_minor":14000,"description":"Standard service delivery"}],"service_end":null,"service_start":"2025-04-10T09:00:00+05:00","status":"paid","tax_minor":0,"total_minor":14000}
+
+{"counterparty_id":"285910572237134536697114448983","currency":"KWD","doc_id":"473015533482666123175426714150","due_timestamp":"2025-04-17T18:00:00+05:00","issue_timestamp":"2025-04-02T11:00:00+05:00","line_items":[{"amount_minor":7740000,"description":"Synthetic service #1"}],"service_end":null,"service_start":"2025-03-25T10:00:00+05:00","status":"paid","tax_minor":0,"total_minor":7740000}
+
+{"counterparty_id":"133351525247484306799637246702","currency":"USD","doc_id":"480217548286908593737835543662","due_timestamp":"2025-04-08T18:00:00+05:00","issue_timestamp":"2025-03-19T11:00:00+05:00","line_items":[{"amount_minor":33000,"description":"Cross-border service #1"}],"service_end":null,"service_start":"2025-03-17T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":33000}
+
+{"counterparty_id":"401043670827058932908057570055","currency":"JPY","doc_id":"490980450692502960676848670246","due_timestamp":"2025-04-23T18:00:00+05:00","issue_timestamp":"2025-04-03T11:00:00+05:00","line_items":[{"amount_minor":207,"description":"Cross-border service #4"}],"service_end":null,"service_start":"2025-04-01T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":207}
+
+{"counterparty_id":"133351525247484306799637246702","currency":"KWD","doc_id":"599393758284475427265574030946","due_timestamp":"2025-04-28T18:00:00+05:00","issue_timestamp":"2025-04-13T11:00:00+05:00","line_items":[{"amount_minor":7590000,"description":"Synthetic service #8"}],"service_end":null,"service_start":"2025-04-12T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":7590000}
+
+{"counterparty_id":"368962363808736895817681607742","currency":"KWD","doc_id":"639124529950764315261202999565","due_timestamp":"2025-04-24T18:00:00+05:00","issue_timestamp":"2025-04-09T11:00:00+05:00","line_items":[{"amount_minor":1600000,"description":"Synthetic service #4"}],"service_end":null,"service_start":"2025-04-08T10:00:00+05:00","status":"paid","tax_minor":0,"total_minor":1600000}
+
+{"counterparty_id":"285910572237134536697114448983","currency":"JPY","doc_id":"651619077736973576853985856606","due_timestamp":"2025-05-04T18:00:00+05:00","issue_timestamp":"2025-04-14T11:00:00+05:00","line_items":[{"amount_minor":160,"description":"Cross-border service #6"}],"service_end":null,"service_start":"2025-04-11T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":160}
+
+{"counterparty_id":"285910572237134536697114448983","currency":"KWD","doc_id":"651734101773283557541342352061","due_timestamp":"2025-04-18T18:00:00+05:00","issue_timestamp":"2025-04-03T11:00:00+05:00","line_items":[{"amount_minor":5520000,"description":"Synthetic service #7"}],"service_end":null,"service_start":"2025-03-26T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":5520000}
+
+{"counterparty_id":"368962363808736895817681607742","currency":"USD","doc_id":"668168711901325181772589365176","due_timestamp":"2025-04-20T18:00:00+05:00","issue_timestamp":"2025-03-31T11:00:00+05:00","line_items":[{"amount_minor":23000,"description":"Cross-border service #3"}],"service_end":null,"service_start":"2025-03-27T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":23000}
+
+{"counterparty_id":"401043670827058932908057570055","currency":"KWD","doc_id":"678114533529311039414529195752","due_timestamp":"2025-04-21T18:00:00+05:00","issue_timestamp":"2025-04-06T11:00:00+05:00","line_items":[{"amount_minor":2190000,"description":"Synthetic service #5"}],"service_end":null,"service_start":"2025-03-29T10:00:00+05:00","status":"paid","tax_minor":0,"total_minor":2190000}
+
+{"counterparty_id":"439608425273579077619682549215","currency":"JPY","doc_id":"684803947726193208233241824511","due_timestamp":"2025-04-15T18:00:00+05:00","issue_timestamp":"2025-03-26T11:00:00+05:00","line_items":[{"amount_minor":264,"description":"Cross-border service #2"}],"service_end":null,"service_start":"2025-03-24T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":264}
+

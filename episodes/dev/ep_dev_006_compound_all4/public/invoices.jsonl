@@ -1,0 +1,42 @@
+{"counterparty_id":"CP-989AABCC1963F27326576F5E","currency":"EUR","doc_id":"INV-101140052BC76E526E0ED318","due_timestamp":"2025-04-15T18:00:00+05:00","issue_timestamp":"2025-03-26T11:00:00+05:00","line_items":[{"amount_minor":14700,"description":"Cross-border service #2"}],"service_end":null,"service_start":"2025-03-24T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":14700}
+
+{"counterparty_id":"CP-4E8457B85956ED0E99F6AA39","currency":"KZT","doc_id":"INV-1E18AE1620B9526B46438800","due_timestamp":"2025-05-15T18:00:00+05:00","issue_timestamp":"2025-04-05T12:00:00+05:00","line_items":[{"amount_minor":33000,"description":"Standard service delivery"}],"service_end":null,"service_start":"2025-04-05T11:00:00+05:00","status":"paid","tax_minor":0,"total_minor":33000}
+
+{"counterparty_id":"CP-4E8457B85956ED0E99F6AA39","currency":"KZT","doc_id":"INV-2C9C6936FE6AD5B2EB048BC0","due_timestamp":"2025-05-15T18:00:00+05:00","issue_timestamp":"2025-04-02T10:00:00+05:00","line_items":[{"amount_minor":45000,"description":"Standard service delivery"}],"service_end":null,"service_start":"2025-04-02T09:00:00+05:00","status":"paid","tax_minor":0,"total_minor":45000}
+
+{"counterparty_id":"CP-989AABCC1963F27326576F5E","currency":"KZT","doc_id":"INV-319D085CDF77690267ED7613","due_timestamp":"2025-04-20T18:00:00+05:00","issue_timestamp":"2025-04-05T11:00:00+05:00","line_items":[{"amount_minor":838000,"description":"Synthetic service #9"}],"service_end":null,"service_start":"2025-03-28T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":838000}
+
+{"counterparty_id":"CP-1857AEC25F8EE2C25D1453BC","currency":"KZT","doc_id":"INV-33DC9C8345000D336A58B8AD","due_timestamp":"2025-04-22T18:00:00+05:00","issue_timestamp":"2025-04-07T11:00:00+05:00","line_items":[{"amount_minor":401000,"description":"Synthetic service #2"}],"service_end":null,"service_start":"2025-04-06T10:00:00+05:00","status":"paid","tax_minor":0,"total_minor":401000}
+
+{"counterparty_id":"CP-4E8457B85956ED0E99F6AA39","currency":"KZT","doc_id":"INV-34EE57D861315A6FDB74BD8C","due_timestamp":"2025-05-15T18:00:00+05:00","issue_timestamp":"2025-03-20T10:00:00+05:00","line_items":[{"amount_minor":29000,"description":"Standard service delivery"}],"service_end":null,"service_start":"2025-04-10T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":29000}
+
+{"counterparty_id":"CP-EB69FA47F9B43E67C254ED54","currency":"EUR","doc_id":"INV-36C866D32D1F6099CD8E9A25","due_timestamp":"2025-04-23T18:00:00+05:00","issue_timestamp":"2025-04-03T11:00:00+05:00","line_items":[{"amount_minor":39300,"description":"Cross-border service #4"}],"service_end":null,"service_start":"2025-04-01T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":39300}
+
+{"counterparty_id":"CP-71FE289934903C9D897650D6","currency":"KZT","doc_id":"INV-3A5E097942AE3FB514E59CA9","due_timestamp":"2025-04-24T18:00:00+05:00","issue_timestamp":"2025-04-09T11:00:00+05:00","line_items":[{"amount_minor":493000,"description":"Synthetic service #4"}],"service_end":null,"service_start":"2025-04-08T10:00:00+05:00","status":"paid","tax_minor":0,"total_minor":493000}
+
+{"counterparty_id":"CP-EB69FA47F9B43E67C254ED54","currency":"KZT","doc_id":"INV-457E3186ABF40D537FAB061A","due_timestamp":"2025-04-21T18:00:00+05:00","issue_timestamp":"2025-04-06T11:00:00+05:00","line_items":[{"amount_minor":866000,"description":"Synthetic service #5"}],"service_end":null,"service_start":"2025-03-29T10:00:00+05:00","status":"paid","tax_minor":0,"total_minor":866000}
+
+{"counterparty_id":"CP-DDEBF8D3F07271237AB35CA4","currency":"USD","doc_id":"INV-5FF2F256A34039AD979414F3","due_timestamp":"2025-04-29T18:00:00+05:00","issue_timestamp":"2025-04-09T11:00:00+05:00","line_items":[{"amount_minor":29100,"description":"Cross-border service #5"}],"service_end":null,"service_start":"2025-04-07T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":29100}
+
+{"counterparty_id":"CP-1857AEC25F8EE2C25D1453BC","currency":"USD","doc_id":"INV-63D5808B99E66B8CAE3BDE89","due_timestamp":"2025-04-08T18:00:00+05:00","issue_timestamp":"2025-03-19T11:00:00+05:00","line_items":[{"amount_minor":16000,"description":"Cross-border service #1"}],"service_end":null,"service_start":"2025-03-17T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":16000}
+
+{"counterparty_id":"CP-4E8457B85956ED0E99F6AA39","currency":"USD","doc_id":"INV-6822076DFAA108B06C0BBCFF","due_timestamp":"2025-05-15T18:00:00+05:00","issue_timestamp":"2025-04-12T10:00:00+05:00","line_items":[{"amount_minor":12500,"description":"Standard service delivery"}],"service_end":null,"service_start":"2025-04-12T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":12500}
+
+{"counterparty_id":"CP-1857AEC25F8EE2C25D1453BC","currency":"KZT","doc_id":"INV-72DA50F067EF0FBDFD8BECC1","due_timestamp":"2025-04-28T18:00:00+05:00","issue_timestamp":"2025-04-13T11:00:00+05:00","line_items":[{"amount_minor":241000,"description":"Synthetic service #8"}],"service_end":null,"service_start":"2025-04-12T10:00:00+05:00","status":"paid","tax_minor":0,"total_minor":241000}
+
+{"counterparty_id":"CP-71FE289934903C9D897650D6","currency":"KZT","doc_id":"INV-890DE58CEABB6F89F2F5C691","due_timestamp":"2025-04-30T18:00:00+05:00","issue_timestamp":"2025-04-15T11:00:00+05:00","line_items":[{"amount_minor":554000,"description":"Synthetic service #10"}],"service_end":null,"service_start":"2025-04-14T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":554000}
+
+{"counterparty_id":"CP-4E8457B85956ED0E99F6AA39","currency":"EUR","doc_id":"INV-92F4A52628BE3485C4321D01","due_timestamp":"2025-05-04T18:00:00+05:00","issue_timestamp":"2025-04-14T11:00:00+05:00","line_items":[{"amount_minor":7300,"description":"Cross-border service #6"}],"service_end":null,"service_start":"2025-04-11T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":7300}
+
+{"counterparty_id":"CP-4E8457B85956ED0E99F6AA39","currency":"KZT","doc_id":"INV-9E136B5DAECD12B7C48762A1","due_timestamp":"2025-04-17T18:00:00+05:00","issue_timestamp":"2025-04-02T11:00:00+05:00","line_items":[{"amount_minor":684000,"description":"Synthetic service #1"}],"service_end":null,"service_start":"2025-03-25T10:00:00+05:00","status":"paid","tax_minor":0,"total_minor":684000}
+
+{"counterparty_id":"CP-4E8457B85956ED0E99F6AA39","currency":"KZT","doc_id":"INV-AAF20811810ED87D69046A7D","due_timestamp":"2025-05-15T18:00:00+05:00","issue_timestamp":"2025-04-05T10:00:00+05:00","line_items":[{"amount_minor":22000,"description":"Standard service delivery"}],"service_end":null,"service_start":"2025-04-05T09:00:00+05:00","status":"paid","tax_minor":0,"total_minor":22000}
+
+{"counterparty_id":"CP-989AABCC1963F27326576F5E","currency":"KZT","doc_id":"INV-ADBCF7132211504E11EC7840","due_timestamp":"2025-04-19T18:00:00+05:00","issue_timestamp":"2025-04-04T11:00:00+05:00","line_items":[{"amount_minor":856000,"description":"Synthetic service #3"}],"service_end":null,"service_start":"2025-03-27T10:00:00+05:00","status":"paid","tax_minor":0,"total_minor":856000}
+
+{"counterparty_id":"CP-4E8457B85956ED0E99F6AA39","currency":"KZT","doc_id":"INV-CF5442576601C844E10330AB","due_timestamp":"2025-04-18T18:00:00+05:00","issue_timestamp":"2025-04-03T11:00:00+05:00","line_items":[{"amount_minor":934000,"description":"Synthetic service #7"}],"service_end":null,"service_start":"2025-03-26T10:00:00+05:00","status":"paid","tax_minor":0,"total_minor":934000}
+
+{"counterparty_id":"CP-DDEBF8D3F07271237AB35CA4","currency":"KZT","doc_id":"INV-E0A0BFA4DF5970112FB6BD41","due_timestamp":"2025-04-26T18:00:00+05:00","issue_timestamp":"2025-04-11T11:00:00+05:00","line_items":[{"amount_minor":651000,"description":"Synthetic service #6"}],"service_end":null,"service_start":"2025-04-10T10:00:00+05:00","status":"paid","tax_minor":0,"total_minor":651000}
+
+{"counterparty_id":"CP-71FE289934903C9D897650D6","currency":"USD","doc_id":"INV-FA55E03218947A4D8909F924","due_timestamp":"2025-04-20T18:00:00+05:00","issue_timestamp":"2025-03-31T11:00:00+05:00","line_items":[{"amount_minor":31100,"description":"Cross-border service #3"}],"service_end":null,"service_start":"2025-03-27T10:00:00+05:00","status":"open","tax_minor":0,"total_minor":31100}
+
