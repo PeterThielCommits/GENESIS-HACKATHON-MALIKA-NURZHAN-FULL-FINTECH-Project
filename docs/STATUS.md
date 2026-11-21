@@ -9,7 +9,7 @@
 | Phase 4 Operators + diff truth | IMPLEMENTED ON PARALLEL BRANCH `arena/d94e8b76` (not merged; contract conflict, CR-05-01) | branch commits 9483274..e740784 |
 | Phase 5 Env reset/step | PARTIAL — provisional env on `arena/eb1e0f8a` (PR #4 draft); exit gate BLOCKED on contracts (issue #3) | `docs/PHASE_REPORTS/PHASE-05.md` (branch) |
 | Phase 6 Matcher + reward | DONE (provisional rubric per EXIT GATE 6; P1..P5 PASS) | `docs/PHASE_REPORTS/PHASE-06.md`, `PHASE-06-reward-matrix.json`, `make verify` PASS |
-| Phase 7 FX + cutoff | NOT STARTED | — |
+| Phase 7 FX + cutoff | PARTIAL — normalized checks PASS; four-type gate BLOCKED | `docs/PHASE_REPORTS/PHASE-07.md` |
 | Phase 8 Verifier + ProofGraph | NOT STARTED | — |
 | Phase 9 Processes + seal + receipts | NOT STARTED | — |
 | Phase 10 NLP layer | NOT STARTED | — |
