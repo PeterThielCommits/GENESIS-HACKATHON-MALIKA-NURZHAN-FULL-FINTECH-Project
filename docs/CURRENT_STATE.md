@@ -9,3 +9,5 @@ Exactly three next actions:
 1. A0: resolve organizer contract, PR #1 schema integration, and CR-05-01.
 2. A2: reconcile environment/adapter with approved schemas and upstream public episode format, including calc if required.
 3. A6: independently test, review, and evaluate the real Phase 5 exit gate.
+
+Remote: issue #3 and draft PR #4 created; implementation commit `151c101` pushed. This context update is a follow-up commit. No independent review or current-branch CI was run at report time.
