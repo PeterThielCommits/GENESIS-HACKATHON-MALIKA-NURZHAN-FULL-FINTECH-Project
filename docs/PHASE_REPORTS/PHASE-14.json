@@ -1,37 +1,131 @@
 {
   "phase": 14,
-  "title": "12-GATE JUDGE KIT, PERFORMANCE/DEPENDENCY AUDIT & OFFLINE HTML REPORT",
+  "title": "JUDGE KIT & FULL REPORT (re-audit)",
   "outcome": "DONE",
-  "exit_gate_14": "DONE",
-  "exit_gate_note": "EXIT GATE 14 PASS: All 12 rubricator gates RC-001..RC-012 green in make verify (~47s), stdlib-only core verified, step p99=0.13ms, peak RSS=22MB, and self-contained offline report.html synthesized over 21 artifacts.",
+  "exit_gate_14": "PASS",
+  "exit_gate_note": "Clean checkout (git-tracked files only, empty artifacts/reports/latest) + documented command `make verify` produced complete verification outputs: 12/12 gates PASS in 62.1s, 21 artifacts, TZ §23.5 envelopes clean, report.html offline (0 http), replay 5/5.",
+  "supersedes": {
+    "branch": "arena/3a99279e-genesis-hackathon-malika-nurzh",
+    "reason": "Earlier EXIT GATE 14 was claimed from a dirty tree with pre-existing artifacts; the clean-checkout run failed with TypeError and exit 5."
+  },
   "date": "2026-11-21",
-  "branch": "arena/3a99279e-genesis-hackathon-malika-nurzh",
-  "base_commit": "da42d26008f948c294920ae8b02a30b08f541732",
-  "master_tz_sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36",
+  "branch": "arena/102582b5-genesis-hackathon-malika-nurzh",
+  "base_commit": "e9a423969fd9f5a3543c7a2438edbf423ed35ced",
   "req_ids": [
     "REQ-JUDGE-001",
     "REQ-JUDGE-002",
     "REQ-JUDGE-003",
     "REQ-JUDGE-004",
+    "REQ-JUDGE-005",
     "REQ-OPS-001",
     "REQ-OPS-002",
     "REQ-OPS-003"
   ],
   "tasks": {
-    "14.1": "DONE",
-    "14.2": "DONE",
-    "14.3": "DONE",
-    "14.4": "DONE"
+    "14.1": "DONE — rubric_map validated by stdlib schema, rubric_matrix.csv now carries rubric_item + provisional",
+    "14.2": "DONE — two-phase summary, deterministic exit precedence 4>3>2>1>5>0, optional-vs-critical skip accounting",
+    "14.3": "DONE — judge/schemas.py (rubric_map, verify_summary, report_index, TZ 23.5 envelope); violations exit 2",
+    "14.4": "DONE — verify_summary.json/.txt, rubric_matrix.csv, episode_matrix.csv regenerated on clean run",
+    "14.5": "DONE — offline report.html, 0 external references, replay 5/5 rendered",
+    "14.6": "DONE — docs/PHASE_REPORTS/TEMPLATE.md added, report_index.json automatic with 21 artifacts"
   },
-  "decisions": [
-    "D-14-01"
+  "defects_fixed": [
+    "judge/report.py: `x or {{}}` inside f-string replacement field parsed as set literal -> TypeError on clean checkout",
+    "judge/verify.py: report.py invoked before verify_summary.json existed -> exit 5 on clean checkout",
+    "judge/verify.py: pre-report completeness check set incomplete permanently -> exit 5",
+    "judge/report.py: replay metrics keys never written by harness -> 'Replay Suite 0/0' instead of 5/5",
+    "replay_report.json + reward_property_matrix.json: missing TZ 23.5 metadata envelope",
+    "judge/performance_and_deps.py: invariant count 15 -> 17; unguarded index/key access removed",
+    "judge/schemas.py: per-check schema_version no longer required on frozen rubric_map (D-14-02)"
   ],
-  "files": [
-    "judge/rubric_map.json",
+  "decisions": ["D-14-01", "D-14-02", "D-14-03"],
+  "files_changed": [
     "judge/verify.py",
-    "judge/performance_and_deps.py",
     "judge/report.py",
-    "Makefile"
+    "judge/schemas.py",
+    "judge/performance_and_deps.py",
+    "harness/replay.py",
+    "tests/scoring/test_reward_properties.py",
+    "tests/judge/__init__.py",
+    "tests/judge/test_judge_kit.py",
+    "docs/PHASE_REPORTS/TEMPLATE.md",
+    "docs/PHASE_REPORTS/PHASE-14.md",
+    "docs/PHASE_REPORTS/PHASE-14.json",
+    "docs/CURRENT_STATE.md",
+    "docs/STATUS.md",
+    "docs/DECISIONS.md"
   ],
-  "gate_evidence": "make verify PASS (12/12 RC-001..RC-012) + artifacts/reports/latest/report.html (0 external links, 0 secret leaks)."
+  "frozen_files_changed": [],
+  "commands": [
+    {
+      "command": "python3 -m unittest tests.judge.test_judge_kit -v",
+      "exit_code": 0,
+      "result": "38 tests OK"
+    },
+    {
+      "command": "make lint",
+      "exit_code": 0,
+      "result": "compile OK + import boundary scan CLEAN (REQ-ARC-001..007)"
+    },
+    {
+      "command": "python3 -m unittest discover -s tests -t .",
+      "exit_code": 0,
+      "result": "410 tests OK (skipped=1 optional hypothesis extra)"
+    },
+    {
+      "command": "make verify",
+      "exit_code": 0,
+      "result": "12/12 PASS in 63.3s, 21 artifacts"
+    },
+    {
+      "command": "make verify-core",
+      "exit_code": 0,
+      "result": "6/6 PASS in 48.0s"
+    },
+    {
+      "command": "make report",
+      "exit_code": 0,
+      "result": "report.html + report_index.json (21 artifacts)"
+    },
+    {
+      "command": "make test-property",
+      "exit_code": 0,
+      "result": "17 tests OK (1 optional skip)"
+    },
+    {
+      "command": "python3 tools/freeze_release.py --verify",
+      "exit_code": 0,
+      "result": "30 frozen files intact, aggregate 0747baf087b9509a..."
+    },
+    {
+      "command": "make verify  # clean copy, empty artifacts/reports/latest",
+      "exit_code": 0,
+      "result": "12/12 PASS in 62.1s -> EXIT GATE 14"
+    }
+  ],
+  "negative_exit_code_tests": {
+    "malformed judge/rubric_map.json with verify.py --full": 2,
+    "judge/report.py without verify_summary.json": 5,
+    "judge/report.py with malformed verify_summary.json": 2,
+    "offline HTML violation (unit path)": 4
+  },
+  "metrics": {
+    "env_step_p99_ms": 0.17,
+    "env_step_p99_budget_ms": 5.0,
+    "peak_rss_mb": 22.41,
+    "peak_rss_budget_mb": 300,
+    "max_episode_disk_mb": 0.0812,
+    "replay_episodes_matched": "5/5",
+    "invariants_catalog_count": 17,
+    "html_external_references": 0,
+    "official_score_claimed": false
+  },
+  "skipped": "1-2 optional hypothesis-extra tests, recorded in optional_checks (critical_skipped=0)",
+  "failed": [],
+  "limitations": [
+    "Timestamps/durations excluded from deterministic hashes by design (TZ 23.5).",
+    "Rubric weights and RC gates remain provisional; never presented as organiser score.",
+    "Offline guarantee enforced by static HTML audit, not OS network namespace, in this phase."
+  ],
+  "next_phase": "Phase 15 — documentation & 3-minute demo; correct README claim of 317 tests to measured 410."
 }

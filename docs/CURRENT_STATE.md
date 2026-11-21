@@ -1,12 +1,14 @@
 # Current State — 2026-11-21
 
-- Active branch: `arena/9d42d276-genesis-hackathon-malika-nurzh`, base `fa3b2919fe375bce849e7bcdf16e38365be04c32`.
-- Phase 13 re-audit DONE, EXIT GATE 13 PASS: 26/26 instrumented mutants killed; seven metamorphic transforms over 28 pairs. Scope and limitations: `docs/PHASE_REPORTS/PHASE-13.md`.
-- `make verify`: 12/12 PASS. Full unittest: 372 tests, one optional dependency skip. Optional Hypothesis separately exercised successfully. Replay, shortcut audit, lint and 30-file freeze verification PASS.
-- No production or frozen release files changed. Existing Phase 12 PR #15 is merged, not open.
-- Tracking: https://github.com/PeterThielCommits/GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project/issues/16. Remote PR and CI status should be checked directly.
+- Active branch: `arena/102582b5-genesis-hackathon-malika-nurzh`, base `e9a4239` (`Merge PR #17`, `main`).
+- **Phase 14 re-audit DONE, EXIT GATE 14 PASS** on a clean checkout: the documented command `make verify` run against a tree built from `git ls-files` (empty `artifacts/reports/latest/`) exits 0 with 12/12 gates PASS in ~62 s and 21 complete artifacts. Scope, defects and evidence: `docs/PHASE_REPORTS/PHASE-14.md`; decisions `D-14-02`, `D-14-03`.
+- Measured in this session: `make verify` 12/12 PASS (63.3 s), `make verify-core` 6/6 PASS, full unittest **410 tests OK** (1 optional Hypothesis skip), Judge Kit suite **38 tests OK**, `make lint` CLEAN, `tools/freeze_release.py --verify` PASS (30 frozen files, `0747baf0…`).
+- Evidence dir is now self-describing: every JSON report carries the TZ §23.5 envelope (code version, config hash, timestamp, platform, Python, command), enforced by `make verify` as exit 2 on violation; `report_index.json` indexes all 21 artifacts with `missing: []`; `report.html` is fully offline (0 external references) and renders real replay 5/5.
+- Exit-code contract exercised with negative tests: malformed rubric map → 2, missing `verify_summary.json` → 5, malformed summary → 2, offline-HTML violation → 4.
+- No production or frozen release files changed (`contracts/*`, `configs/*`, `judge/rubric_map.json`, Master TZ untouched). Phase 12 PR #15 is merged, not open.
 
 ## Next actions
-1. Review Phase 13 changes and finite-coverage limitations, and check current PR/CI.
-2. Re-run `make verify` and `python3 tools/freeze_release.py --verify` for the reviewed commit.
-3. Release owner handles any release/tag decisions separately; Phase 13 re-audit is not release authorization.
+1. Phase 15: correct `README.md`'s stale claim ("317 tests") to the measured 410 and link each claim to a report artifact (TZ §24 Phase 15.5/15.6).
+2. Review Phase 14 changes (`judge/verify.py` two-phase synthesis, `judge/report.py` f-string fix, new `judge/schemas.py`, new `tests/judge/`) and check current PR/CI.
+3. Re-run `make verify` and `python3 tools/freeze_release.py --verify` for the reviewed commit.
+4. Release owner handles tag/release decisions separately; the Phase 14 re-audit is not release authorization.

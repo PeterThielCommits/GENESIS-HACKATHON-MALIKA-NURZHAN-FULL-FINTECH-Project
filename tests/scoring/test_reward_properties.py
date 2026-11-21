@@ -10,11 +10,14 @@ the machine verdict of every property.
 from __future__ import annotations
 
 import json
+import platform
+import sys
 import unittest
+from datetime import datetime, timezone
 from fractions import Fraction
 from pathlib import Path
 
-from contracts.canonical import canonical_json
+from contracts.canonical import canonical_json, sha256_hex
 from scoring.diagnostics import build_reward_property_matrix, evaluate_reward_properties
 from scoring.reward import compute_reward, load_scoring_config
 from tests.scoring import fixtures as fx
@@ -116,6 +119,22 @@ class TestRewardProperties(unittest.TestCase):
         cls.verdicts = evaluate_reward_properties(cls.matrix)
         ARTIFACT_PATH.parent.mkdir(parents=True, exist_ok=True)
         artifact = dict(cls.matrix)
+        # TZ §23.5: every report carries code version, config hash, run
+        # timestamp, target platform, Python version, and the launch command.
+        artifact.update(
+            {
+                "schema_version": "1.0.0",
+                "report_type": "reward_property_matrix",
+                "code_version": "twinledger@1.0.0",
+                "config_hash": sha256_hex(
+                    {"baseline_steps": BASELINE_STEPS, "p5_step_sweep": list(P5_STEP_SWEEP)}
+                ),
+                "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "platform": platform.platform(),
+                "python_version": sys.version.split()[0],
+                "command": "python3 -m unittest tests.scoring.test_reward_properties",
+            }
+        )
         artifact["properties"] = cls.verdicts
         ARTIFACT_PATH.write_text(canonical_json(artifact) + "\n", encoding="utf-8")
 

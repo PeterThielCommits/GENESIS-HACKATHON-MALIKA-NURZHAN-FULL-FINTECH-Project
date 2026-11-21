@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import platform
 import subprocess
 import sys
 import tempfile
@@ -30,7 +31,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from contracts.canonical import canonical_json
+from contracts.canonical import canonical_json, sha256_hex
 from harness.env_process import EnvSubprocess
 from harness.runner import run_closed_eval_batch
 from harness.sandbox import REPO_ROOT, build_sanitized_env
@@ -460,12 +461,26 @@ def run_replay_verification_suite(
         all_matched = all(r["matched"] and r["lifecycle_strictly_ordered"] for r in replay_results)
         security_profile = batch_results[0].security_profile.to_dict()
 
+    # TZ §23.5: every report carries code version, config hash, run timestamp,
+    # target platform, Python version, and the launch command.
+    config_meta = {
+        "suite": "replay_verification",
+        "salt_mode": "TEST_FIXTURE",
+        "runs": [{"episode_id": Path(str(ep)).name, "policy": pol} for ep, _cmd, pol in runs],
+    }
     report = {
         "schema_version": "1.0.0",
+        "report_type": "replay_report",
+        "code_version": "twinledger@1.0.0",
+        "config_hash": sha256_hex(config_meta),
         "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "platform": platform.platform(),
         "python_version": sys.version.split()[0],
+        "command": "python3 -m harness.replay --verify-suite",
         "status": "PASS" if all_matched else "FAIL",
         "episodes_replayed": len(replay_results),
+        "episodes_tested": len(replay_results),
+        "episodes_matched": sum(1 for r in replay_results if r["matched"]),
         "all_byte_identical": all(r["response_bytes_identical"] for r in replay_results),
         "all_hashes_identical": all(r["event_hashes_identical"] for r in replay_results),
         "all_rewards_identical": all(r["reward_identical"] for r in replay_results),

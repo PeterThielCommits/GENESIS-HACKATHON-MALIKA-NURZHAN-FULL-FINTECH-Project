@@ -258,6 +258,22 @@ Remediates `R-09` and `L4`:
 
 `judge/verify.py` executes all 12 provisional Master TZ §23 rubricator gates (`RC-001..RC-012`) while preserving `official_score_claimed: false` (`D-01-06`). `judge/report.py` synthesizes a 100% offline self-contained `artifacts/reports/latest/report.html` (zero external `http://` or `https://` links, zero canary/salt leaks) indexing all 21 JSON/CSV/MD/HTML evidence artifacts.
 
+## D-14-02 (2026-11-21) — Frozen rubric map validated tolerantly; TZ §23.5 envelope enforced as a contract gate
+
+Phase 14 re-audit. `judge/rubric_map.json` is frozen by `configs/release_freeze.json`, but its per-check objects omit `schema_version` (the version appears once, at top level as `rubric_version`), while `contracts/rubric_check.schema.json` lists `schema_version` among the required fields for a standalone check. Editing either the frozen map or the frozen contract to reconcile this would require a CR, and the discrepancy is representation-only.
+
+Decision: `judge/schemas.py::validate_rubric_map` requires the seven semantic fields (`check_id`, `rubric_item`, `req_id`, `test_id`, `command`, `evidence_artifact`, `provisional`) and validates `schema_version` **only when present**. Locked by `tests/judge/test_judge_kit.py::TestRubricMapConsistency::test_rubric_map_validates` running against the real frozen file.
+
+In the same pass, TZ §23.5 ("every report must contain code version, config hash, run timestamp, target platform, Python version and launch command") is now machine-enforced: `validate_report_envelope` / `validate_report_dir_envelopes` audit every `*.json` in `artifacts/reports/latest/`, and `judge/verify.py --full` treats a violation as a configuration/contract error (exit 2). `harness/replay.py` and `tests/scoring/test_reward_properties.py` were extended with the envelope (additive metadata only — no change to replay, reward, or scoring semantics).
+
+## D-14-03 (2026-11-21) — EXIT GATE 14 is defined by clean-checkout reproduction, and report synthesis is ordered around it
+
+The earlier Phase 14 claim of `PASS` was measured in a working tree that already contained 21 artifacts. TZ §24 defines EXIT GATE 14 as *clean checkout + documented command → complete verification outputs*, so that claim was untested for the only condition that matters to a judge.
+
+Decision: the gate is only accepted when the documented command runs in a tree built from `git ls-files` (no `__pycache__`, `artifacts/reports/latest/` holding only `.gitkeep`) and exits 0 with complete outputs. This standard immediately exposed two real defects, both fixed: an f-string `x or {{}}` set-literal `TypeError` that only fires when an optional report is absent, and a synthesis-order bug where `judge/report.py` consumed `verify_summary.json` before `judge/verify.py` wrote it (exit 5 on a clean clone). `judge/verify.py` now emits the summary in two phases — before the report step (its input) and after (final status/artifacts) — and the advisory pre-report completeness check can no longer decide the exit code; only the post-report completeness pass sets exit 5. Locked by `test_build_report_survives_empty_artifact_dir`.
+
+Consequence for future phases: any "VERIFIED" claim about the judge path must name the clean-tree reproduction, not a dirty run.
+
 ## D-17-01 (2026-11-21) — Post-release cryptographic contract & config freeze manifest
 
 `tools/freeze_release.py` locks SHA-256 digests over all 30 frozen contract schemas (`contracts/*.schema.json`, `contracts/version.json`), operational configs (`configs/*`), provisional rubricator (`judge/rubric_map.json`), official check spec (`spec/official_fintech_checks_2026-11-20.md`), and Master TZ v3.0.0 (`docs/reference/TwinLedger_v3_Master_TZ_AI_Agents.txt`) in `configs/release_freeze.json`.

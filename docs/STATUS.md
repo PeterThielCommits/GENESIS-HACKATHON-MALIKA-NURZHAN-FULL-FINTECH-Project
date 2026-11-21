@@ -15,7 +15,7 @@
 | Phase 11 | Prompt-Injection Robustness Twin Evaluation | DONE | `configs/robustness/default.json`, `judge/robustness_audit.py`, `docs/PHASE_REPORTS/PHASE-11.md` |
 | Phase 12 | Arena (8 Baselines, 22 Attacks), AutoHacker & Shortcut/Canary Audits | DONE | `arena/`, `judge/shortcut_audit.py`, `judge/canary_fuzzer.py`, `docs/PHASE_REPORTS/PHASE-12.md` |
 | Phase 13 | Property, Metamorphic (`M-01..M-07`), RNG & 26-Mutant Suites | DONE | `metamorphic/suite.py`, `judge/mutation_suite.py`, `docs/PHASE_REPORTS/PHASE-13.md` |
-| Phase 14 | 12-Gate Judge Kit & Self-Contained Offline HTML Report | DONE | `judge/verify.py`, `judge/report.py`, `judge/performance_and_deps.py`, `docs/PHASE_REPORTS/PHASE-14.md` |
+| Phase 14 | 12-Gate Judge Kit & Self-Contained Offline HTML Report | DONE (re-audit 2026-11-21) | `judge/verify.py`, `judge/report.py`, `judge/schemas.py`, `judge/performance_and_deps.py`, `tests/judge/test_judge_kit.py`, `docs/PHASE_REPORTS/PHASE-14.md` |
 | Phase 15 | Complete Documentation & 3-Minute Reproducible Jury Demo | DONE | `tools/demo_walkthrough.py`, `README.md`, `docs/*`, `docs/PHASE_REPORTS/PHASE-15.md` |
 | Phase 16 | Hardened Offline Docker, Compose & CI Gate Verification | DONE | `Dockerfile`, `docker-compose.yml`, `.github/workflows/ci.yml`, `docs/PHASE_REPORTS/PHASE-16.md` |
 | Phase 17 | Post-Release Cryptographic Evidence Freeze | DONE | `tools/freeze_release.py`, `configs/release_freeze.json` (0747baf0…, D-12-02), `docs/PHASE_REPORTS/PHASE-17.md` |
@@ -33,3 +33,9 @@ See `docs/PHASE_REPORTS/PHASE-12.md` and `docs/AGENT_REPORTS/2026-11-21/arena-ph
 
 ## Phase 13 re-audit (2026-11-21)
 EXIT GATE 13 PASS: 26/26 instrumented mutants killed, 7/7 metamorphic transforms over 28 pairs; 372 tests (one optional Hypothesis skip), 12/12 verify gates. Optional Hypothesis path independently passed. See `docs/PHASE_REPORTS/PHASE-13.md` and issue #16; QA/CI review remains pending.
+
+## Phase 14 re-audit (2026-11-21)
+EXIT GATE 14 PASS **on a clean checkout**: `make verify` against a tree built from `git ls-files` (empty `artifacts/reports/latest/`) → exit 0, 12/12 gates in ~62 s, 21 complete artifacts; 410 tests (1 optional Hypothesis skip), 38 Judge Kit tests, lint CLEAN, freeze `0747baf0…` intact.
+Three blocking defects fixed, all in non-frozen files: (1) `judge/report.py` f-string `x or {{}}` parsed as a set literal → `TypeError: unhashable type: 'dict'` on every clean clone; (2) `judge/verify.py` invoked `report.py` before writing `verify_summary.json` → exit 5 on a clean clone; (3) the pre-report completeness check permanently forced exit 5. Also fixed: `Replay Suite 0/0` mis-rendering (real 5/5), missing TZ §23.5 metadata envelope on `replay_report.json` and `reward_property_matrix.json`, invariant catalog 15→17, and unguarded metric access in `judge/performance_and_deps.py`.
+New: `judge/schemas.py` (stdlib validators incl. §23.5 envelope, exit 2 on violation), `tests/judge/` (38 tests), `docs/PHASE_REPORTS/TEMPLATE.md`. Decisions `D-14-02`, `D-14-03`.
+See `docs/PHASE_REPORTS/PHASE-14.md` / `.json`. This row is not release authorization.
