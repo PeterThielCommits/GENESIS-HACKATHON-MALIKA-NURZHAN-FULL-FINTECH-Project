@@ -1,108 +1,126 @@
-# TwinLedger
+# TwinLedger — Proof-Carrying FinTech Audit Environment
 
-Proof-carrying audit environment for AI agents — a deterministic,
-synthetic-accounting benchmark with counterfactual twins, an independent
-verifier, sealed evaluation and reproducible receipts.
+TwinLedger is a deterministic, synthetic-accounting benchmark environment for AI
+audit agents featuring counterfactual twins, a zero-common-mode independent
+verifier, sealed evaluation, OS-isolated baseline policies, and full compliance
+with the official **Genesis FinTech Check Definitions (2026-11-20)**
+(`spec/official_fintech_checks_2026-11-20.md`).
 
-> TwinLedger is a research/competition environment. It is **not** a real
-> accounting system, audit service, tax/legal advisor or company
-> certification tool. All companies, banks, counterparties, documents and
-> operations are fictional and generated programmatically.
+> **Scope notice:** TwinLedger is a research/competition benchmark environment.
+> It is **not** a real accounting system, audit service, or financial product.
+> All companies, banks, counterparties, documents, and transactions are 100%
+> synthetic and generated deterministically from seed.
 
-## Quick start (offline, Python 3.11, stdlib only)
+---
+
+## Single-Command Verification (Offline, Python 3.11, stdlib-only)
+
+Working directory inside the container: `/app`. Zero external `pip` packages or
+network access are required.
 
 ```bash
-make setup        # check Python 3.11 + optional extras (no downloads)
-make lint         # compile check + import-boundary scan
-make test         # unit + contract tests
-make verify-core  # critical core + release blockers
-make verify       # full rubricator + reports
+make verify          # lint + import-boundary scan + all 269 unit/contract/official tests + property tests + Judge Kit report
+make test-official   # official Genesis FinTech 2026-11-20 mirror suite (Blocks 1..5: C01..C20, D01..D20, Block 3 #1..20 + M01..M12, P01..P20, Baselines)
+make official-eval   # run all 4 baseline policies across D01..D20 -> artifacts/trajectories/trajectories.jsonl + summary
+make docker-check    # build and run inside offline container (--network=none --cpus=2 --memory=4g)
 ```
 
-Artifacts: `artifacts/reports/latest/verify_summary.json` (+ `.txt`).
+Pinned versions and reproduction parameters are locked in
+`configs/official_eval_manifest.json`.
 
-## Official compatibility status
+---
 
-The official organiser contract has **not** been published in this
-repository yet. All tool names, reward parameters and ID rules below are
-**provisional** (Master TZ assumptions A-001…A-016) and isolated in
-`adapter/` + `configs/`. See `docs/DECISIONS.md` and `docs/QUESTIONS.md`.
+## Judge Adapter (`judge_adapter.py`)
 
-## Architecture overview
+Root-level entrypoint `/app/judge_adapter.py` exposes the exact three functions
+required by the official evaluation harness:
 
-```
-clean twin C ──operators──▶ mutated twin M
-     │ diff(C,M) → candidate truth          (gen/, Zone 1)
-     ▼
-verifier reads ONLY public M → independent findings + ProofGraph (verifier/, Zone 3)
-     ▼
-env exposes public tools (reset/step)      (env/, Zone 2)
-policy ──JSONL──▶ harness ──JSONL──▶ env
-episode ends → scorer (sealed truth) → reward + receipt + replay (scoring/, seal/, Zone 2)
-judge kit: one command, machine-readable reports (judge/, Zone 4)
-```
+```python
+import judge_adapter
 
-Environment never loads truth/provenance/sealed (REQ-PROD-005). Policy
-never imports scorer/verifier/generator internals (REQ-ARC-003).
+# 1. Deterministic episode generator (writes public/, manifest.json, sealed/truth.json, sealed/provenance.json)
+judge_adapter.generate_episode(seed: int, config: dict, output_dir: str) -> None
 
-## Core commands
+# 2. Public-only stateful environment (reset/step)
+env = judge_adapter.make_env()
+obs, info = env.reset(seed=2026, config={"mode": "closed", "episode_dir": "...", "team_config": {}})
+obs, reward, terminated, truncated, info = env.step({"name": "list_records", "args": {"table": "invoices", "cursor": None, "limit": 50}})
 
-| Command | Purpose |
-|---|---|
-| `make help` | list targets |
-| `make setup` | Python/extras check |
-| `make lint` | compile + boundary scan |
-| `make test` | unit + contract tests |
-| `make test-property` | property tests (stdlib fallback) |
-| `make build-episodes` | generate episodes (Phase 3+) |
-| `make verify-core` / `make verify` | verification gates |
-| `make replay` / `make audit-shortcuts` / `make mutation-test` | later phases |
-| `make report` | aggregated report |
-| `make docker-check` | offline Docker smoke |
-| `make clean` | remove generated artifacts |
-
-## Input/output examples
-
-Valid finding (`contracts/finding.schema.json`):
-
-```json
-{
-  "schema_version": "1.0.0",
-  "type": "FX_RATE_MISMATCH",
-  "affected_ids": ["JE:je_demo_001"],
-  "claimed_amount": 1250,
-  "currency": "KZT",
-  "evidence_ids": ["JE:je_demo_001", "FX:fx_demo_17", "INV:inv_demo_9"]
-}
+# 3. Closed judge-side scorer (never exposed to policies)
+metrics = judge_adapter.score_episode(episode_dir: str, findings: dict, inspection_steps: int) -> dict
 ```
 
-Tool request (`contracts/tool_request.schema.json`):
+### Canonical Actions & Result Schema
 
-```json
-{
-  "protocol_version": "1.0",
-  "request_id": "req-0001",
-  "action": {"tool": "list_records", "args": {"table": "payments", "cursor": null, "limit": 25, "filters": {}}}
-}
-```
+Every `step(action)` accepts `{"name": "<action>", "args": {...}}`:
 
-## Resource limits (provisional, TZ 22.5)
+| Action | Arguments | `obs["result"]` |
+|---|---|---|
+| `list_records` | `table`, `cursor` (`null` for page 1), `limit` (`1..50`) | `{"records": [...], "next_cursor": str \| null}` |
+| `get_record` | `table`, `id` (raw PK, typed `PREFIX:id`, or FX semantic key `YYYY-MM-DD:SRC:DST[:SRC_CODE]`) | Record JSON object |
+| `get_document` | `doc_id` (raw ID or typed `PREFIX:id`) | Document JSON object (strictly preloaded; zero filesystem access) |
+| `calculator` | `expression` (AST-only exact `Decimal` arithmetic) | Exact decimal string (e.g. `"0.1+0.2"` -> `"0.3"`) |
+| `submit` | `findings` (`{"findings": [...]}` per §05) | `{"accepted": true}` or bounded structural error (never leaks truth) |
 
-2 CPU / 4 GB RAM / 1 GB disk, offline, Python 3.11. Core targets:
-env step p99 < 5 ms, one L4 episode < 50 MB, peak < 300 MB,
-`make verify` < 10 min on the target host (to be measured, not claimed).
+- **Initial observation:** `{"task": str, "manifest": object, "policy": object, "remaining_steps": 100}`
+- **Subsequent observations:** `{"result": value_or_null, "error": null_or_object, "remaining_steps": int}`
+- **Budget & timeout:** 100 total actions (`submit` on action 100 after 99 inspection steps is accepted and `terminated=True`; 100 inspection actions without `submit` ends as `truncated=True` with empty findings). `submit` is excluded from `inspection_steps`; errored inspection steps are included. 60-second wall-clock episode limit ends as `truncated=True` with empty findings.
+- **Closed vs. train mode:** In `mode="closed"`, `reward` is numeric `0` on every step including terminal, and `info` contains zero truth/metric fields. In `mode="train"`, terminal reward is returned to the policy.
 
-## Current known limitations
+### Canonical Tables
 
-- Phase 1 only: contracts, canonical JSON, models, boundary scan, CI,
-  docs. Generator, env, scoring, verifier, harness are **not yet
-  implemented** (see `docs/CURRENT_STATE.md`).
-- Official organiser contract/rubric unknown — everything provisional.
-- Process separation is planned, not yet implemented; no sandbox claims.
+- **Required adapter tables:** `ledger` (journal entries), `invoices`, `payments`, `fx` (FX quotes).
+- **Supporting accounting tables:** `credit_notes`, `bank_lines`, `counterparties`, `accounts`, `opening_balances`, `period_calendar`.
+- File row order is preserved verbatim on load (for paired permutation checks `P01..P05`, `P11..P20`), and arbitrary bijective-remapped string IDs are accepted without prefix regex restrictions (for `P06..P20`).
 
-See `docs/LIMITATIONS.md`, `docs/DESIGN.md`, `docs/PROJECT_CONTEXT.md`.
+### Supported Anomaly Types & Interaction Scenarios
 
-## Phase 2: accounting primitives
+| Anomaly Type | Description | Canonical `affected_ids` |
+|---|---|---|
+| `DUPLICATE_PAYMENT` | Duplicate payment & settlement journal entry on an already-settled invoice (excluding valid refunds/credit notes & recurring invoices) | `["JE:<dup_je>", "PAY:<dup_pay>"]` |
+| `PARTIAL_PAYMENT_ALLOCATION` | Missing payment allocation (`allow_advances=false`), premature `paid` invoice status with unpaid shortfall, or over-allocated payment | `["PAY:<pay>"]` (missing alloc) or `["INV:<inv>", "PAY:<pay>"]` |
+| `FX_RATE_MISMATCH` | Foreign-currency journal entry converted using non-policy rate/date/source/quote convention | `["JE:<je>"]` |
+| `PERIOD_CUTOFF` | Invoice recognition journal entry posted to the wrong fiscal period under company timezone & calendar policy | `["JE:<je>"]` |
 
-Run `make setup verify-core` with Python 3.11. See the [Phase 2 report](docs/PHASE_REPORTS/PHASE-02.md)
-for the implemented boundaries and the [manual accounting vectors](tests/fixtures/manual/).
+Two documented multi-anomaly interaction scenarios (`D16..D20`):
+1. **Interaction #1 (`FX_PERIOD_INTERACTION`, `D16..D18`):** `FX_RATE_MISMATCH` + `PERIOD_CUTOFF` on cross-border invoices spanning period boundaries across multiple currencies, rounding modes, quote conventions, and timezones.
+2. **Interaction #2 (`PAYMENT_ALLOCATION_INTERACTION`, `D19..D20`):** `DUPLICATE_PAYMENT` + `PARTIAL_PAYMENT_ALLOCATION` (`missing_allocation` and `premature_paid`) woven alongside legitimate split, refund, and credit-note distractors.
+
+### Official Matcher & Reward Specification (`scoring/official_scorer.py`)
+
+- **Pre-deduplication structural limits:** max `30` findings, max `10` `evidence_ids` per finding (checked before dedup — M05), max `1000` Unicode code points for `explanation`, strict JSON integer `claimed_amount_minor` (rejects `bool`/`str`/`float` — M09). Structural violations return `return=-1.0` and `null` for `tp/fp/fn/precision/recall/f1`.
+- **Exact matching:** exact case/whitespace ID, type, and currency equality; exact `affected_ids` set equality; `evidence_ids` must cover at least one valid evidence set AND every listed `evidence_id` must exist in the episode's accessible public IDs (M04); default amount tolerance `tau = 0` (`abs(claimed - expected) <= tau`).
+- **Matching & tie-break:** maximum-cardinality bipartite matching (duplicate findings kept as separate vertices — M12), breaking ties by sorting truth `issue_id` by Unicode code points and selecting the lexicographically smallest sorted list of `(issue_id, finding_index)` pairs (M10/M11).
+- **Reward formula (exact `Fraction` arithmetic):**
+  - Clean book + empty findings (`TP=FP=FN=0`): `precision=0`, `recall=0`, `f1=1`.
+  - `return = clip([-1, 1], 2 * F1 - 1 - 0.2 * inspection_steps / 100)`.
+
+---
+
+## Measured Baseline Results (`D01..D20`, `seed=2026`)
+
+Public policies (`random`, `simple_reconciliation`, `mass_flagging`) execute in
+separate OS child processes (`python3 -m arena.policies.worker`) with sanitized
+environment variables and zero access to `episode_dir`, `sealed/`, or scoring
+modules. The `oracle` policy runs strictly on the judge side (`judge/oracle_policy.py`).
+
+| Policy | Isolation | Mean F1 | Mean Return | Mean Steps | Max Episode Time |
+|---|---|---:|---:|---:|---:|
+| `oracle` | Judge-side reference | `1.0000` | `+0.9920` | `4.0` | `0.004s` |
+| `simple_reconciliation` | OS subprocess worker | `1.0000` | `+0.9853` | `7.3` | `0.065s` |
+| `random` | OS subprocess worker | `0.2500` | `-0.5060` | `12.0` | `0.084s` |
+| `mass_flagging` | OS subprocess worker | `0.0000` | `-1.0000` | `1.0` | `0.079s` |
+
+Full 80-episode trajectory log (zero truth leakage in observations):
+`artifacts/trajectories/trajectories.jsonl`.
+
+---
+
+## Documentation & Traceability
+
+- `spec/official_fintech_checks_2026-11-20.md` — Official Genesis FinTech check definitions (verbatim reference)
+- `docs/OFFICIAL_COMPLIANCE_MATRIX.md` — Line-by-line mapping of all 100 points (`C01..C20`, `D01..D20`, Block 3 #1..20 + M01..M12, `P01..P20`, Engineering 0/1/2)
+- `docs/FAILURE_ANALYSIS.md` — Measured failure analysis, root causes, and re-verification
+- `docs/LIMITATIONS.md` — Honest scenario-linked limitations
+- `docs/INDEPENDENCE.md` — Zero-common-mode verifier independence & import-boundary rules
+- `tools/demo_server.py` — Optional zero-dependency interactive local workbench (`python3 tools/demo_server.py`)

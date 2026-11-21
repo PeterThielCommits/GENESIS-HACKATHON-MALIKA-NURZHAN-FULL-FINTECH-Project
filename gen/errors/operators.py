@@ -289,6 +289,23 @@ def inject_partial_allocation(
         ev_set = [f"INV:{inv['doc_id']}", f"PAY:{pay['pay_id']}"]
         amount_minor = over_amt
         sig = {"invariant_id": "INV-05", "subcase": "over_allocated_payment", "pay_id": pay["pay_id"]}
+
+    elif subcase == "missing_allocation":
+        # Payment recorded and settled in bank/JE, but its invoice allocation was omitted
+        # while allow_advances=False. Invoice remains open (so INV-06 does not double-fire).
+        if twin.policy["allocation_policy"].get("allow_advances", False):
+            raise ValueError("missing_allocation requires allow_advances=False in policy")
+        pay["allocations"] = []
+        inv["status"] = "open"
+        affected = [f"PAY:{pay['pay_id']}"]
+        ev_set = [f"PAY:{pay['pay_id']}"]
+        amount_minor = pay["amount_minor"]
+        sig = {
+            "invariant_id": "INV-15",
+            "subcase": "missing_allocation",
+            "pay_id": pay["pay_id"],
+            "original_invoice_id": inv["doc_id"],
+        }
     else:
         raise ValueError(f"unsupported partial_allocation subcase: {subcase!r}")
 
@@ -361,7 +378,7 @@ def inject_fx_mismatch(
         rate_rule = twin.policy["fx_policy"]["rate_date_rule"]
         events = {
             "document_date": inv["issue_timestamp"],
-            "operation_date": inv["service_start"],
+            "operation_date": je["timestamp"],
             "payment_date": inv["issue_timestamp"],
         }
         target_d = instant(events[rate_rule]).astimezone(tz).date()
@@ -400,7 +417,10 @@ def inject_fx_mismatch(
             credit_ln["fx_rate_decimal"] = wrong_q.rate
             credit_ln["functional_credit_minor"] = mutated_j.credit_minor
 
-            ev_sets = [[f"FX:{r['fx_id']}", f"INV:{inv['doc_id']}", f"JE:{je['je_id']}"] for r in permitted_rows]
+            if rate_rule == "operation_date":
+                ev_sets = [[f"FX:{r['fx_id']}", f"JE:{je['je_id']}"] for r in permitted_rows]
+            else:
+                ev_sets = [[f"FX:{r['fx_id']}", f"INV:{inv['doc_id']}", f"JE:{je['je_id']}"] for r in permitted_rows]
             delta_minor = int(sig_inv08.expected_delta_minor or 0)
             truth = _make_truth_dict(
                 truth_id=f"T-{twin.episode_id}-{truth_index:03d}",

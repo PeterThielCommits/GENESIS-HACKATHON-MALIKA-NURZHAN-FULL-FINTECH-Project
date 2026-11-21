@@ -10,5 +10,5 @@ COPY . /app
 RUN useradd --create-home --uid 10001 twinledger && chown -R twinledger:twinledger /app
 USER twinledger
 
-# Offline smoke: core verification only (stdlib, no network, no installs)
-CMD ["make", "verify-core"]
+# Single-command offline verification (stdlib only, no network, no installs)
+CMD ["make", "verify"]
