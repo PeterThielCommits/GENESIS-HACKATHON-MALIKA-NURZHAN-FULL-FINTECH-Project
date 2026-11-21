@@ -263,3 +263,14 @@ Remediates `R-09` and `L4`:
 `tools/freeze_release.py` locks SHA-256 digests over all 30 frozen contract schemas (`contracts/*.schema.json`, `contracts/version.json`), operational configs (`configs/*`), provisional rubricator (`judge/rubric_map.json`), official check spec (`spec/official_fintech_checks_2026-11-20.md`), and Master TZ v3.0.0 (`docs/reference/TwinLedger_v3_Master_TZ_AI_Agents.txt`) in `configs/release_freeze.json`.
 
 
+## D-10-02 (2026-11-21) — Phase 10 quality audit: pinned text dictionaries, scorer-side evidence-hierarchy enforcement, lazy NLP facade, explanation report artifact
+
+Follow-up to `D-10-01` after a full Phase 10 re-execution (Universal Phase Execution Prompt, `PHASE_NUMBER=10`, branch `arena/794acafe-genesis-hackathon-malika-nurzh`):
+
+- **Module vs package deviation:** Master §24 lists the deliverable as `gen/core/text/`; the implementation keeps `gen/core/text.py` (single module). Functionally equivalent for every requirement; no import churn. Recorded as an accepted deviation rather than restructuring.
+- **Pinned dictionary versions (TZ §17.2):** `gen/core/text.py` now exposes `TEXT_LAYER_VERSION = "text-layer@1.0.0"` and `TEMPLATE_DICTIONARY_VERSION = "ru-kk-en-dicts@1.0.0"`, recorded in generation provenance so text dictionaries are version-frozen.
+- **Evidence hierarchy enforcement (Task 10.5, TZ §17.3):** `nlp/hierarchy.py` gains `assess_evidence_reachability` + `build_evidence_hierarchy_report`; `scoring/scorer_cli.py` emits `diagnostics.evidence_hierarchy` on every scored submission. Strictly diagnostic (TZ §15.9): matching/F1/official reward semantics unchanged (`D-06-05` preserved). Scorer imports ONLY `nlp.hierarchy` from the `nlp` package — never the optional fuzzy helpers.
+- **Lazy `nlp` facade:** `nlp/__init__.py` uses PEP-562 lazy exports so that importing the strict rule module never loads `nlp.matching`/`nlp.normalize`. Subprocess tests prove `gen`, `env`, `verifier`, `scoring.{matcher,reward,diagnostics}`, `seal`, `harness` load zero `nlp` submodules (EXIT GATE 10: NLP layer optional for core).
+- **Import-boundary hardening:** `tools/check_import_boundaries.py` forbids `nlp` entirely in `core/`, `invariants/`, `env/`, `gen/`, `seal/`, `harness/` (and `verifier/` as before), and restricts `scoring/` to `nlp.hierarchy` only — machine-enforcing "verifier does not rely on unsupported fuzzy matches".
+- **Explanation consistency report (Task 10.6 deliverable):** `tools/explanation_report.py` produces `artifacts/reports/latest/explanation_consistency_report.json` (rules EC-01..EC-05 per TZ §17.6, deterministic, diagnostic-only).
+- **REQ-ID correction:** `REQ-SCORE-020` cited in earlier Phase 10 artifacts is a phantom ID (Master TZ defines `REQ-SCORE-001..005` only); Phase 10 traceability now lists `REQ-NLP-001..005`, `REQ-PROD-020`, `REQ-ARC-001`, `REQ-VER-002`.

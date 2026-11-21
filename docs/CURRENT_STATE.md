@@ -1,14 +1,20 @@
 # Current State
 
-- **Active branch:** `arena/3a99279e-genesis-hackathon-malika-nurzh` (PR #11 open against `main` @ `da42d26`).
-- **Completed Master TZ phases:** **Phases 0–17 COMPLETE (100%)**.
-- **Phase 9 Risk Remediation (`P-012`/`R-09`, `L4`, `L5`):** **COMPLETE**:
-  - Linux kernel `user + mount + net` namespace + `seccomp-BPF` sandbox (`harness/ns_launcher.py`, `harness/sandbox.py`, `profile_id = "linux-kernel-ns-seccomp-v1"`, `is_full_os_sandbox = True` on Linux) + hardened offline `Dockerfile` (`UID 10001`, `util-linux`) + `docker-compose.yml` + GitHub Actions `docker-offline` job (`--network=none`).
-  - CSPRNG `PRODUCTION_SECRET` salt re-keying (`seal/rekey.py`, `python3 -m seal.cli rekey-production`) + Stage-2 `semantic_truth_verification` (`scoring/scorer_cli.py` running `scoring/crosscheck.py` against `verifier_report.json`).
-  - Diagnostic `explanation_consistency` linter (`scoring/explanation_linter.py`) + `verifier_quality` integrated into `scoring/diagnostics.py` and `scoring/scorer_cli.py`.
-- **Phases 10–17 Summary:**
-  - **Phase 10–11:** `gen/core/text.py` (`ru`/`kk`/`en`/`mixed` under isolated `"text_layer"` & `"injection_layer"` RNG streams), `nlp/` (`normalize.py`, `matching.py`, `hierarchy.py`, `injection_guard.py`), `configs/robustness/default.json`, `judge/robustness_audit.py` (`robustness_report.json`).
-  - **Phase 12:** 7 public baselines (`arena/policies/catalog.py`) + separated `oracle_test_only` (`REQ-ARENA-005`), all 22 attacks `AT-01..AT-22` (`arena/attacks/catalog.py`), seed-grouped `TRAIN`/`DEV`/`HELDOUT` AutoHacker with 95% bootstrap CIs (`arena/autohacker.py`), within-table L2 Logistic Regression shortcut auditor (`macro_ROC_AUC = 0.5389 <= 0.55`, `judge/shortcut_audit.py`), and 10-channel canary & API fuzzer (`judge/canary_fuzzer.py`).
-  - **Phase 13:** Metamorphic suite `M-01..M-07` (`7/7 PASS`, `metamorphic/suite.py`), 26-mutant scoring suite (`26/26 = 100% killed`, `judge/mutation_suite.py`), RNG isolation (`tests/generator/test_rng_isolation.py`), and interleaved multi-env isolation (`tests/env/test_interleaved_isolation.py`).
-  - **Phases 14–17:** 12-gate Judge Kit (`judge/verify.py`, `RC-001..RC-012`), performance & offline dependency auditor (`judge/performance_and_deps.py`, `step p99 = 0.13ms`, `peak RSS = 22MB`), self-contained offline `report.html` (`judge/report.py`), 3-minute deterministic jury demo (`tools/demo_walkthrough.py`), and cryptographic release freeze (`tools/freeze_release.py`, `configs/release_freeze.json`).
-- **Active blockers:** None. Ready for clean-clone check, remote CI (`core` + `docker-offline`), and PR #11 merge.
+- **Active branch:** `arena/794acafe-genesis-hackathon-malika-nurzh` (from `main` @ `7f47638` = merge of PR #11).
+- **Completed Master TZ phases:** **Phases 0–17 COMPLETE (100%)**, with **Phase 10 re-executed at full depth (2026-11-21 quality audit, `D-10-02`)**.
+- **Current test baseline:** `python3 -m unittest discover -s tests -t .` → **343 tests OK**; `make lint` → `CLEAN (REQ-ARC-001..007)`.
+- **Phase 10 audit outcome (this branch):** tasks 10.1–10.6 all DONE against Master TZ §24/§17:
+  - 10.1: deterministic ru/kk/en/mixed templates in `gen/core/text.py` with pinned `TEXT_LAYER_VERSION`/`TEMPLATE_DICTIONARY_VERSION` (recorded in provenance) + same-seed byte-identical determinism tests.
+  - 10.2: business abbreviations, transliteration (`nlp/normalize.py`), benign OCR typos with protected typed IDs byte-exact (`_apply_controlled_ocr_noise`) + tests.
+  - 10.3: Unicode normalization tests incl. zero-width/bidi stripping, NFD→NFC, homoglyph typed-ID rejection, NFC property of emitted text, Unicode-form-invariant similarity (`tests/unit/test_property.py`).
+  - 10.4: text-to-entity candidate matching as optional hypothesis-tier helper (`nlp/matching.py`), with subprocess proof that core loads zero `nlp` submodules.
+  - 10.5: evidence hierarchy ENFORCED — `nlp/hierarchy.py::assess_evidence_reachability` + `build_evidence_hierarchy_report` wired into `scoring/scorer_cli.py` (`diagnostics.evidence_hierarchy`, diagnostic-only); text-only findings provably inadmissible and reward-less.
+  - 10.6: explanation consistency linter (`scoring/explanation_linter.py`) + **report artifact** `tools/explanation_report.py` → `artifacts/reports/latest/explanation_consistency_report.json`.
+  - EXIT GATE 10 PASS (text layer off ⇒ core byte-identical; verifier/scoring rely on no fuzzy matches — AST rules + subprocess import tests).
+- **Phase 9 Risk Remediation (`P-012`/`R-09`, `L4`, `L5`):** COMPLETE (kernel `user+mount+net` namespaces + `seccomp-BPF`, CSPRNG rekey, Stage-2 semantic truth verification).
+- **Phases 11–17 summary (unchanged):** robustness track (`judge/robustness_audit.py`, RC-006 PASS pairs=4), 22-attack Arena + AutoHacker + shortcut audit (`macro_ROC_AUC=0.5389<=0.55`), metamorphic `M-01..M-07` + 26/26 mutants killed, 12-gate Judge Kit (`RC-001..RC-012`), offline HTML report, 3-minute deterministic jury demo, cryptographic release freeze (30 files).
+- **Active blockers:** None.
+- **Next actions (exactly three):**
+  1. Publish Phase 10 audit PR/issue (this branch) and merge after CI green — owner: team lead.
+  2. Run `make verify` on a clean clone to re-confirm `RC-001..RC-012` against the audit changes — owner: Zone D (QA).
+  3. Proceed to Phase 11 re-audit or submission prep per `docs/CONTEXT/NEXT_AGENT.md` — owner: orchestrator.

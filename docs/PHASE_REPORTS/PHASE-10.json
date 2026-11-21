@@ -3,10 +3,20 @@
   "title": "MULTILINGUAL TEXT LAYER (RU/KK/EN), NLP NORMALIZATION & EVIDENCE HIERARCHY",
   "outcome": "DONE",
   "exit_gate_10": "DONE",
-  "exit_gate_note": "EXIT GATE 10 PASS: Deterministic ru/kk/en/mixed narrative layer isolated under 'text_layer' RNG stream, NFC/cross-script ranker, 4-tier evidence hierarchy, and diagnostic explanation-consistency linter.",
+  "exit_gate_note": "EXIT GATE 10 PASS: text layer disableable with zero effect on core (byte-identical truth/invoice/verifier outputs across toggles); verifier and scoring rely on no unsupported fuzzy matches (AST boundary scan + subprocess import proof). Deterministic ru/kk/en/mixed templates with pinned dictionary versions, OCR-noise typos preserving typed IDs, 4-tier evidence hierarchy enforced in scorer diagnostics, and the explanation consistency report artifact.",
   "date": "2026-11-21",
-  "branch": "arena/3a99279e-genesis-hackathon-malika-nurzh",
-  "base_commit": "da42d26008f948c294920ae8b02a30b08f541732",
+  "sessions": [
+    {
+      "branch": "arena/3a99279e-genesis-hackathon-malika-nurzh",
+      "base_commit": "da42d26008f948c294920ae8b02a30b08f541732",
+      "note": "initial implementation, merged to main via PR #11 (merge commit 7f47638)"
+    },
+    {
+      "branch": "arena/794acafe-genesis-hackathon-malika-nurzh",
+      "base_commit": "7f47638276ccf6b12525dceffdd3b9e2842d4f37",
+      "note": "quality audit and gap closure (tasks 10.1-10.6 re-verified against Master TZ section 24)"
+    }
+  ],
   "master_tz_sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36",
   "req_ids": [
     "REQ-NLP-001",
@@ -14,17 +24,24 @@
     "REQ-NLP-003",
     "REQ-NLP-004",
     "REQ-NLP-005",
-    "REQ-SCORE-020"
+    "REQ-PROD-020",
+    "REQ-ARC-001",
+    "REQ-VER-002"
+  ],
+  "req_id_corrections": [
+    "REQ-SCORE-020 removed: phantom ID not defined in Master TZ v3.0.0 (scoring requirements end at REQ-SCORE-005)"
   ],
   "tasks": {
     "10.1": "DONE",
     "10.2": "DONE",
     "10.3": "DONE",
     "10.4": "DONE",
-    "10.5": "DONE"
+    "10.5": "DONE",
+    "10.6": "DONE"
   },
   "decisions": [
-    "D-10-01"
+    "D-10-01",
+    "D-10-02"
   ],
   "files": [
     "gen/core/text.py",
@@ -32,9 +49,27 @@
     "nlp/normalize.py",
     "nlp/matching.py",
     "nlp/hierarchy.py",
+    "nlp/injection_guard.py",
     "scoring/explanation_linter.py",
-    "tests/nlp/test_phase10_nlp_and_injection.py",
-    "tests/scoring/test_explanation_linter.py"
+    "scoring/scorer_cli.py",
+    "scoring/diagnostics.py",
+    "tools/explanation_report.py",
+    "tools/check_import_boundaries.py",
+    "tests/nlp/test_multilingual_and_robustness.py",
+    "tests/nlp/test_phase10_text_layer.py",
+    "tests/scoring/test_explanation_linter.py",
+    "tests/unit/test_property.py",
+    "tests/unit/test_import_boundaries.py"
   ],
-  "gate_evidence": "RC-006 PASS: 4 language variants (en/ru/kk/mixed) produce identical accounting numbers, truth digests, and Stage-1 verifier reports."
+  "deliverables": {
+    "text_layer": "gen/core/text.py (module; D-10-02 records deviation from package path gen/core/text/)",
+    "nlp_package": "nlp/ (lazy facade; core loads zero nlp submodules)",
+    "explanation_consistency_report": "tools/explanation_report.py -> artifacts/reports/latest/explanation_consistency_report.json"
+  },
+  "gate_evidence": {
+    "text_layer_off_never_changes_core": "tests/generator/test_rng_isolation.py::test_text_and_injection_namespaces_never_change_amounts_ids_or_truth (byte-identical sealed/truth.json + verifier reports across enable_text_layer/language_profile/noise_level/injection toggles)",
+    "verifier_no_unsupported_fuzzy_matches": "tools/check_import_boundaries.py granular rule (verifier forbids nlp; scoring limited to nlp.hierarchy) + tests/nlp/test_phase10_text_layer.py::TestPhase10OptionalEntityMatching subprocess import proof",
+    "rc006_robustness": "python3 judge/robustness_audit.py -> PASS pairs=4",
+    "full_suite": "python3 -m unittest discover -s tests -t . -> 343 tests OK (2026-11-21)"
+  }
 }
