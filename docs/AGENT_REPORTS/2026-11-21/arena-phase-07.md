@@ -11,3 +11,8 @@ phase/session reports. Updated current state, status, decision log and next
 agent handoff. Deleted nothing; no frozen schema or public API changed.
 GitHub publication and CI should be read from the branch PR, not inferred
 from local `make verify`.
+
+Follow-up from `a62d97d`: added a mixed-currency aggregate INV-02/10
+regression and audited Phase 4 `e740784` against frozen truth on this line.
+`make verify` (137 + 3) and `git diff --check` both exited 0. See the Phase 7
+report appendix for the concrete incompatibility and remaining merge gate.

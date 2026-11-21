@@ -110,3 +110,41 @@ class CutoffTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 period_cutoff(entry, 'issue_date', dict(events, issue_date=bad),
                               CUTOFF_POLICY, company)
+
+    def test_period_aggregate_moves_only_affected_currency(self):
+        from collections import defaultdict
+
+        from invariants.checks import check
+
+        clean = Journal('JE:sample', 'USD', 'USD', 500, 500, 500, None, '2024-03')
+        other_usd = replace(clean, id='JE:neighbor', source_minor=200, debit_minor=200,
+                            credit_minor=200, posting_period='2024-04')
+        other_kzt = replace(clean, id='JE:other', source_currency='KZT', currency='KZT')
+        events = {'service_date': '2024-03-31', 'issue_date': '2024-04-01'}
+        moved, _ = period_cutoff(clean, 'issue_date', events, CUTOFF_POLICY, COMPANY)
+        expected = {('2024-03', 'USD'): 500, ('2024-04', 'USD'): 200,
+                    ('2024-03', 'KZT'): 500}
+
+        def audit(rows):
+            booked = defaultdict(list)
+            for row in rows:
+                booked[row.posting_period, row.currency].append(row)
+            deltas = {}
+            for (period, currency), recognized in expected.items():
+                group = booked[period, currency]
+                debits = [row.debit_minor for row in group]
+                credits = [row.credit_minor for row in group]
+                key = f'{period}/{currency}'
+                self.assertIsNone(check('INV-02', key, {'currency': currency,
+                                                        'debits': debits, 'credits': credits}))
+                # Compare the booked aggregate to the policy recognition benchmark,
+                # not to the same postings from which the total was calculated.
+                sig = check('INV-10', key, {'currency': currency, 'reported': sum(debits),
+                                            'lines': [recognized]})
+                if sig:
+                    deltas[key] = sig.expected_delta_minor
+            return deltas
+
+        self.assertEqual(audit([clean, other_usd, other_kzt]), {})
+        self.assertEqual(audit([moved, other_usd, other_kzt]),
+                         {'2024-03/USD': -500, '2024-04/USD': 500})

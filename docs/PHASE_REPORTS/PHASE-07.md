@@ -57,3 +57,29 @@ and draft CR-06-01. Phase 8 release inputs are not ready. A0 must reconcile
 upstream Phase 3–5 and answer the official semantics questions; then Zone 1
 can run the four-type matrix, rebuild aggregate period totals, and demonstrate
 public evidence reachability before declaring this gate passed.
+
+## Follow-up: aggregate fixture and upstream compatibility audit
+
+`make verify` exited 0 with 137 tests and 3 property tests after adding a
+three-journal mixed-currency fixture. Against independently specified policy
+recognition totals, the cutoff moves 500 USD minor units out of March and
+into April; KZT is unchanged, and trial balance (INV-02) still holds for each
+period/currency. This exercises INV-10 on normalized inputs, not published
+ledger reports. `git diff --check` exited 0. Session log:
+`/tmp/tl-phase07-followup`.
+
+Inspection of Phase 4 head `e740784` confirmed that its generator has a real
+`build_episode` pipeline but produces an episode-envelope truth schema
+(`truth_version`, `episode_id`, `findings`, `diff_summary`, `distractors`)
+where this checkout freezes individual findings (`schema_version`,
+`truth_id`, `affected_ids`, `invariant_signature`, etc.). Its pipeline also
+imports its branch's canonicalization, error types, and clean-book invariant
+runner. A wholesale merge or importing the generator directory would not be
+a compatible Phase 7 integration. CR-06-01 still requires A0 disposition;
+issue #3 records no organizer approval. A compatible port needs explicit
+producer-to-frozen-finding translation and an approved public record/adapter
+mapping, not acceptance of the other branch's identically versioned schema.
+
+Prior PR CI passed at `a62d97d`; that result does not close the Phase 7 gate.
+PR #6 stays draft and unmerged pending the required external decisions and
+four-type evidence described above.
