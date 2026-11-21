@@ -3,7 +3,7 @@
   "title": "ARENA BASELINES, 22 RED-TEAM ATTACKS, AUTOHACKER, SHORTCUT & CANARY AUDITS",
   "outcome": "DONE",
   "exit_gate_12": "DONE",
-  "exit_gate_note": "EXIT GATE 12 PASS: 7 public baselines + separated oracle_test_only, 22/22 red-team attacks AT-01..AT-22 defended, seed-grouped AutoHacker positive heldout delta (+0.2502), shortcut macro_ROC_AUC=0.5389 <= 0.55, and 0 canary hits across 10 channels.",
+  "exit_gate_note": "EXIT GATE 12 PASS: 7 public baselines + separated oracle_test_only, 22/22 red-team attacks AT-01..AT-22 defended, seed-grouped AutoHacker positive heldout delta (+0.2502), shortcut macro_ROC_AUC=0.5389 <= 0.55, and 0 canary hits across 10 channels. Freeze re-synced under D-12-02 (0747baf0…, 30 files).",
   "date": "2026-11-21",
   "branch": "arena/3f693c20-genesis-hackathon-malika-nurzh",
   "base_commit": "2dc365a6ebc0aa2b907bacb6a79189e8b590fbb8",
@@ -37,7 +37,8 @@
     "12.7": "DONE"
   },
   "decisions": [
-    "D-12-01"
+    "D-12-01",
+    "D-12-02"
   ],
   "files": [
     "arena/policies/catalog.py",
@@ -52,7 +53,15 @@
     "judge/canary_fuzzer.py",
     "configs/arena/default.json",
     "tests/arena/test_arena_and_audits.py",
-    "env/loader.py"
+    "env/loader.py",
+    "configs/release_freeze.json"
   ],
-  "gate_evidence": "RC-007, RC-008, RC-009 PASS -> reward_strategy_report.json (22/22 defended, delta +0.2502), shortcut_audit.json (macro_roc_auc=0.5389), canary_fuzz_report.json (0 hits across 10 channels); full verify 12/12 PASS; env/loader D-10-03 restoration included (RC-001 360 tests); freeze --verify FAIL pre-existing (contracts/loader.py drift) not re-frozen."
+  "gate_evidence": "RC-007, RC-008, RC-009 PASS -> reward_strategy_report.json (22/22 defended, delta +0.2502), shortcut_audit.json (macro_roc_auc=0.5389), canary_fuzz_report.json (0 hits); full verify 12/12 PASS (360 tests), lint CLEAN, freeze --verify PASS (30 files, 0747baf0… under D-12-02); env/loader D-10-03 restoration + authorized freeze re-sync.",
+  "freeze": {
+    "manifest": "configs/release_freeze.json",
+    "aggregate_sha256": "0747baf087b9509aa5d5be1bf7345c58a04c8c57ff5d1918ec84fd62669be0c1",
+    "frozen_file_count": 30,
+    "contracts_loader_sha256": "4dbb8ba16ec407673bc83cc04c6debf13d610c289d1b1d6af97ffc6a307c61ff",
+    "previous_aggregate": "caf9405ee71a1aaacb81b3afcba05bb66bfd3e035b5224bbcf143695a5d414a9"
+  }
 }

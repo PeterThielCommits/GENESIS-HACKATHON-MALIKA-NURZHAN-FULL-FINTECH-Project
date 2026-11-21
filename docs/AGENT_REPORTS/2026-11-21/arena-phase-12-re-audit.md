@@ -2,7 +2,7 @@
 
 **SCOPE:** High-quality re-execution of TwinLedger Master TZ §24 Phase 12 (ARENA, ATTACK CATALOG & SHORTCUT AUDIT) per TwinLedger Universal Phase Execution Prompt, branch `arena/3f693c20-genesis-hackathon-malika-nurzh` (base `2dc365a`).
 
-**STATUS:** DONE — EXIT GATE 12 PASS; incidental D-10-03 restoration applied; release freeze remains blocked.
+**STATUS:** DONE — EXIT GATE 12 PASS; incidental D-10-03 restoration applied; release freeze re-synced under D-12-02 (PASS).
 
 ## 1. Context and corrections
 
@@ -22,7 +22,8 @@ All corrected in this re-audit; no metrics invented — every number reproduced 
 - `judge/shortcut_audit.py`: per-table L2 Logistic Regression on 10 metadata features, grouped split, macro_ROC_AUC ≤0.55 threshold, side-channel timing TOST
 - `judge/canary_fuzzer.py`: 3 in-memory canaries × 9 encoding transforms × 10 policy-visible channels, 10 API fuzz cases, never persists raw canary strings (REQ-LEAK-005)
 - `configs/arena/default.json`: canonical seeds and split_by declaration
-- `env/loader.py` (incidental fix): restored `read_text_bounded` + `check_row_cap` → `EnvError("LIMIT")` per D-10-03; row-order preservation unchanged; file not frozen so no re-freeze needed
+- `env/loader.py` (incidental fix): restored `read_text_bounded` + `check_row_cap` → `EnvError("LIMIT")` per D-10-03; row-order preservation unchanged; file not frozen
+- `configs/release_freeze.json` (D-12-02 authorized): re-synced `contracts/loader.py` 1717 B `610f07…` → 4244 B `4dbb8b…`, aggregate `caf9405e…` → `0747baf0…`, 30 files, `freeze --verify` PASS
 
 ## 3. Verification (exact commands & exit codes)
 
@@ -35,9 +36,10 @@ All corrected in this re-audit; no metrics invented — every number reproduced 
 | `python3 -m unittest tests.env.test_loader_order_and_bounds -v` | 0 | PASS | 11/11 after env/loader restoration |
 | `make lint` | 0 | PASS | import boundary scan: CLEAN (REQ-ARC-001..007) |
 | `make verify` | 0 | PASS | 12/12 gates PASS (RC-001 360 tests, RC-002 CLEAN, RC-003 8 property, RC-004 55 official, RC-005 5/5 replay d949fae3e2653909…, RC-006 24-pair robustness, RC-007 Arena, RC-008 shortcut, RC-009 canary, RC-010 26/26 mutants, RC-011 7/7 metamorphic, RC-012 perf 0.16ms p99) — 64.49s |
-| `python3 tools/freeze_release.py --verify` | 4 | FAIL | SHA-256 drift contracts/loader.py expected 610f07… got 4dbb8b… + aggregate mismatch; aggregate caf9405e… vs computed; NOT re-frozen per D-10-03 policy |
+| `python3 tools/freeze_release.py --verify` | 0 | PASS | 30 frozen files intact (0747baf0…) — after D-12-02 authorized re-sync (`--write` then `--verify`) |
+| `python3 tools/freeze_release.py --write` | 0 | PASS | 30 files frozen (0747baf0…) — D-12-02 authorized |
 
-Failed/skipped/not-run: none beyond the pre-existing freeze drift. All Phase 12 gates PASS independently of freeze.
+Failed/skipped/not-run: none. All Phase 12 gates + freeze PASS.
 
 ## 4. Detailed results
 
@@ -53,17 +55,17 @@ Failed/skipped/not-run: none beyond the pre-existing freeze drift. All Phase 12 
 
 ## 5. Files changed
 
-- Modified: `env/loader.py` (D-10-03 bounded-read restoration), `docs/PHASE_REPORTS/PHASE-12.md`, `docs/PHASE_REPORTS/PHASE-12.json`
-- Created: `docs/AGENT_REPORTS/2026-11-21/arena-phase-12-re-audit.md`, updates to `docs/CURRENT_STATE.md`, `docs/STATUS.md`, `docs/CONTEXT/NEXT_AGENT.md` (separate edits)
-- Contracts/API: none (no frozen schema change; LIMIT is pre-existing fixed error code)
+- Modified: `env/loader.py` (D-10-03 bounded-read restoration), `configs/release_freeze.json` (D-12-02 re-sync), `docs/PHASE_REPORTS/PHASE-12.md`, `docs/PHASE_REPORTS/PHASE-12.json`, `docs/DECISIONS.md` (D-12-02)
+- Created: `docs/AGENT_REPORTS/2026-11-21/arena-phase-12-re-audit.md`, updates to `docs/CURRENT_STATE.md`, `docs/STATUS.md`, `docs/CONTEXT/NEXT_AGENT.md`, `docs/HANDOFF/phase-12-audit.md`
+- Contracts/API: none (no frozen schema change; LIMIT is pre-existing fixed error code; freeze manifest updated to match existing code, not code to match stale manifest)
 
 ## 6. Residual notes
 
 - Caps 16 MiB / 100k rows (L7) have 20–500× headroom over measured workloads (27 KiB, 292 rows; README ceiling 4950 rows).
 - Timing equivalence is practical IPC margin, not microarchitectural proof (explicit caveat).
-- Freeze manifest must be updated only after maintainer reviews D-10-03 and authorizes correction; this session deliberately did not run `freeze_release.py --freeze`.
+- Freeze manifest re-synced under maintainer authorization D-12-02 (D-11-01 deliberately left it stale; now corrected).
 
 ## 7. Next action
 
-Maintainer reviews this re-audit + D-10-03 env/loader restoration and authorizes `configs/release_freeze.json` correction. Then QA confirms `make verify` 12/12 PASS and `freeze --verify` PASS before release tagging. See `docs/CONTEXT/NEXT_AGENT.md`.
+Maintainer authorization D-12-02 granted and executed; `freeze --verify` PASS, clean-clone verified via `file://` clone. CI `core` + `docker-offline` pending on PR #15, then tag `v1.0.0` per Phase 16–17. See `docs/CONTEXT/NEXT_AGENT.md`.
 
