@@ -1,0 +1,43 @@
+{
+  "phase": 9,
+  "title": "ПРОЦЕССЫ, SEALED EVALUATION И RECEIPTS",
+  "outcome": "DONE",
+  "exit_gate_9": "DONE",
+  "exit_gate_note": "Tasks 9.1-9.8 DONE and EXIT GATE 9 PASS on a clean workspace (including with gitignored episodes/*/*/sealed removed): 3-subprocess CLOSED_EVAL separation (policy, env, post-termination scorer), salted commit-reveal, wall-clock-free trajectory hash chain, size-bound RFC-6962 Merkle receipts, offline seal.cli verifier, honest non-MAC SecurityProfile, and 5/5 byte-identical fresh-process trajectory replay.",
+  "date": "2026-11-21",
+  "branch": "arena/3a99279e-genesis-hackathon-malika-nurzh",
+  "base_commit": "da42d26008f948c294920ae8b02a30b08f541732",
+  "master_tz_sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36",
+  "req_ids": [
+    "REQ-PROD-005", "REQ-PROD-006", "REQ-PROD-009",
+    "REQ-ARC-001", "REQ-ARC-002", "REQ-ARC-003", "REQ-ARC-004", "REQ-ARC-005", "REQ-ARC-006",
+    "REQ-ENV-030", "REQ-ENV-031", "REQ-ENV-032",
+    "REQ-SEAL-001", "REQ-SEAL-002", "REQ-SEAL-003", "REQ-SEAL-004", "REQ-SEAL-005",
+    "REQ-SEAL-010", "REQ-SEAL-011", "REQ-SEAL-012", "REQ-SEAL-013",
+    "REQ-SEAL-020", "REQ-SEAL-021", "REQ-SEAL-022", "REQ-SEAL-023",
+    "REQ-SEAL-030", "REQ-SEAL-031",
+    "REQ-GH-001", "REQ-GH-002", "REQ-GH-003", "REQ-GH-004", "REQ-GH-005", "REQ-GH-006", "REQ-GH-007", "REQ-GH-008"
+  ],
+  "tasks": {
+    "9.1": "DONE",
+    "9.2": "DONE",
+    "9.3": "DONE",
+    "9.4": "DONE",
+    "9.5": "DONE",
+    "9.6": "DONE",
+    "9.7": "DONE",
+    "9.8": "DONE"
+  },
+  "checks": [
+    {"command": "make lint", "exit": 0, "status": "PASS"},
+    {"command": "make test-property", "exit": 0, "status": "PASS", "tests": 5},
+    {"command": "make test", "exit": 0, "status": "PASS", "tests": 295},
+    {"command": "make replay", "exit": 0, "status": "PASS", "episodes_replayed": 5, "all_byte_identical": true},
+    {"command": "make verify", "exit": 0, "status": "PASS", "checks": ["RC-001", "RC-002", "RC-003", "RC-004", "RC-005"]},
+    {"command": "make report", "exit": 0, "status": "PASS"},
+    {"command": "make docker-check", "status": "NOT RUN", "reason": "Docker unavailable in session sandbox"}
+  ],
+  "decisions": ["D-09-01", "D-09-02", "D-09-03", "D-09-04"],
+  "closed_items": ["Phase 9 Tasks 9.1-9.8", "EXIT GATE 9 (CLOSED_EVAL + receipts + replay)"],
+  "open_external_items": ["Q-003", "Q-004", "Q-005", "Q-006", "make docker-check (no Docker in sandbox)"]
+}

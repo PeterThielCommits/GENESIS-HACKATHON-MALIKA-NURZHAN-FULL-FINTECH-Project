@@ -193,3 +193,48 @@ Resolved `docs/CR/CR-06-01.md` on the frozen Phase 1 v1.0.0 contract line
   tool reachability — promoting EXIT GATE 8 to **DONE** (internal provisional
   contract line; external organiser items `Q-003..Q-006` and `make docker-check`
   remain explicitly documented).
+
+## D-09-01 (2026-11-21) — Three-subprocess `CLOSED_EVAL` barrier & Zone-2 import discipline
+
+`harness/` imports ONLY `contracts` and Python 3.11 stdlib (enforced by
+`tools/check_import_boundaries.py`). During `CLOSED_EVAL`, `harness/runner.py`
+spawns `env` (`python3 -m env.jsonl_server --require-closed-eval`) over a staged
+read-only copy of the 12 allowlisted `public/` files (`0o444`/`0o555`, zero
+`sealed/`) and `policy` in an empty read-only temporary directory (`0o555`).
+Only after BOTH `policy` and `env` subprocesses exit (`env_alive=False`,
+`policy_alive=False`, monotonic `env_exited_ns <= scorer_started_ns`) may
+`harness/scorer_process.py` spawn `python3 -m scoring.scorer_cli`. Preserves
+`harness/isolated_runner.py` intact for Official 2026-11-20 evaluation.
+
+## D-09-02 (2026-11-21) — Normative trajectory hash chain without wall-clock fields
+
+Every episode trajectory is anchored at
+`h_0 = SHA256("twinledger:h0:v1|" + truth_commitment + "|" + episode_id)` and
+chained via
+`h_{i+1} = SHA256(b"twinledger:event:v1|" + h_i + b"|" + canonical_bytes(event_i))`
+over frozen `contracts/trajectory_event.schema.json` v1.0.0 (`reset`,
+`tool_call`, `submit`, `terminate`, `error`). Diagnostic nanosecond timings
+(`elapsed_ns`) live only in the outer JSONL wrapper and are excluded from
+`TrajectoryEvent` so `trajectory_head` is 100% deterministic across fresh
+processes (`REQ-SEAL-021`, `REQ-SEAL-030`).
+
+## D-09-03 (2026-11-21) — Size-bound RFC-6962 domain-separated Merkle tree
+
+`seal/merkle.py` uses `0x00` leaf prefix, `0x01` internal node prefix, odd-leaf
+promotion without self-duplication, and a size-bound root envelope
+`SHA256(0x02 || uint64_be(leaf_count) || top_node)` (with
+`EMPTY_TREE_ROOT = SHA256(b"twinledger:merkle:empty:v1")`). This prevents both
+leaf-duplication second-preimage collisions (`[A, B, C]` vs `[A, B, C, C]`) and
+subtree-truncation size ambiguity (`leaf_index=0` across `leaf_count=3` vs `4`),
+satisfying `REQ-SEAL-022..023`.
+
+## D-09-04 (2026-11-21) — Explicit non-MAC `SecurityProfile` honesty contract
+
+`harness/sandbox.py` sets `SecurityProfile.is_full_os_sandbox = False`
+(`host-posix-subprocess-v1` / `container-posix-subprocess-v1`), enumerating both
+enforced controls (separate OS subprocesses, post-termination scorer barrier,
+staged read-only `public/`, empty scratch `cwd`, `close_fds=True`, sanitized env
+allowlist, `shell=False`, POSIX soft `rlimit`s) and unavailable kernel controls
+(`container_mount_namespace`, `container_network_disabled_flag`,
+`seccomp_bpf_syscall_filter`) per Master TZ Principle P-012 and Risk R-09.
+

@@ -1,47 +1,10 @@
-# Honest Limitations (Scenario-Linked)
+# Known Limitations (Phase 9)
 
-Every limitation below is tied directly to concrete verified scenarios in
-TwinLedger (`D01..D20`, `C01..C20`, `L`, `P01..P20`). No claims are made
-regarding LLM or RL fine-tuning improvement, as no model training comparison
-was run in this repository.
+Honest accounting per Principle P-012 ("Честность сильнее декоративной сложности").
 
-1. **Synthetic Accounting Domain Scope (`D01..D20`):**
-   - TwinLedger models a synthetic accrual double-entry chart of accounts
-     (7 standard accounts, 5 currencies `KZT/USD/EUR/JPY/KWD`, 4 anomaly
-     classes + 2 multi-anomaly interaction classes). It does **not** cover tax
-     filings, payroll, multi-entity consolidation, deferred tax, inventory
-     costing (FIFO/LIFO), or real statutory compliance.
-2. **Table-Scan Budget Ceiling for `simple_reconciliation` (`L`, >4,950 rows):**
-   - On standard episodes (`D01..D20`, ~200–300 total rows across tables) and
-     fixture `L` (~700 rows), `simple_reconciliation` completes full table
-     scans in `7..15` steps (`mean_steps=7.3` on `D01..D20`). However, on very
-     large books exceeding `99 * 50 = 4,950` rows across scanned tables, a naive
-     sequential scan cannot read every row within the 100-action budget without
-     targeted filtering or prioritization.
-3. **Rule-Based vs. Learned Agent Evaluation:**
-   - The four baseline policies (`random`, `simple_reconciliation`,
-     `mass_flagging`, `oracle`) validate environment soundness, reward shaping,
-     and baseline separation (`+0.9920 >= +0.9853 >> -0.5060 > -1.0000`). We
-     make **no** claim that training an RL/LLM agent on TwinLedger improves
-     real-world financial auditing performance.
-4. **OS Process Isolation Boundary (`C20`):**
-   - Public baseline policies execute in a separate OS child process
-     (`arena.policies.worker`) with a sanitized environment and stdin/stdout
-     JSONL messaging, enforcing strict separation inside the evaluation harness.
-     Stronger kernel-level sandboxing (seccomp/namespaces/read-only container
-     mounts) is expected to be enforced by the outer Docker container runtime
-     (`--network=none --cpus=2 --memory=4g`, non-root user `uid 10001`).
-5. **Wall-Clock Timeout Determinism (`C18`):**
-   - The 60-second wall-clock episode limit is enforced in both
-     `OfficialJudgeEnv` (via injectable monotonic clock, tested deterministically
-     in `test_C18`) and `harness/isolated_runner.py` (via `select` timeout +
-     subprocess `kill`). Actual wall-clock latency varies by host CPU; on the
-     reference 2-CPU environment, worst-case baseline episode duration across
-     `D01..D20` is `0.084s`.
-6. **Backward Compatibility of Legacy Internal Modules:**
-   - Legacy Phase 1–6 modules (`env/environment.py`, `scoring/reward.py`,
-     `scoring/matcher.py`, `configs/scoring/default.json`) remain intact to
-     preserve the frozen `contracts/*.schema.json` v1.0.0 suite (214 unit
-     tests). All official Genesis FinTech 2026-11-20 grading traffic runs
-     through `judge_adapter.py` -> `adapter/official_env.py` +
-     `scoring/official_scorer.py`.
+1. **L1 — External LLM / live RL training:** Core benchmark and reference/baseline policies (`noop`, `random_audit`, `simple_reconciliation`, `verifier_oracle_dev_only`, and Phase 9 JSONL policies `silent_v1`, `rule_auditor_v1`, `truncate_exhaust_v1`, `malicious_probe_v1`) run deterministically offline on Python 3.11 stdlib. No external API calls are made; optional multi-episode RL / benchmark analytics are Phase 11–12 scope.
+2. **L2 — Synthetic accounting scope:** Four anomaly types (`DUPLICATE_PAYMENT`, `PARTIAL_PAYMENT_ALLOCATION`, `FX_RATE_MISMATCH`, `PERIOD_CUTOFF`) and 16 documented distractor families (`D-DUP/PART/FX/CUT-01..04`); not a full IFRS/GAAP ERP simulator.
+3. **L3 — Subprocess isolation vs kernel MAC sandbox:** Phase 9 enforces true 3-process OS separation (`policy`, `env`, post-termination `scorer`), staged read-only `public/` (`0o444`/`0o555`) without `sealed/`, empty `0o555` `policy` scratch `cwd`, `close_fds=True`, sanitized env allowlist, and POSIX soft `rlimit`s. As explicitly declared in `SecurityProfile` (`is_full_os_sandbox: false`), plain host subprocesses are not a kernel mount-namespace/seccomp sandbox without outer Docker (`--network=none`, unmounted `sealed` volume); `make docker-check` remains unexecuted in this sandbox because Docker is unavailable here.
+4. **L4 — Commit-reveal semantic scope:** Commit-reveal (`seal/commitment.py`) cryptographically proves post-commitment immutability of canonical truth bytes (`truth_commitment`), not initial semantic validity of truth (which is verified independently by `gen` invariants, `verifier/`, and `scoring/crosscheck.py`). Checked-in `dev`/`train` episodes use deterministic `TEST_FIXTURE` salts (`REQ-SEAL-012` / TZ §16.3), whereas `generate_secret_salt` (`secrets.token_hex`) is used for `PRODUCTION_SECRET` sealed evaluations.
+5. **L5 — Explanation consistency & perturbation suites:** `explanation_consistency` in `scoring/diagnostics.py` remains `NOT_AVAILABLE` pending Phase 10 (`Perturbation, Metamorphic, Anti-Cheat, Canary`).
+6. **L6 — Organiser submission packaging details:** Official 2026-11-20 FinTech checks (`C01..C20`, `S01..S25`, `Q01..Q20`, `P01..P20`, `A01..A15`) are implemented and green; external organiser packaging/leaderboard conventions (`Q-003`, `Q-006`) remain tracked in `docs/QUESTIONS.md`.

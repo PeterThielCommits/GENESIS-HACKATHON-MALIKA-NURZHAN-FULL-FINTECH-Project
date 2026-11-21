@@ -1,32 +1,14 @@
-# Architecture Snapshot (Phases 1–8 Integrated)
+# Architecture Snapshot (Post-Phase 9)
 
-```
-contracts/   schemas + canonical + models + validator + currency (frozen v1.0.0)
-adapter/     provisional organiser protocol adapter (Phase 5, A-*)
-core/        exact money + company-local time + anti-shortcut IDs (Phase 2)
-invariants/  INV-01..INV-17 group checks (Phase 2)
-gen/         Clean Twin + 16 distractors + all 4 operators + diff truth + serializer (Phases 3, 4, 7, Zone 1)
-spec/        normative accounting rules + frozen verifier_algorithm.md (v1.0.0)
-verifier/    independent public-only discovery + ProofGraph + ablation + CLI (Phase 8, Zone 3)
-env/         public-only reset/step + tools + safe AST calc + HMAC cursors + JSONL server (Phase 5, Zone 2)
-harness/     JSONL + trajectory + replay (Phase 9, Zone 2)
-scoring/     canon + matcher + reward + diagnostics + exhaustive + Stage-2 crosscheck (Phases 6 & 8, Zone 2)
-seal/        commit-reveal + Merkle + receipts (Phase 9, Zone 2)
-arena/       baselines + attacks (Phase 12, Zone 3)
-metamorphic/ M-01..M-07 (Phase 13)
-judge/       verify CLI + rubric map + reports (Phase 14, Zone 4)
-tools/       make_dataset (with Stage-1/Stage-2 gate) + verify_manifest + inspect_episode + check_import_boundaries
-configs/     versioned configs (generator/environment/scoring/arena/rubric)
-tests/       contracts + unit + generator + env + scoring + verifier (214 + 3 property tests)
-episodes/    dev (6 verified) + train (4 verified); sealed/ strictly gitignored
-docs/        context, CR (CR-06-01 resolved), phase reports, agent reports, INDEPENDENCE.md
-```
-
-Import rules (machine-checked by `tools/check_import_boundaries.py`):
-- `env` ↛ gen/verifier/scoring/seal (and zero private path literals)
-- `verifier` ↛ gen (and AST-checked ↛ core/invariants/scoring/env/harness/seal/arena; zero private path literals)
-- `arena/policies|attacks` ↛ private internals
-- `scoring` → contracts/seal only (↛ gen/verifier/env/harness)
-- `seal` → contracts/stdlib only
-- `gen` ↛ verifier/scoring/seal
-- `harness` ↛ gen/verifier/scoring/seal
+- **Python:** 3.11+ stdlib only in core (`contracts`, `gen`, `env`, `scoring`, `verifier`, `seal`, `harness`, `adapter`, `arena`, `judge`, `tools`).
+- **Four isolation zones (AST-enforced via `tools/check_import_boundaries.py`):**
+  - `contracts/` — frozen v1.0.0 JSON schemas, canonical JSON + SHA-256 (`contracts/canonical.py`), money/decimal/rounding/time primitives (`contracts/money.py`, `contracts/rounding.py`, `contracts/time_utils.py`), typed domain models (`contracts/models.py`).
+  - **Zone 1 (`gen/`)** — deterministic chart of accounts, ERP simulator, invoice/payment/bank/ledger builders, 16 clean distractors (`gen/distractors.py`), 4 mutation operators (`gen/operators/`), exact state-diff truth builder (`gen/diff.py`), salted truth commitment (`gen/truth.py`), release pipeline (`gen/pipeline.py`).
+  - **Zone 2 (`env/`, `scoring/`, `seal/`, `harness/`)**:
+    - `env/` — public-only loader (`env/loader.py`), opaque HMAC cursors (`env/cursors.py`), safe Decimal AST calculator (`env/calc.py`), `TwinLedgerEnv` (`env/environment.py`), hardened JSONL stdio server (`env/jsonl_server.py`) supporting `reset`/`step`/`export_state`/`shutdown` and `--require-closed-eval`.
+    - `scoring/` — Frozen v1.0.0 predicate & deterministic bipartite matcher (`scoring/matcher.py`), exact `Fraction` F1/reward (`scoring/reward.py`), diagnostics (`scoring/diagnostics.py`), Stage-2 truth crosscheck (`scoring/crosscheck.py`), Official 2026-11-20 scorer (`scoring/official_scorer.py`), and post-termination isolated CLI (`scoring/scorer_cli.py`).
+    - `seal/` — Phase 9 commit-reveal (`seal/commitment.py`), wall-clock-free trajectory hash chain (`seal/hashchain.py`), size-bound RFC-6962 Merkle tree (`seal/merkle.py`), offline receipt builder/verifier (`seal/receipt.py`), and CLI (`seal/cli.py`). Imports ONLY `contracts` + stdlib.
+    - `harness/` — Phase 9 `CLOSED_EVAL` 3-subprocess orchestrator (`harness/runner.py`), staged read-only public & scratch policy workspaces + honest `SecurityProfile` (`harness/sandbox.py`), JSONL v1.0 protocol & outbound leakage guard (`harness/protocol.py`), trajectory recorder (`harness/trajectory.py`), `EnvSubprocess`, `PolicySubprocess`, post-termination `ScorerSubprocess` barrier (`ScorerPrematureStartError`), reference/adversarial JSONL policies (`harness/reference_policies.py`), fresh-process deterministic replay CLI (`harness/replay.py`), plus `harness/isolated_runner.py` for Official 2026-11-20 evaluation. Imports ONLY `contracts` + stdlib.
+  - **Zone 3 (`verifier/`)** — zero-common-mode independent public-only anomaly discovery (`verifier/discover.py`), ProofGraph DAG (`verifier/proof_graph.py`), minimal-evidence ablation (`verifier/ablation.py`), reachability (`verifier/evidence.py`), CLI (`python3 -m verifier`).
+  - **Official 2026-11-20 layer (`adapter/`, `arena/`, `judge_adapter.py`, `tools/run_official_eval.py`)** — Gymnasium-like public env (`TwinLedgerOfficialEnv`), `JudgeTwinLedgerAdapter`, 4 baseline policies, paired invariance (`P01..P20`), anti-cheat (`A01..A15`).
+- **Verification & reporting (`judge/`, `Makefile`):** `make lint`, `make test` (295 tests), `make test-property` (5 stdlib property suites), `make replay` (`harness.replay --verify-suite` + `P01..P20`), `make verify` (`RC-001..RC-005`), `make report`.
