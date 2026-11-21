@@ -34,6 +34,7 @@ CHECKS: list[tuple[str, str, list[str], bool]] = [
     ("RC-002", "REQ-ARC-001", [sys.executable, "tools/check_import_boundaries.py"], True),
     ("RC-003", "REQ-CONTRACT-010", [sys.executable, "-m", "unittest", "tests.unit.test_canonical", "-v"], True),
     ("RC-004", "OFFICIAL-2026-11-20", [sys.executable, "-m", "unittest", "discover", "-s", "tests/official", "-t", ".", "-v"], True),
+    ("RC-005", "REQ-SEAL-030", [sys.executable, "-m", "harness.replay", "--verify-suite"], True),
 ]
 
 
@@ -83,7 +84,14 @@ def main() -> int:
         "required_checks": {"passed": sum(1 for r in results if r["status"] == "PASS"), "failed": failed, "blocked": 0},
         "optional_checks": {"passed": 0, "skipped": 0},
         "checks": results,
-        "artifacts": ["artifacts/reports/latest/verify_summary.json"],
+        "artifacts": [
+            "artifacts/reports/latest/verify_summary.json",
+            *(
+                ["artifacts/reports/latest/replay_report.json"]
+                if (REPORT_DIR / "replay_report.json").is_file()
+                else []
+            ),
+        ],
     }
     (REPORT_DIR / "verify_summary.json").write_text(
         json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"

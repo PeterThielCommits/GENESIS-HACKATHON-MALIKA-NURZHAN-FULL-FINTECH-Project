@@ -47,7 +47,8 @@ verify-core: lint test ## Critical core + release blockers
 verify: lint test test-property ## Full verification + reports
 	@$(PYTHON) judge/verify.py --full
 
-replay: ## Trajectory determinism (covered in P01..P20 & official-eval)
+replay: ## Trajectory determinism & fresh-process CLOSED_EVAL replay (REQ-SEAL-030, P01..P20)
+	@$(PYTHON) -m harness.replay --verify-suite
 	@$(PYTHON) -m unittest tests.official.test_block4_paired -v
 
 audit-shortcuts: ## Metadata-only leakage audit (C20 + boundary scan)

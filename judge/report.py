@@ -22,9 +22,13 @@ def main() -> int:
         print("report: no verify_summary.json found — run `make verify` first.")
         return 5
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    artifacts = ["verify_summary.json", "verify_summary.txt"]
+    if (REPORT_DIR / "replay_report.json").is_file():
+        artifacts.append("replay_report.json")
+    artifacts.append("report_index.json")
     (REPORT_DIR / "report_index.json").write_text(
         json.dumps({"schema_version": "1.0.0", "verify_status": summary.get("status"),
-                    "artifacts": ["verify_summary.json", "verify_summary.txt", "report_index.json"]},
+                    "artifacts": artifacts},
                    indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
