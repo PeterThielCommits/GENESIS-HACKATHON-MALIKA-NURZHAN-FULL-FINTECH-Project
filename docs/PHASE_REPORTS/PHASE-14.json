@@ -1,0 +1,37 @@
+{
+  "phase": 14,
+  "title": "12-GATE JUDGE KIT, PERFORMANCE/DEPENDENCY AUDIT & OFFLINE HTML REPORT",
+  "outcome": "DONE",
+  "exit_gate_14": "DONE",
+  "exit_gate_note": "EXIT GATE 14 PASS: All 12 rubricator gates RC-001..RC-012 green in make verify (~47s), stdlib-only core verified, step p99=0.13ms, peak RSS=22MB, and self-contained offline report.html synthesized over 21 artifacts.",
+  "date": "2026-11-21",
+  "branch": "arena/3a99279e-genesis-hackathon-malika-nurzh",
+  "base_commit": "da42d26008f948c294920ae8b02a30b08f541732",
+  "master_tz_sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36",
+  "req_ids": [
+    "REQ-JUDGE-001",
+    "REQ-JUDGE-002",
+    "REQ-JUDGE-003",
+    "REQ-JUDGE-004",
+    "REQ-OPS-001",
+    "REQ-OPS-002",
+    "REQ-OPS-003"
+  ],
+  "tasks": {
+    "14.1": "DONE",
+    "14.2": "DONE",
+    "14.3": "DONE",
+    "14.4": "DONE"
+  },
+  "decisions": [
+    "D-14-01"
+  ],
+  "files": [
+    "judge/rubric_map.json",
+    "judge/verify.py",
+    "judge/performance_and_deps.py",
+    "judge/report.py",
+    "Makefile"
+  ],
+  "gate_evidence": "make verify PASS (12/12 RC-001..RC-012) + artifacts/reports/latest/report.html (0 external links, 0 secret leaks)."
+}

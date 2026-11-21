@@ -19,6 +19,7 @@ from gen.core.clean_twin import (
     verify_clean_invariants,
 )
 from gen.core.rng import derive_bytes, scoped_rng
+from gen.core.text import apply_benign_prompt_injections, apply_multilingual_text_layer
 from gen.errors.operators import (
     OperatorOutcome,
     inject_duplicate_payment,
@@ -62,24 +63,28 @@ def build_episode(
     if max_attempts < 1:
         raise ValueError("max_attempts must be >= 1")
 
-    cfg_hash = canonical_sha256(
-        {
-            "episode_id": recipe.twin_spec.episode_id,
-            "master_seed": recipe.twin_spec.master_seed,
-            "episode_index": recipe.twin_spec.episode_index,
-            "functional_currency": recipe.twin_spec.functional_currency,
-            "foreign_currencies": list(recipe.twin_spec.foreign_currencies),
-            "timezone": recipe.twin_spec.timezone,
-            "fiscal_period_rule": recipe.twin_spec.fiscal_period_rule,
-            "rounding_mode": recipe.twin_spec.rounding_mode,
-            "rate_date_rule": recipe.twin_spec.rate_date_rule,
-            "fallback_rule": recipe.twin_spec.fallback_rule,
-            "quote_convention": recipe.twin_spec.quote_convention,
-            "recognition_event": recipe.twin_spec.recognition_event,
-            "id_style": recipe.twin_spec.id_style,
-            "distractor_classes": list(recipe.twin_spec.distractor_classes),
-        }
-    )
+    cfg_dict: dict[str, Any] = {
+        "episode_id": recipe.twin_spec.episode_id,
+        "master_seed": recipe.twin_spec.master_seed,
+        "episode_index": recipe.twin_spec.episode_index,
+        "functional_currency": recipe.twin_spec.functional_currency,
+        "foreign_currencies": list(recipe.twin_spec.foreign_currencies),
+        "timezone": recipe.twin_spec.timezone,
+        "fiscal_period_rule": recipe.twin_spec.fiscal_period_rule,
+        "rounding_mode": recipe.twin_spec.rounding_mode,
+        "rate_date_rule": recipe.twin_spec.rate_date_rule,
+        "fallback_rule": recipe.twin_spec.fallback_rule,
+        "quote_convention": recipe.twin_spec.quote_convention,
+        "recognition_event": recipe.twin_spec.recognition_event,
+        "id_style": recipe.twin_spec.id_style,
+        "distractor_classes": list(recipe.twin_spec.distractor_classes),
+    }
+    if recipe.twin_spec.enable_text_layer or recipe.twin_spec.enable_prompt_injection:
+        cfg_dict["enable_text_layer"] = recipe.twin_spec.enable_text_layer
+        cfg_dict["language_profile"] = recipe.twin_spec.language_profile
+        cfg_dict["text_noise_level"] = recipe.twin_spec.text_noise_level
+        cfg_dict["enable_prompt_injection"] = recipe.twin_spec.enable_prompt_injection
+    cfg_hash = canonical_sha256(cfg_dict)
 
     last_err: Exception | None = None
     for attempt in range(1, max_attempts + 1):
@@ -136,6 +141,34 @@ def build_episode(
             if not recipe.anomalies and diff:
                 raise RuntimeError("clean episode had non-empty structural diff")
 
+            text_meta: dict[str, Any] | None = None
+            injected_meta: list[dict[str, Any]] | None = None
+            if recipe.twin_spec.enable_text_layer:
+                txt_rng = scoped_rng(
+                    recipe.twin_spec.master_seed,
+                    "text_layer",
+                    recipe.twin_spec.episode_id,
+                    attempt,
+                )
+                text_meta = apply_multilingual_text_layer(
+                    mutated,
+                    txt_rng,
+                    language_profile=recipe.twin_spec.language_profile,
+                    noise_level=recipe.twin_spec.text_noise_level,
+                )
+            if recipe.twin_spec.enable_prompt_injection:
+                inj_rng = scoped_rng(
+                    recipe.twin_spec.master_seed,
+                    "injection_layer",
+                    recipe.twin_spec.episode_id,
+                    attempt,
+                )
+                injected_meta = apply_benign_prompt_injections(
+                    mutated,
+                    inj_rng,
+                    language_profile=recipe.twin_spec.language_profile,
+                )
+
             salt_hex = derive_bytes(
                 recipe.twin_spec.master_seed,
                 "truth_salt",
@@ -144,6 +177,21 @@ def build_episode(
                 length=32,
             ).hex()
 
+            prov_dict: dict[str, Any] = {
+                "master_seed": recipe.twin_spec.master_seed,
+                "episode_index": recipe.twin_spec.episode_index,
+                "attempt": attempt,
+                "operators": [
+                    {"operator": oc.operator_name, "mutated_ids": list(oc.mutated_ids), **oc.provenance}
+                    for oc in outcomes
+                ],
+                "structural_diff": diff,
+            }
+            if text_meta is not None:
+                prov_dict["text_layer"] = text_meta
+            if injected_meta is not None:
+                prov_dict["prompt_injections"] = injected_meta
+
             ep_dir = Path(out_root) if out_dir_exact else (Path(out_root) / recipe.twin_spec.episode_id)
             manifest = write_episode(
                 ep_dir,
@@ -151,16 +199,7 @@ def build_episode(
                 truths,
                 config_hash=cfg_hash,
                 commitment_salt_hex=salt_hex,
-                provenance={
-                    "master_seed": recipe.twin_spec.master_seed,
-                    "episode_index": recipe.twin_spec.episode_index,
-                    "attempt": attempt,
-                    "operators": [
-                        {"operator": oc.operator_name, "mutated_ids": list(oc.mutated_ids), **oc.provenance}
-                        for oc in outcomes
-                    ],
-                    "structural_diff": diff,
-                },
+                provenance=prov_dict,
             )
             m_errs = verify_episode_manifest(ep_dir)
             if m_errs:

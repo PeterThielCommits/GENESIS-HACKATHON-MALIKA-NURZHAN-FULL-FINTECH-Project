@@ -193,3 +193,73 @@ Resolved `docs/CR/CR-06-01.md` on the frozen Phase 1 v1.0.0 contract line
   tool reachability — promoting EXIT GATE 8 to **DONE** (internal provisional
   contract line; external organiser items `Q-003..Q-006` and `make docker-check`
   remain explicitly documented).
+
+## D-09-01 (2026-11-21) — Three-subprocess `CLOSED_EVAL` barrier & Zone-2 import discipline
+
+`harness/` imports ONLY `contracts` and Python 3.11 stdlib (enforced by
+`tools/check_import_boundaries.py`). During `CLOSED_EVAL`, `harness/runner.py`
+spawns `env` (`python3 -m env.jsonl_server --require-closed-eval`) over a staged
+read-only copy of the 12 allowlisted `public/` files (`0o444`/`0o555`, zero
+`sealed/`) and `policy` in an empty read-only temporary directory (`0o555`).
+Only after BOTH `policy` and `env` subprocesses exit (`env_alive=False`,
+`policy_alive=False`, monotonic `env_exited_ns <= scorer_started_ns`) may
+`harness/scorer_process.py` spawn `python3 -m scoring.scorer_cli`. Preserves
+`harness/isolated_runner.py` intact for Official 2026-11-20 evaluation.
+
+## D-09-02 (2026-11-21) — Normative trajectory hash chain without wall-clock fields
+
+Every episode trajectory is anchored at
+`h_0 = SHA256("twinledger:h0:v1|" + truth_commitment + "|" + episode_id)` and
+chained via
+`h_{i+1} = SHA256(b"twinledger:event:v1|" + h_i + b"|" + canonical_bytes(event_i))`
+over frozen `contracts/trajectory_event.schema.json` v1.0.0 (`reset`,
+`tool_call`, `submit`, `terminate`, `error`). Diagnostic nanosecond timings
+(`elapsed_ns`) live only in the outer JSONL wrapper and are excluded from
+`TrajectoryEvent` so `trajectory_head` is 100% deterministic across fresh
+processes (`REQ-SEAL-021`, `REQ-SEAL-030`).
+
+## D-09-03 (2026-11-21) — Size-bound RFC-6962 domain-separated Merkle tree
+
+`seal/merkle.py` uses `0x00` leaf prefix, `0x01` internal node prefix, odd-leaf
+promotion without self-duplication, and a size-bound root envelope
+`SHA256(0x02 || uint64_be(leaf_count) || top_node)` (with
+`EMPTY_TREE_ROOT = SHA256(b"twinledger:merkle:empty:v1")`). This prevents both
+leaf-duplication second-preimage collisions (`[A, B, C]` vs `[A, B, C, C]`) and
+subtree-truncation size ambiguity (`leaf_index=0` across `leaf_count=3` vs `4`),
+satisfying `REQ-SEAL-022..023`.
+
+## D-09-04 (2026-11-21) — Explicit non-MAC `SecurityProfile` honesty contract
+
+`harness/sandbox.py` sets `SecurityProfile.is_full_os_sandbox = False`
+(`host-posix-subprocess-v1` / `container-posix-subprocess-v1`), enumerating both
+enforced controls (separate OS subprocesses, post-termination scorer barrier,
+staged read-only `public/`, empty scratch `cwd`, `close_fds=True`, sanitized env
+allowlist, `shell=False`, POSIX soft `rlimit`s) and unavailable kernel controls
+(`container_mount_namespace`, `container_network_disabled_flag`,
+`seccomp_bpf_syscall_filter`) per Master TZ Principle P-012 and Risk R-09.
+
+## D-09-05 (2026-11-21) — Linux kernel namespace + seccomp-BPF sandbox & CSPRNG production rekey (supersedes D-09-04 on Linux)
+
+Remediates `R-09` and `L4`:
+- On Linux kernels where `probe_kernel_sandbox_capabilities()` succeeds, `harness/sandbox.py` + `harness/ns_launcher.py` wrap `policy` and `env` inside `unshare --user --map-root-user --net --mount` with `MS_REC|MS_PRIVATE` `tmpfs` path masking over `episodes/` and `episode_dir`, read-only `tmpfs` `cwd` (`EROFS`), `PR_SET_NO_NEW_PRIVS`, and `x86_64`/`aarch64` `seccomp-BPF` blocking `socket`, `mount`, `umount2`, `pivot_root`, `ptrace`, `process_vm_readv`, and `process_vm_writev` (`profile_id = "linux-kernel-ns-seccomp-v1"`, `is_full_os_sandbox = True`), with automatic honest fallback to `posix-subprocess-isolated-v1` on non-Linux hosts.
+- `seal/rekey.py` (`python3 -m seal.cli rekey-production`) re-keys episodes with 256-bit `secrets.token_hex(32)` `PRODUCTION_SECRET` salts, and `scoring/scorer_cli.py` performs Stage-2 `scoring/crosscheck.py` `semantic_truth_verification` whenever `verifier_report.json` is supplied.
+
+## D-10-01 (2026-11-21) — Isolated multilingual (`ru`/`kk`/`en`) & prompt-injection RNG streams + diagnostic explanation linter
+
+`gen/core/text.py` renders `en`, `ru`, `kk`, and `mixed` narrative layers and benign prompt-injection strings solely via derived RNG streams (`"text_layer"` and `"injection_layer"`), guaranteeing byte-identical accounting numbers, dates, IDs, `TruthFinding` digests, and Stage-1 `verifier_report` findings across language variants (`REQ-NLP-001..005`). `scoring/explanation_linter.py` populates `diagnostics.explanation_consistency` strictly as a diagnostic column without influencing official `F1` or `reward` (preserving `D-06-05`).
+
+## D-12-01 (2026-11-21) — Privilege-separated oracle, 22-attack Arena, seed-grouped AutoHacker & within-table shortcut audit
+
+- `oracle_test_only` is forbidden in public runs (`ValueError` unless `allow_privileged_oracle=True`, `REQ-ARENA-005`).
+- `arena/attacks/catalog.py` executes all 22 TZ §18.3 red-team attacks (`AT-01..AT-22`), and `arena/autohacker.py` optimizes `AuditorParams` strictly on seed-grouped `TRAIN`/`DEV` splits before single-shot `HELDOUT` evaluation with 95% bootstrap CIs (`REQ-AUTO-001..004`).
+- `judge/shortcut_audit.py` orthogonalizes `(anomaly_class, id_style, timezone)` and trains per-table L2 Logistic Regression classifiers on public metadata features (`macro_ROC_AUC <= 0.55`, `REQ-SHORTCUT-001..003`).
+
+## D-14-01 (2026-11-21) — Complete 12-Gate Judge Kit & Offline Self-Contained HTML Report
+
+`judge/verify.py` executes all 12 provisional Master TZ §23 rubricator gates (`RC-001..RC-012`) while preserving `official_score_claimed: false` (`D-01-06`). `judge/report.py` synthesizes a 100% offline self-contained `artifacts/reports/latest/report.html` (zero external `http://` or `https://` links, zero canary/salt leaks) indexing all 21 JSON/CSV/MD/HTML evidence artifacts.
+
+## D-17-01 (2026-11-21) — Post-release cryptographic contract & config freeze manifest
+
+`tools/freeze_release.py` locks SHA-256 digests over all 30 frozen contract schemas (`contracts/*.schema.json`, `contracts/version.json`), operational configs (`configs/*`), provisional rubricator (`judge/rubric_map.json`), official check spec (`spec/official_fintech_checks_2026-11-20.md`), and Master TZ v3.0.0 (`docs/reference/TwinLedger_v3_Master_TZ_AI_Agents.txt`) in `configs/release_freeze.json`.
+
+

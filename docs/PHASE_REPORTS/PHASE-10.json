@@ -1,0 +1,40 @@
+{
+  "phase": 10,
+  "title": "MULTILINGUAL TEXT LAYER (RU/KK/EN), NLP NORMALIZATION & EVIDENCE HIERARCHY",
+  "outcome": "DONE",
+  "exit_gate_10": "DONE",
+  "exit_gate_note": "EXIT GATE 10 PASS: Deterministic ru/kk/en/mixed narrative layer isolated under 'text_layer' RNG stream, NFC/cross-script ranker, 4-tier evidence hierarchy, and diagnostic explanation-consistency linter.",
+  "date": "2026-11-21",
+  "branch": "arena/3a99279e-genesis-hackathon-malika-nurzh",
+  "base_commit": "da42d26008f948c294920ae8b02a30b08f541732",
+  "master_tz_sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36",
+  "req_ids": [
+    "REQ-NLP-001",
+    "REQ-NLP-002",
+    "REQ-NLP-003",
+    "REQ-NLP-004",
+    "REQ-NLP-005",
+    "REQ-SCORE-020"
+  ],
+  "tasks": {
+    "10.1": "DONE",
+    "10.2": "DONE",
+    "10.3": "DONE",
+    "10.4": "DONE",
+    "10.5": "DONE"
+  },
+  "decisions": [
+    "D-10-01"
+  ],
+  "files": [
+    "gen/core/text.py",
+    "nlp/__init__.py",
+    "nlp/normalize.py",
+    "nlp/matching.py",
+    "nlp/hierarchy.py",
+    "scoring/explanation_linter.py",
+    "tests/nlp/test_phase10_nlp_and_injection.py",
+    "tests/scoring/test_explanation_linter.py"
+  ],
+  "gate_evidence": "RC-006 PASS: 4 language variants (en/ru/kk/mixed) produce identical accounting numbers, truth digests, and Stage-1 verifier reports."
+}

@@ -1,47 +1,16 @@
-# Honest Limitations (Scenario-Linked)
+# Known Limitations (Release v1.0.0 — Phases 0–17 Complete)
 
-Every limitation below is tied directly to concrete verified scenarios in
-TwinLedger (`D01..D20`, `C01..C20`, `L`, `P01..P20`). No claims are made
-regarding LLM or RL fine-tuning improvement, as no model training comparison
-was run in this repository.
+Honest engineering disclosure per Master TZ Principle `P-012` ("Честность сильнее декоративной сложности") and Section 27 (`R-01..R-24`).
 
-1. **Synthetic Accounting Domain Scope (`D01..D20`):**
-   - TwinLedger models a synthetic accrual double-entry chart of accounts
-     (7 standard accounts, 5 currencies `KZT/USD/EUR/JPY/KWD`, 4 anomaly
-     classes + 2 multi-anomaly interaction classes). It does **not** cover tax
-     filings, payroll, multi-entity consolidation, deferred tax, inventory
-     costing (FIFO/LIFO), or real statutory compliance.
-2. **Table-Scan Budget Ceiling for `simple_reconciliation` (`L`, >4,950 rows):**
-   - On standard episodes (`D01..D20`, ~200–300 total rows across tables) and
-     fixture `L` (~700 rows), `simple_reconciliation` completes full table
-     scans in `7..15` steps (`mean_steps=7.3` on `D01..D20`). However, on very
-     large books exceeding `99 * 50 = 4,950` rows across scanned tables, a naive
-     sequential scan cannot read every row within the 100-action budget without
-     targeted filtering or prioritization.
-3. **Rule-Based vs. Learned Agent Evaluation:**
-   - The four baseline policies (`random`, `simple_reconciliation`,
-     `mass_flagging`, `oracle`) validate environment soundness, reward shaping,
-     and baseline separation (`+0.9920 >= +0.9853 >> -0.5060 > -1.0000`). We
-     make **no** claim that training an RL/LLM agent on TwinLedger improves
-     real-world financial auditing performance.
-4. **OS Process Isolation Boundary (`C20`):**
-   - Public baseline policies execute in a separate OS child process
-     (`arena.policies.worker`) with a sanitized environment and stdin/stdout
-     JSONL messaging, enforcing strict separation inside the evaluation harness.
-     Stronger kernel-level sandboxing (seccomp/namespaces/read-only container
-     mounts) is expected to be enforced by the outer Docker container runtime
-     (`--network=none --cpus=2 --memory=4g`, non-root user `uid 10001`).
-5. **Wall-Clock Timeout Determinism (`C18`):**
-   - The 60-second wall-clock episode limit is enforced in both
-     `OfficialJudgeEnv` (via injectable monotonic clock, tested deterministically
-     in `test_C18`) and `harness/isolated_runner.py` (via `select` timeout +
-     subprocess `kill`). Actual wall-clock latency varies by host CPU; on the
-     reference 2-CPU environment, worst-case baseline episode duration across
-     `D01..D20` is `0.084s`.
-6. **Backward Compatibility of Legacy Internal Modules:**
-   - Legacy Phase 1–6 modules (`env/environment.py`, `scoring/reward.py`,
-     `scoring/matcher.py`, `configs/scoring/default.json`) remain intact to
-     preserve the frozen `contracts/*.schema.json` v1.0.0 suite (214 unit
-     tests). All official Genesis FinTech 2026-11-20 grading traffic runs
-     through `judge_adapter.py` -> `adapter/official_env.py` +
-     `scoring/official_scorer.py`.
+1. **L1 — Benchmark Scope vs Real ERP Systems:** TwinLedger is a 100% synthetic research and hackathon benchmark covering four documented accounting anomaly classes (`DUPLICATE_PAYMENT`, `PARTIAL_PAYMENT_ALLOCATION`, `FX_RATE_MISMATCH`, `PERIOD_CUTOFF`) and 16 clean distractor families (`D-DUP/PART/FX/CUT-01..04`). It is not a real statutory accounting or audit product.
+2. **L2 — Host-Dependent OS Sandbox Capabilities (`R-09`):**
+   - On Linux hosts supporting unprivileged user, mount, and network namespaces plus `seccomp-BPF` (live-verified on `x86_64` Linux 6.1+ and inside the `docker-offline` CI job), `harness/sandbox.py` + `harness/ns_launcher.py` enforce `profile_id = "linux-kernel-ns-seccomp-v1"` (`is_full_os_sandbox: true`): private `MS_REC|MS_PRIVATE` mount namespaces overmounting `episodes/` and `sealed/` with read-only `tmpfs`, read-only `tmpfs` policy `cwd` (`EROFS`), isolated network namespace, `PR_SET_NO_NEW_PRIVS`, and `seccomp-BPF` blocking `socket`, `mount`, `umount2`, `pivot_root`, `ptrace`, `process_vm_readv`, and `process_vm_writev`.
+   - On non-Linux hosts (macOS/Windows) or restricted kernels where `probe_kernel_sandbox_capabilities()` detects unavailable namespace/seccomp support, `detect_security_profile()` automatically and honestly degrades to `posix-subprocess-isolated-v1` (`is_full_os_sandbox: false`, listing exact `unavailable_controls`) unless run inside `docker run --network=none --read-only --cap-drop ALL`.
+3. **L3 — Commit-Reveal vs Semantic Correctness (`R-10`):** Cryptographic commit-reveal (`SHA256("twinledger-truth-v1:" || salt || ":" || canonical_truth)`) proves post-commitment immutability only, NOT semantic truth validity. Semantic truth validity is enforced separately via Stage-1 public-only `verifier.discover` + Stage-2 `scoring/crosscheck.py` (`semantic_truth_verification: VERIFIED` in `scoring/scorer_cli.py`). Checked-in `dev`/`train` fixtures use deterministic `TEST_FIXTURE` salts for clean-clone reproducibility, while `python3 -m seal.cli rekey-production` (`seal/rekey.py`) seals private competition splits with 256-bit `secrets.token_hex(32)` `PRODUCTION_SECRET` salts.
+4. **L4 — Side-Channel & Shortcut Audit Bounds (`R-06`, `R-12`):**
+   - Within-table L2 Logistic Regression metadata auditing (`judge/shortcut_audit.py`) verifies `macro_ROC_AUC <= 0.55` across surface metadata features, confirming absence of trivial generator stamps while recognizing that real accounting structure legitimately distinguishes anomaly classes once domain relations are joined.
+   - Warmed-up interleaved timing equivalence (`tost_ci90_diff_us` within practical margin) bounds local Python IPC timing differences; it does not prove absence of hardware/microarchitectural cache side channels.
+5. **L5 — AutoHacker & Mutation Score Interpretation (`R-13`, `R-24`):**
+   - AutoHacker (`arena/autohacker.py`) demonstrates positive out-of-sample sensitivity on seed-grouped `HELDOUT` episodes over an interpretable `AuditorParams` space; it does not prove absence of all conceivable exploit strategies.
+   - Achieving `26/26` (100%) killed mutants in `judge/mutation_suite.py` verifies test sensitivity against the 26 declared matcher/reward defect classes, not mathematical absence of all bugs.
+6. **L6 — Internal Verification Pass Rate vs Official Jury Score (`R-01`, `R-20`, `R-24`):** TwinLedger implements both the provisional Master TZ v3.0 rubricator (`RC-001..RC-012`) and the Official Genesis FinTech 2026-11-20 mirror checks (`tests/official/*`, `judge_adapter.py`). Internal `PASS` (100% of internal gates) is never claimed as an official organiser jury score.

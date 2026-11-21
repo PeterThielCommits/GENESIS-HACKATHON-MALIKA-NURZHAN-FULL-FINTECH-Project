@@ -59,6 +59,10 @@ class CleanTwinSpec:
     max_page_size: int = 50
     max_findings: int = 20
     max_evidence_ids: int = 20
+    enable_text_layer: bool = False
+    language_profile: str = "mixed"
+    text_noise_level: int = 0
+    enable_prompt_injection: bool = False
 
 
 @dataclass

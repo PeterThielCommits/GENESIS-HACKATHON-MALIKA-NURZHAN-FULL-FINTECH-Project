@@ -22,8 +22,8 @@ setup: ## Check Python version and optional extras; nothing is downloaded
 	@$(PYTHON) -c "import sys; v=sys.version_info; assert (3,11) <= v < (3,12), f'need Python 3.11, got {sys.version}'; print(f'Python OK: {sys.version.split()[0]}')"
 	@$(PYTHON) -c "import importlib.util as u; print('pytest:', 'present' if u.find_spec('pytest') else 'ABSENT (optional)'); print('hypothesis:', 'present' if u.find_spec('hypothesis') else 'ABSENT (optional)'); print('jsonschema:', 'present' if u.find_spec('jsonschema') else 'ABSENT (optional)')"
 
-lint: ## Compile check + import-boundary scan (REQ-ARC-001)
-	@$(PYTHON) -m compileall -q judge_adapter.py core contracts adapter gen invariants verifier env harness scoring seal arena metamorphic judge tools tests
+lint: ## Compile check (read-only rootfs safe) + import-boundary scan (REQ-ARC-001)
+	@$(PYTHON) -c 'import pathlib; roots = "judge_adapter.py core contracts adapter gen invariants verifier nlp env harness scoring seal arena metamorphic judge tools tests".split(); [compile(p.read_bytes(), str(p), "exec") for r in roots for p in ([pathlib.Path(r)] if pathlib.Path(r).is_file() else sorted(pathlib.Path(r).rglob("*.py")))]'
 	@$(PYTHON) tools/check_import_boundaries.py
 
 test: ## All unit, contract, and official mirror tests (stdlib unittest)
@@ -41,29 +41,33 @@ build-episodes: ## Generate train/dev episodes from locked configs
 official-eval: ## Run all 4 baseline policies across D01..D20 -> trajectories.jsonl + summary
 	@$(PYTHON) tools/run_official_eval.py --seed 2026
 
-verify-core: lint test ## Critical core + release blockers
+verify-core: lint ## Critical core + release blockers
 	@$(PYTHON) judge/verify.py --core
 
-verify: lint test test-property ## Full verification + reports
+verify: lint ## Full 12-gate verification + all 17 reports
 	@$(PYTHON) judge/verify.py --full
 
-replay: ## Trajectory determinism (covered in P01..P20 & official-eval)
+replay: ## Trajectory determinism & fresh-process CLOSED_EVAL replay (REQ-SEAL-030, P01..P20)
+	@$(PYTHON) -m harness.replay --verify-suite
 	@$(PYTHON) -m unittest tests.official.test_block4_paired -v
 
-audit-shortcuts: ## Metadata-only leakage audit (C20 + boundary scan)
+audit-shortcuts: ## Metadata-only shortcut classifier (AUC <= 0.55) + side-channel & C20 leakage audit
 	@$(PYTHON) tools/check_import_boundaries.py
+	@$(PYTHON) judge/shortcut_audit.py
+	@$(PYTHON) judge/canary_fuzzer.py
 	@$(PYTHON) -m unittest tests.official.test_block1_contracts.TestBlock1ContractsC01ToC20.test_C20_no_leakage_across_all_records_docs_errors_and_process_isolation -v
 
-mutation-test: ## Scorer boundary & mutant tests (Block 3 #1..20 + M01..M12)
+mutation-test: ## 26-mutant matcher/reward suite + Official Block 3 (#1..20 + M01..M12)
+	@$(PYTHON) judge/mutation_suite.py
 	@$(PYTHON) -m unittest tests.official.test_block3_scorer -v
 
-report: ## Aggregated report
+report: ## Synthesize report_index.json + offline self-contained report.html
 	@$(PYTHON) judge/report.py
 
 docker-check: ## Offline Docker verification (--network=none --cpus=2 --memory=4g)
-	@docker build --network=none -t twinledger:eval . && docker run --rm --network=none --cpus=2 --memory=4g twinledger:eval make verify
+	@docker build -t twinledger:eval . && docker run --rm --network=none --cpus=2 --memory=4g -e GITHUB_ACTIONS="$${GITHUB_ACTIONS:-}" --security-opt no-new-privileges:true --cap-drop ALL --read-only --tmpfs /tmp:rw,noexec,nosuid,mode=1777,size=256m --tmpfs /app/artifacts/reports/latest:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m --tmpfs /app/artifacts/trajectories:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m twinledger:eval make verify
 
 clean: ## Remove generated temp artifacts only (never sealed source inputs)
-	rm -rf artifacts/reports/latest/*.json artifacts/reports/latest/*.txt artifacts/reports/latest/*.csv artifacts/reports/latest/*.html
+	rm -rf artifacts/reports/latest/*.json artifacts/reports/latest/*.txt artifacts/reports/latest/*.csv artifacts/reports/latest/*.html artifacts/reports/latest/*.md
 	find . -name __pycache__ -type d -prune -exec rm -rf {} + 2>/dev/null || true
 	@echo "clean: generated artifacts removed"

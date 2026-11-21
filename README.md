@@ -19,10 +19,17 @@ Working directory inside the container: `/app`. Zero external `pip` packages or
 network access are required.
 
 ```bash
-make verify          # lint + import-boundary scan + all 269 unit/contract/official tests + property tests + Judge Kit report
-make test-official   # official Genesis FinTech 2026-11-20 mirror suite (Blocks 1..5: C01..C20, D01..D20, Block 3 #1..20 + M01..M12, P01..P20, Baselines)
-make official-eval   # run all 4 baseline policies across D01..D20 -> artifacts/trajectories/trajectories.jsonl + summary
-make docker-check    # build and run inside offline container (--network=none --cpus=2 --memory=4g)
+make verify            # lint + full 12-gate Judge Kit (RC-001..RC-012) + all 317 unit/official/security tests + 21 JSON/CSV/HTML artifacts
+make verify-core       # fast critical core & release-blocker gates (RC-001..005, RC-009)
+make test-official     # official Genesis FinTech 2026-11-20 mirror suite (Blocks 1..5: C01..C20, D01..D20, Block 3 #1..20 + M01..M12, P01..P20, Baselines)
+make replay            # fresh-process CLOSED_EVAL trajectory & Merkle receipt replay + paired P01..P20
+make audit-shortcuts   # metadata-only L2 logistic regression audit (AUC <= 0.55) + 10-channel canary fuzzer + C20 non-leakage
+make mutation-test     # 26-mutant matcher/reward kill suite (100% killed) + Official Block 3 M01..M12
+make report            # synthesize self-contained offline artifacts/reports/latest/report.html + report_index.json
+make official-eval     # run all 4 baseline policies across D01..D20 -> artifacts/trajectories/trajectories.jsonl + summary
+make docker-check      # build and run inside hardened offline container (--network=none --read-only --cap-drop ALL)
+python3 tools/demo_walkthrough.py        # deterministic 3-minute jury walkthrough (seed=2025)
+python3 tools/freeze_release.py --verify # cryptographic SHA-256 verification of frozen contracts & configs
 ```
 
 Pinned versions and reproduction parameters are locked in

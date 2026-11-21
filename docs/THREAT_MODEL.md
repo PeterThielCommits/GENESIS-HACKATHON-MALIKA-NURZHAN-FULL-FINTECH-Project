@@ -1,34 +1,21 @@
-# TwinLedger — Threat Model (Phase 1)
+# Threat Model (Release v1.0.0 — Kernel-Sandboxed Sealed Evaluation & Anti-Leakage)
 
-## Assets
+## 1. Assets Protected
+- **Sealed Ground Truth & Salts:** `episodes/*/*/sealed/truth.json`, `provenance.json`, and 256-bit `PRODUCTION_SECRET` commitment salts (`seal/rekey.py`).
+- **Scoring & Lifecycle Integrity:** Official matcher/reward (`scoring/`), trajectory hash chains (`seal/hashchain.py`), and size-bound RFC-6962 Merkle batch receipts (`seal/merkle.py`).
+- **Evaluation Fairness:** Prevention of metadata shortcuts (`AUC <= 0.55`), prompt-injection hijacking, and post-submission tampering.
 
-Sealed truth, provenance, seeds, salt, scorer internals, heldout
-episodes, canary tokens.
+## 2. Trust Boundaries & Enforced Controls
 
-## Trust boundaries
+| Boundary | Trusted Side | Untrusted / Restricted Side | Enforced Controls |
+| --- | --- | --- | --- |
+| `POLICY` ↔ `ENV` | `env.jsonl_server` | External `policy` process | Separate OS process; JSONL v1.0 over stdin/stdout only; Linux `unshare --user --map-root-user --net --mount` + `harness.ns_launcher` masking `episodes/`, `episode_dir`, and staged `env` dir with read-only `tmpfs`; read-only `tmpfs` `cwd` (`EROFS`); `PR_SET_NO_NEW_PRIVS` + `seccomp-BPF` blocking `socket`/`mount`/`umount2`/`pivot_root`/`ptrace`/`process_vm_*`; sanitized env allowlist; `close_fds=True` |
+| `ENV` ↔ `sealed/` | Post-episode `scorer` (`scoring.scorer_cli`) | `env` & `policy` processes | `StagedPublicWorkspace` copies ONLY the 12 allowlisted `public/` files (`0o444`/`0o555`) with zero `sealed/`, symlinks, or dotfiles; kernel mount namespace masks repository `episodes/`; `ScorerPrematureStartError` + monotonic nanosecond `ProcessLifecycleProof` (`env_exited_ns <= scorer_started_ns`) |
+| `gen/` ↔ `verifier/` | Independent Stage-1 discovery | Common-mode generator bug | Disjoint AST import zones (`tools/check_import_boundaries.py`: `verifier` imports neither `gen` nor `nlp`); Stage-2 `scoring/crosscheck.py` attestation (`semantic_truth_verification: VERIFIED`) |
+| Untrusted Document Text ↔ Policy | Structured accounting tables | Free-text descriptions/memos | `nlp/injection_guard.py` + 4-tier evidence hierarchy (`nlp/hierarchy.py` rejecting Tier-4 text-only proof); paired prompt-injection twin audit (`judge/robustness_audit.py`) |
+| Container Host ↔ Evaluation Run | Judge host | Containerized run | `Dockerfile` (`python:3.11-slim-bookworm`, non-root UID `10001`), `docker-compose.yml` (`network_mode: none`, `read_only: true`, `cap_drop: [ALL]`, `no-new-privileges:true`), CI `docker-offline` job |
 
-Policy | Env (public only) | Harness | Scorer (sealed, post-episode)
-| Judge. Env never loads truth (REQ-PROD-005). Policy never imports
-scorer/verifier/generator (REQ-ARC-003).
-
-## Attackers / surfaces
-
-- Policy reading sealed files / scorer memory → mitigated by process
-  separation + read-only public mount + no sealed path in policy/env
-  containers (Phase 9). Phase 1: import-boundary scan only.
-- Truth leak via observation/info/error/log/metadata → bounded errors,
-  no sealed fields in public schemas (Phase 5 tests).
-- Shortcut via ID/order/amount metadata → metadata-only classifier
-  audit (Phase 12).
-- Reward exploits (duplicates, split, flag-all) → matcher properties +
-  attack suite (Phases 6/12).
-- Prompt injection in document text → separate robustness track
-  (Phase 11), never part of official reward.
-- Timing/size side channels → equivalence tests with predeclared
-  margin (Phase 12); `p > 0.05` is not equivalence.
-
-## Residual risks
-
-Process separation ≠ sandbox. Timing tests cannot prove absence of all
-side channels. Commit-reveal proves integrity after commitment, not
-initial truth correctness (needs diff + invariants + verifier).
+## 3. Red-Team & Fuzzing Verification Evidence
+- **Live Malicious Policy Probe (`tests/security/test_phase09_isolation.py`):** Even when handed the exact host path to `sealed/truth.json`, `malicious_probe_v1` observes `cwd_empty=True`, `cwd_writable=False`, `env_leaks=0`, `sealed_found=False`, `net_blk=True`, `umnt_blk=True`, `trav_blk=True`, `calc_blk=True`.
+- **10-Channel Canary & API Fuzzer (`judge/canary_fuzzer.py`):** 0 hits across 10 policy-visible channels and 9 encoding transforms (`exact`, `casefold`, `hex`, `base64`, `urlsafe_b64`, `url_percent`, `NFC`, `NFKC`).
+- **22-Attack Red-Team Catalog (`arena/attacks/catalog.py`):** `AT-01..AT-22` all defended (`reward_strategy_report.json`).

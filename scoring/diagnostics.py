@@ -134,8 +134,16 @@ def build_diagnostics(
             "matched_with_superset": match_result.tp - minimal_evidence_matches,
             "extra_evidence_ids_total": extra_evidence_total,
         },
-        "explanation_consistency": dict(NOT_AVAILABLE_EXPLANATION),
-        "verifier_quality": dict(NOT_AVAILABLE_VERIFIER),
+        "explanation_consistency": dict(
+            info["explanation_consistency"]
+            if isinstance(info.get("explanation_consistency"), dict)
+            else NOT_AVAILABLE_EXPLANATION
+        ),
+        "verifier_quality": dict(
+            info["verifier_quality"]
+            if isinstance(info.get("verifier_quality"), dict)
+            else NOT_AVAILABLE_VERIFIER
+        ),
     }
     if "difficulty" in info:
         diagnostics["difficulty"] = info["difficulty"]
