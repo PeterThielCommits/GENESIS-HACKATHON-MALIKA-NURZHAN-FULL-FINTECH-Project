@@ -1,0 +1,13 @@
+{
+  "config_version": "1.0.0",
+  "mode": "CLOSED_EVAL",
+  "max_steps": 100,
+  "max_page_size": 50,
+  "max_findings": 20,
+  "max_evidence_ids": 20,
+  "max_request_bytes": 65536,
+  "max_calc_expression_length": 500,
+  "max_calc_ast_nodes": 100,
+  "submit_counts_as_step": false,
+  "config_hash": "cd9b97c7b45d5055905c42b03931140c53ea4fba0043c2491c0db0b83605db8f"
+}

@@ -1,0 +1,39 @@
+{
+  "phase": 6,
+  "title": "MATCHER И БАЗОВАЯ НАГРАДА",
+  "outcome": "DONE",
+  "rubric_conformance": "provisional",
+  "rubric_note": "EXIT GATE 6 allows provisional status while the official organiser rubric is unpublished (Q-003/Q-005, A-005)",
+  "date": "2026-11-21",
+  "branch": "arena/a3999087-genesis-hackathon-malika-nurzh",
+  "base_stack": "ef15218 (Phase 1+2, PR #1/#2 line)",
+  "req_ids": [
+    "REQ-SCORE-001", "REQ-SCORE-002", "REQ-SCORE-003", "REQ-SCORE-004", "REQ-SCORE-005",
+    "REQ-CONTRACT-002", "REQ-CONTRACT-021", "REQ-PROD-025", "REQ-TEST-003"
+  ],
+  "tasks": {
+    "6.1": "DONE", "6.2": "DONE", "6.3": "DONE", "6.4": "DONE",
+    "6.5": "DONE", "6.6": "DONE", "6.7": "DONE"
+  },
+  "checks": [
+    {"command": "make setup", "exit": 0, "status": "PASS"},
+    {"command": "make lint", "exit": 0, "status": "PASS"},
+    {"command": "make test", "exit": 0, "status": "PASS", "tests": 131},
+    {"command": "make test-property", "exit": 0, "status": "PASS", "tests": 3},
+    {"command": "make verify-core", "exit": 0, "status": "PASS"},
+    {"command": "make verify", "exit": 0, "status": "PASS"},
+    {"command": "make report", "exit": 0, "status": "PASS"},
+    {"command": "python3 -m unittest tests.scoring.test_reward_properties", "exit": 0, "status": "PASS", "properties": ["P1", "P2", "P3", "P4", "P5"]},
+    {"command": "make docker-check", "status": "NOT RUN", "reason": "Docker unavailable in session sandbox"}
+  ],
+  "sanity_examples": "A-J of TZ 15.6 all executable and exact (49/50, 391/600, 39/50, 99/100, 0, 0, 0, 19/20)",
+  "artifacts": [
+    "docs/PHASE_REPORTS/PHASE-06.md",
+    "docs/PHASE_REPORTS/PHASE-06-reward-matrix.json",
+    "docs/AGENT_REPORTS/2026-11-21/A3-phase-06.md",
+    "artifacts/reports/latest/verify_summary.json",
+    "artifacts/reports/latest/reward_property_matrix.json"
+  ],
+  "decisions": ["D-06-00", "D-06-01", "D-06-02", "D-06-03", "D-06-04", "D-06-05"],
+  "open_items": ["Q-003", "Q-005", "issue #3", "CR-06-01 (draft)"]
+}

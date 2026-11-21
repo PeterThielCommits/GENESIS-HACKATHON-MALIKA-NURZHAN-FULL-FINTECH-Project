@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "company_id": "demo-company-001",
+  "legal_name": "Demo Synthetic LLP",
+  "name_variants": {"ru": "Демо Синтетик ТОО", "kk": "Демо Синтетик ЖШС", "en": "Demo Synthetic LLP"},
+  "jurisdiction_code": "XA",
+  "timezone": "Asia/Almaty",
+  "functional_currency": "KZT",
+  "supported_currencies": ["KZT", "USD"],
+  "fiscal_year_start": "2025-01-01",
+  "fiscal_period_rule": "monthly",
+  "accounting_basis": "accrual",
+  "id_style": "A",
+  "text_profile": "default",
+  "company_size": "M"
+}

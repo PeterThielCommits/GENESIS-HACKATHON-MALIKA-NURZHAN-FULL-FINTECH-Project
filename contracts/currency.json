@@ -1,0 +1,11 @@
+{
+  "registry_version": "1.0.0",
+  "note": "Configuration reference of the environment (TZ 9.1). Exponents are minor-unit decimal exponents. Not derived from external code at runtime.",
+  "currencies": [
+    {"code": "KZT", "exponent": 2},
+    {"code": "USD", "exponent": 2},
+    {"code": "EUR", "exponent": 2},
+    {"code": "JPY", "exponent": 0},
+    {"code": "KWD", "exponent": 3}
+  ]
+}

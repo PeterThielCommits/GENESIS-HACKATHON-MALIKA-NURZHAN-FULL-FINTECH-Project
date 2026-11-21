@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TwinLedger Tool Request",
+  "description": "Versioned JSONL tool request from policy to environment (REQ-ARC-006).",
+  "type": "object",
+  "required": ["protocol_version", "request_id", "action"],
+  "additionalProperties": false,
+  "patternProperties": {"^x_twinledger_.*": {}},
+  "properties": {
+    "protocol_version": {"type": "string", "const": "1.0"},
+    "request_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "action": {
+      "type": "object",
+      "required": ["tool", "args"],
+      "additionalProperties": false,
+      "properties": {
+        "tool": {"type": "string", "enum": ["list_records", "get_record", "get_document", "calc", "submit"]},
+        "args": {"type": "object"}
+      }
+    }
+  }
+}

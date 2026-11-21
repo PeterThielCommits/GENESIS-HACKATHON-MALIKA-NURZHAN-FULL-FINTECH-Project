@@ -1,0 +1,8 @@
+{
+  "config_version": "1.0.0",
+  "eta": 0.05,
+  "max_steps": 100,
+  "provisional": true,
+  "note": "Provisional reward parameters (A-005). Replace with official values when confirmed.",
+  "config_hash": "3618eb397e71aae0f95ee8152501f723e309b78546f5b52074d09553219d5806"
+}

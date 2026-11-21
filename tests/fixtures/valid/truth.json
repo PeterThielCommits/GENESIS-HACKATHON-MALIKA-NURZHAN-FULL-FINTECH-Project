@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "truth_id": "truth-demo-001",
+  "type": "DUPLICATE_PAYMENT",
+  "affected_ids": [
+    "PAY:pay_demo_2",
+    "JE:je_demo_2"
+  ],
+  "amount_minor": 50000,
+  "currency": "KZT",
+  "tolerance_minor": 1,
+  "evidence_sets": [
+    [
+      "PAY:pay_demo_2",
+      "INV:inv_demo_1",
+      "PAY:pay_demo_1"
+    ]
+  ],
+  "minimal_evidence_size": 3,
+  "invariant_signature": {
+    "invariant_id": "INV-15",
+    "entity_key": "INV:inv_demo_1",
+    "expected_delta_minor": 50000,
+    "currency": "KZT",
+    "direction": "over",
+    "tolerance_minor": 1,
+    "side_effect_class": "intended"
+  },
+  "operator_version": "0.1.0",
+  "evidence_enumeration_complete": true
+}

@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0.0",
+  "episode_public_hash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "findings": [],
+  "examined_public_sources": ["company.json", "policy.json", "payments.jsonl"],
+  "unresolved_ambiguities": [],
+  "verifier_version": "0.1.0"
+}

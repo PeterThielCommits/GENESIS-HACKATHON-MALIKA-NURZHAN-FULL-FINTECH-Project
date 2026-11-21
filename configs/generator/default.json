@@ -1,0 +1,13 @@
+{
+  "config_version": "1.0.0",
+  "master_seed": 0,
+  "profile": "L1",
+  "record_targets": {
+    "journal_entries": 200,
+    "documents": 40
+  },
+  "anomaly_count": 1,
+  "distractor_count": 4,
+  "reject_max_attempts": 50,
+  "config_hash": "d1dd9bd4cebf315df02ba3a1b5bc6bb306a3b106d49c3829b9392901e5f6f9c7"
+}

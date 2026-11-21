@@ -1,0 +1,4 @@
+# Developer-only tools (optional for core; never required at runtime).
+pytest>=8
+hypothesis>=6
+jsonschema>=4

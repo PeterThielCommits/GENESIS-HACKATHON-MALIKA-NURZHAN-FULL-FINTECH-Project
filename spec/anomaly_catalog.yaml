@@ -1,0 +1,39 @@
+# TwinLedger anomaly catalog (normative, TZ 11). Phase 1 skeleton.
+# affected_ids rules are PROVISIONAL (A-006) pending official confirmation.
+anomalies:
+  - type: DUPLICATE_PAYMENT
+    operator_id: duplicate_payment
+    operator_version: "0.1.0"
+    intended_invariants: [INV-04, INV-15]
+    allowed_side_effects: [BANK_RECON may remain clean when bank honestly shows both transfers]
+    forbidden_invariants: [INV-01]
+    affected_ids_rule: "PAY of the new payment + JE directly reflecting it (provisional)"
+    evidence_requirements: "payment->allocation->invoice chain + credit-note/refund absence"
+    distractor_suite: [D-DUP-01, D-DUP-02, D-DUP-03, D-DUP-04]
+  - type: PARTIAL_PAYMENT_ALLOCATION
+    operator_id: partial_allocation
+    operator_version: "0.1.0"
+    intended_invariants: [INV-15, INV-04]
+    allowed_side_effects: []
+    forbidden_invariants: [INV-01]
+    affected_ids_rule: "PAY with wrong allocation + affected INV(s) (provisional)"
+    evidence_requirements: "payment amount + allocations + invoice balances"
+    distractor_suite: [D-PART-01, D-PART-02, D-PART-03, D-PART-04]
+  - type: FX_RATE_MISMATCH
+    operator_id: fx_mismatch
+    operator_version: "0.1.0"
+    intended_invariants: [INV-07, INV-08]
+    allowed_side_effects: []
+    forbidden_invariants: [INV-01]
+    affected_ids_rule: "JE IDs that are wrong under official semantics; FX row is evidence (provisional)"
+    evidence_requirements: "FX policy + selected rate + recalculated functional amount"
+    distractor_suite: [D-FX-01, D-FX-02, D-FX-03, D-FX-04]
+  - type: PERIOD_CUTOFF
+    operator_id: period_cutoff
+    operator_version: "0.1.0"
+    intended_invariants: [INV-09, INV-10]
+    allowed_side_effects: []
+    forbidden_invariants: [INV-01]
+    affected_ids_rule: "JE with wrong posting period (provisional)"
+    evidence_requirements: "recognition event + company-timezone period + posting_period"
+    distractor_suite: [D-CUT-01, D-CUT-02, D-CUT-03, D-CUT-04]

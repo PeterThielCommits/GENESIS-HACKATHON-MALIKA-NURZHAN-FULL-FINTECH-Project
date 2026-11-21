@@ -1,0 +1,19 @@
+{
+ "INV-01":[{"debits":[40,60],"credits":[100]}, {"credits":[99]},1,{"debits":[0]},-100],
+ "INV-02":[{"debits":[140,10],"credits":[150]}, {"credits":[151]},-1,{"credits":[100]},50],
+ "INV-03":[{"subledger":120,"documents":[90,30]}, {"subledger":119},-1,{"documents":[]},120],
+ "INV-04":[{"gross":120,"payments":[50],"credit_notes":[10],"open":60},{"open":61},1,{"payments":[]},-50],
+ "INV-05":[{"as_of":"2025-01-31","due":"2025-01-01","open":1,"bucket":"1-30"},{"open":0},null,{"as_of":"2025-02-01"},null],
+ "INV-06":[{"matched_payment_id":"p","payments":{"p":["USD",-20]},"signed_minor":-20,"unmatched_reason":null},{"signed_minor":20},null,{"matched_payment_id":null},null],
+ "INV-07":[{"selected_quote":"2025-01-03:source1","permitted_quotes":["2025-01-03:source1"]},{"selected_quote":"2025-01-04:source1"},null,{"permitted_quotes":[]},null],
+ "INV-08":[{"source_minor":1,"source_currency":"JPY","rate":"0.025","rounding_mode":"half_even","functional_minor":2},{"rounding_mode":"half_up"},-1,{"functional_minor":3},1],
+ "INV-09":[{"posting_period":"2025-02","events":{"issue_date":"2025-01-31T22:00:00+00:00"},"policy":{"cutoff_policy":{"recognition_event":"issue_date","timezone_source":"company"}},"company":{"timezone":"Asia/Tokyo","fiscal_period_rule":"monthly","fiscal_year_start":"2025-01-01"}},{"posting_period":"2025-01"},null,{"events":{"issue_date":"2025-03-01"}},null],
+ "INV-10":[{"reported":90,"lines":[120,-30]},{"reported":91},1,{"lines":[120]},-30],
+ "INV-11":[{"ids":["x","y"]},{"ids":["x","x"]},null,{"ids":[]},null],
+ "INV-12":[{"reference":"p","target_ids":["p"],"nullable":false},{"reference":null},null,{"target_ids":[]},null],
+ "INV-13":[{"amount_minor":1,"scale":2},{"scale":3},null,{"amount_minor":true},null],
+ "INV-14":[{"timestamp":"2025-01-01T00:00:00+05:00","zone":"Asia/Almaty"},{"timestamp":"2025-01-01"},null,{"zone":"Mars/Olympus"},null],
+ "INV-15":[{"allocations":[70,30],"payment":100,"allow_advances":false},{"payment":99},1,{"payment":101},-1],
+ "INV-16":[{"credit_notes":[60,40],"cap":100},{"cap":99},1,{"credit_notes":[101,1]},2],
+ "INV-17":[{"gross":100,"open":40,"status":"partial"},{"open":0},null,{"open":101},null]
+}

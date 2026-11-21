@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TwinLedger Truth Finding (sealed)",
+  "description": "Sealed ground-truth finding. Never exposed to policy/env (REQ-PROD-005).",
+  "type": "object",
+  "required": ["schema_version", "truth_id", "type", "affected_ids", "amount_minor", "currency", "tolerance_minor", "evidence_sets", "minimal_evidence_size", "invariant_signature", "operator_version"],
+  "additionalProperties": false,
+  "patternProperties": {"^x_twinledger_.*": {}},
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0.0"},
+    "truth_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "type": {"type": "string", "enum": ["DUPLICATE_PAYMENT", "PARTIAL_PAYMENT_ALLOCATION", "FX_RATE_MISMATCH", "PERIOD_CUTOFF"]},
+    "affected_ids": {"type": "array", "minItems": 1, "maxItems": 20, "items": {"type": "string", "pattern": "^(JE|INV|CN|PAY|BANK|FX|CP):[A-Za-z0-9._/-]+$"}},
+    "amount_minor": {"type": "integer"},
+    "currency": {"type": "string", "enum": ["KZT", "USD", "EUR", "JPY", "KWD"]},
+    "tolerance_minor": {"type": "integer", "minimum": 0},
+    "evidence_sets": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"type": "array", "minItems": 1, "maxItems": 20, "items": {"type": "string", "pattern": "^(JE|INV|CN|PAY|BANK|FX|CP):[A-Za-z0-9._/-]+$"}}},
+    "evidence_enumeration_complete": {"type": "boolean"},
+    "minimal_evidence_size": {"type": "integer", "minimum": 1, "maximum": 20},
+    "optimal_steps_model_id": {"type": "string", "maxLength": 128},
+    "optimal_steps": {"type": ["integer", "null"], "minimum": 0},
+    "depends_on": {"type": "array", "items": {"type": "string"}},
+    "invariant_signature": {"type": "object"},
+    "operator_version": {"type": "string", "minLength": 1, "maxLength": 64}
+  }
+}

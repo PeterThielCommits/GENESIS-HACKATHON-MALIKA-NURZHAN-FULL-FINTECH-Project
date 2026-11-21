@@ -1,0 +1,32 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Setup check (Python 3.11, no downloads)
+        run: make setup
+      - name: Lint + import boundaries
+        run: make lint
+      - name: Core tests
+        run: make test
+      - name: Property tests (stdlib fallback)
+        run: make test-property
+      - name: Verify core
+        run: make verify-core
+      - name: Upload verify artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-summary
+          path: artifacts/reports/latest/
+          if-no-files-found: warn

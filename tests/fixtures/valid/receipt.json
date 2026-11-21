@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "episode_id": "demo-ep-001",
+  "protocol_version": "1.0",
+  "code_version_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "config_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "public_manifest_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "truth_commitment": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "trajectory_head": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "merkle_leaf_index": 0,
+  "policy_identifier": "silent_policy",
+  "verification_status": "PENDING"
+}
