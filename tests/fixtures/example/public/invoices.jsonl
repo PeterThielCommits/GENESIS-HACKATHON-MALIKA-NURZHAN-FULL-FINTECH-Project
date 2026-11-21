@@ -1,0 +1,2 @@
+{"doc_id": "I-1", "counterparty_id": "C-1", "currency": "USD", "total_minor": 1000, "status": "open", "line_items": [{"line_id": "L-1", "amount_minor": 1000}]}
+{"doc_id": "I-2", "counterparty_id": "C-1", "currency": "USD", "total_minor": 2000, "status": "open", "line_items": []}
