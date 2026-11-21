@@ -10,14 +10,14 @@
 | Phase 5 Env reset/step | PARTIAL — provisional env on `arena/eb1e0f8a` (PR #4 draft); exit gate BLOCKED on contracts (issue #3) | `docs/PHASE_REPORTS/PHASE-05.md` (branch) |
 | Phase 6 Matcher + reward | DONE (provisional rubric per EXIT GATE 6; P1..P5 PASS) | `docs/PHASE_REPORTS/PHASE-06.md`, `PHASE-06-reward-matrix.json`, `make verify` PASS |
 | Phase 7 FX + cutoff | PARTIAL — normalized checks PASS; four-type gate BLOCKED | `docs/PHASE_REPORTS/PHASE-07.md` |
-| Phase 8 Verifier + ProofGraph | NOT STARTED | — |
+| Phase 8 Verifier + ProofGraph | PARTIAL — Tasks 8.1–8.7 DONE (60 tests PASS, boundaries CLEAN); release-episode gate BLOCKED on 0 generated episodes (Phases 3–4 / issue #3) | `docs/PHASE_REPORTS/PHASE-08.md`, `PHASE-08.json`, `docs/INDEPENDENCE.md`, `make verify` PASS |
 | Phase 9 Processes + seal + receipts | NOT STARTED | — |
 | Phase 10 NLP layer | NOT STARTED | — |
 | Phase 11 Injection track | NOT STARTED | — |
 | Phase 12 Arena + shortcut audit | NOT STARTED | — |
 | Phase 13 Metamorphic/mutation | NOT STARTED | — |
 | Phase 14 Judge kit + report | PARTIAL (verify CLI skeleton) | `judge/verify.py`, `judge/report.py` |
-| Phase 15 Docs + demo | PARTIAL (Phase 1 docs) | `docs/` |
+| Phase 15 Docs + demo | PARTIAL (Phase 1–8 docs) | `docs/` |
 | Phase 16 Release candidate | NOT STARTED | — |
 | Phase 17 Evidence freeze | NOT STARTED | — |
 
@@ -25,8 +25,8 @@ Test statuses: PASS = run and succeeded; FAIL = run and failed;
 SKIPPED = intentionally not run (reason recorded); BLOCKED = could not
 run; FLAKY = unstable. Never mark unverified work DONE.
 
-Phase 6 session checks (2026-11-21): make setup PASS, make lint PASS
-(scan CLEAN), make test PASS (131), make test-property PASS (3),
-make verify-core PASS, make verify PASS (RC-001..003), make report PASS;
-make docker-check NOT RUN (no Docker in session sandbox);
+Phase 8 session checks (2026-11-21): make setup PASS, make lint PASS
+(scan CLEAN), make test PASS (197: 137 baseline + 60 Phase 8),
+make test-property PASS (3), make verify PASS (RC-001..003),
+make report PASS; make docker-check NOT RUN (no Docker in session sandbox);
 pytest/hypothesis/jsonschema SKIPPED (optional extras absent).
