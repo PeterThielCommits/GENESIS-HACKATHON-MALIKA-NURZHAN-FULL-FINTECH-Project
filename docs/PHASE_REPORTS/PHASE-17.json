@@ -1,0 +1,29 @@
+{
+  "phase": 17,
+  "title": "POST-RELEASE CRYPTOGRAPHIC CONTRACT & CONFIG FREEZE",
+  "outcome": "DONE",
+  "exit_gate_17": "DONE",
+  "exit_gate_note": "EXIT GATE 17 PASS: SHA-256 freeze manifest generated and verified across all 30 frozen contract schemas, operational configs, rubric map, official check spec, and Master TZ v3.0.0.",
+  "date": "2026-11-21",
+  "branch": "arena/3a99279e-genesis-hackathon-malika-nurzh",
+  "base_commit": "da42d26008f948c294920ae8b02a30b08f541732",
+  "master_tz_sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36",
+  "req_ids": [
+    "REQ-CONTRACT-001",
+    "REQ-CONTRACT-003",
+    "REQ-JUDGE-004"
+  ],
+  "tasks": {
+    "17.1": "DONE",
+    "17.2": "DONE"
+  },
+  "decisions": [
+    "D-17-01"
+  ],
+  "files": [
+    "tools/freeze_release.py",
+    "configs/release_freeze.json",
+    "docs/HANDOFF/phase-10-to-17-release.md"
+  ],
+  "gate_evidence": "python3 tools/freeze_release.py --verify PASS (30 files verified in configs/release_freeze.json)."
+}

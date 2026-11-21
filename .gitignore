@@ -15,6 +15,7 @@ artifacts/reports/latest/*.json
 artifacts/reports/latest/*.txt
 artifacts/reports/latest/*.csv
 artifacts/reports/latest/*.html
+artifacts/reports/latest/*.md
 # Sealed episode data: never commit without explicit Phase 0 decision (TZ 5)
 episodes/*/sealed/
 episodes/*/*/sealed/

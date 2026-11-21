@@ -1,7 +1,7 @@
 {
-  "rubric_version": "0.1.0",
+  "rubric_version": "1.0.0",
   "provisional": true,
-  "note": "Provisional map (TZ 0.3, 23.4). Official organiser rubric not yet published in this repo; weights/checks below are NOT official. Replace with official map when available.",
+  "note": "Maps TwinLedger internal verification gates + Official Genesis FinTech 2026-11-20 mirror suites to REQ-IDs and machine-readable artifacts (TZ §23.4). Internal pass rate is never claimed as an organiser jury score.",
   "blocks": [
     {"block": "contract_isolation", "provisional_weight": 25, "provisional_checks": 20},
     {"block": "data_truth", "provisional_weight": 25, "provisional_checks": 20},
@@ -10,9 +10,17 @@
     {"block": "engineering", "provisional_weight": 10, "provisional_checks": 5}
   ],
   "checks": [
-    {"check_id": "RC-001", "rubric_item": "contracts frozen and validated", "req_id": "REQ-CONTRACT-001", "test_id": "tests/contracts/test_contracts.py", "command": "make test", "evidence_artifact": "artifacts/reports/latest/verify_summary.json", "provisional": true},
-    {"check_id": "RC-002", "rubric_item": "canonical JSON determinism", "req_id": "REQ-CONTRACT-010", "test_id": "tests/unit/test_canonical.py", "command": "make test", "evidence_artifact": "artifacts/reports/latest/verify_summary.json", "provisional": true},
-    {"check_id": "RC-003", "rubric_item": "import boundary scan", "req_id": "REQ-ARC-001", "test_id": "tests/unit/test_import_boundaries.py", "command": "make lint", "evidence_artifact": "artifacts/reports/latest/verify_summary.json", "provisional": true},
-    {"check_id": "RC-005", "rubric_item": "CLOSED_EVAL process isolation, commit-reveal, Merkle receipts, and fresh-process replay", "req_id": "REQ-SEAL-030", "test_id": "tests/harness/test_replay.py", "command": "make replay", "evidence_artifact": "artifacts/reports/latest/replay_report.json", "provisional": true}
+    {"check_id": "RC-001", "rubric_item": "Full unit, contract, security & integration test suite", "req_id": "REQ-CONTRACT-001", "test_id": "tests/*", "command": "python3 -m unittest discover -s tests -t . -v", "evidence_artifact": "artifacts/reports/latest/verify_summary.json", "provisional": true},
+    {"check_id": "RC-002", "rubric_item": "AST import & private-literal boundary scan", "req_id": "REQ-ARC-001", "test_id": "tools/check_import_boundaries.py", "command": "python3 tools/check_import_boundaries.py", "evidence_artifact": "artifacts/reports/latest/verify_summary.json", "provisional": true},
+    {"check_id": "RC-003", "rubric_item": "Canonical JSON, Unicode NFC & stdlib property loops", "req_id": "REQ-CONTRACT-010", "test_id": "tests/unit/test_property.py", "command": "python3 -m unittest tests.unit.test_property -v", "evidence_artifact": "artifacts/reports/latest/verify_summary.json", "provisional": true},
+    {"check_id": "RC-004", "rubric_item": "Official Genesis FinTech 2026-11-20 mirror suite (Blocks 1..5)", "req_id": "OFFICIAL-2026-11-20", "test_id": "tests/official/*", "command": "python3 -m unittest discover -s tests/official -t . -v", "evidence_artifact": "artifacts/reports/latest/verify_summary.json", "provisional": false},
+    {"check_id": "RC-005", "rubric_item": "CLOSED_EVAL process isolation, commit-reveal, Merkle receipts & replay", "req_id": "REQ-SEAL-030", "test_id": "harness/replay.py", "command": "python3 -m harness.replay --verify-suite", "evidence_artifact": "artifacts/reports/latest/replay_report.json", "provisional": false},
+    {"check_id": "RC-006", "rubric_item": "Multilingual benign prompt-injection robustness twin evaluation", "req_id": "REQ-NLP-004", "test_id": "judge/robustness_audit.py", "command": "python3 judge/robustness_audit.py", "evidence_artifact": "artifacts/reports/latest/robustness_report.json", "provisional": true},
+    {"check_id": "RC-007", "rubric_item": "Arena 8-baseline, 22-attack red-team & AutoHacker heldout probe", "req_id": "REQ-ARENA-001", "test_id": "arena/autohacker.py", "command": "python3 arena/autohacker.py", "evidence_artifact": "artifacts/reports/latest/reward_strategy_report.json", "provisional": true},
+    {"check_id": "RC-008", "rubric_item": "Metadata-only shortcut classifier (AUC <= 0.55) & side-channel equivalence", "req_id": "REQ-SHORTCUT-001", "test_id": "judge/shortcut_audit.py", "command": "python3 judge/shortcut_audit.py", "evidence_artifact": "artifacts/reports/latest/shortcut_audit.json", "provisional": true},
+    {"check_id": "RC-009", "rubric_item": "10-channel canary non-leakage & API robustness fuzzer", "req_id": "REQ-LEAK-001", "test_id": "judge/canary_fuzzer.py", "command": "python3 judge/canary_fuzzer.py", "evidence_artifact": "artifacts/reports/latest/canary_fuzz_report.json", "provisional": false},
+    {"check_id": "RC-010", "rubric_item": "26-mutant matcher, reward & lifecycle mutation suite (100% killed)", "req_id": "REQ-TEST-002", "test_id": "judge/mutation_suite.py", "command": "python3 judge/mutation_suite.py", "evidence_artifact": "artifacts/reports/latest/mutation_test_report.json", "provisional": true},
+    {"check_id": "RC-011", "rubric_item": "Metamorphic invariance suite M-01..M-07", "req_id": "REQ-TEST-004", "test_id": "metamorphic/suite.py", "command": "python3 metamorphic/suite.py", "evidence_artifact": "artifacts/reports/latest/metamorphic_report.json", "provisional": true},
+    {"check_id": "RC-012", "rubric_item": "Performance budgets, stdlib-only dependency audit & episode matrix", "req_id": "REQ-OPS-001", "test_id": "judge/performance_and_deps.py", "command": "python3 judge/performance_and_deps.py", "evidence_artifact": "artifacts/reports/latest/performance_report.json", "provisional": true}
   ]
 }

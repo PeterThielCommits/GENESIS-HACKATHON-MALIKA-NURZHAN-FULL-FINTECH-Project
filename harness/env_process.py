@@ -28,6 +28,7 @@ from harness.sandbox import (
     StagedPublicWorkspace,
     build_sanitized_env,
     make_posix_preexec,
+    wrap_argv_with_kernel_sandbox,
 )
 
 
@@ -87,10 +88,17 @@ class EnvSubprocess:
         if self._env_config_path is not None:
             argv.extend(["--config", str(self._env_config_path)])
 
+        episode_parent = self._source_public_dir.resolve().parent
+        effective_argv, _ = wrap_argv_with_kernel_sandbox(
+            argv,
+            mask_dirs=[episode_parent],
+            chdir=ws.root_dir,
+        )
+
         try:
             self._started_ns = time.monotonic_ns()
             self._proc = subprocess.Popen(
-                argv,
+                effective_argv,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,

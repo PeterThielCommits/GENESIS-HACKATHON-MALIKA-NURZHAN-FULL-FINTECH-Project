@@ -45,6 +45,10 @@ from seal.receipt import (
     seal_receipt_batch,
     verify_receipt_offline,
 )
+from seal.rekey import (
+    ProductionRekeyResult,
+    rekey_episode_with_production_salt,
+)
 
 __all__ = [
     "COMMITMENT_INTEGRITY_NOTE",
@@ -60,6 +64,7 @@ __all__ = [
     "HashChainBuilder",
     "MerkleProofStep",
     "MerkleTree",
+    "ProductionRekeyResult",
     "ReceiptVerificationResult",
     "RevealResult",
     "build_lineage_digests",
@@ -75,9 +80,11 @@ __all__ = [
     "generate_secret_salt",
     "internal_node_hash",
     "leaf_hash",
+    "rekey_episode_with_production_salt",
     "seal_receipt_batch",
     "verify_episode_commitment_from_disk",
     "verify_hash_chain",
     "verify_inclusion_proof",
     "verify_receipt_offline",
+    "verify_reveal",
 ]

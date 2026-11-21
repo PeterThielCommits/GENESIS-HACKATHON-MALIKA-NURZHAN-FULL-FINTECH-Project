@@ -1,0 +1,38 @@
+{
+  "phase": 13,
+  "title": "PROPERTY, METAMORPHIC (M-01..M-07), RNG ISOLATION & 26-MUTANT SUITES",
+  "outcome": "DONE",
+  "exit_gate_13": "DONE",
+  "exit_gate_note": "EXIT GATE 13 PASS: 7/7 metamorphic transforms M-01..M-07 invariant across 21 episode pairs, 26/26 (100%) scoring/lifecycle mutants killed, 7/7 property suites PASS, RNG stream isolation & interleaved multi-env isolation verified.",
+  "date": "2026-11-21",
+  "branch": "arena/3a99279e-genesis-hackathon-malika-nurzh",
+  "base_commit": "da42d26008f948c294920ae8b02a30b08f541732",
+  "master_tz_sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36",
+  "req_ids": [
+    "REQ-TEST-001",
+    "REQ-TEST-002",
+    "REQ-TEST-003",
+    "REQ-TEST-004",
+    "REQ-TEST-005",
+    "REQ-CONTRACT-010"
+  ],
+  "tasks": {
+    "13.1": "DONE",
+    "13.2": "DONE",
+    "13.3": "DONE",
+    "13.4": "DONE",
+    "13.5": "DONE"
+  },
+  "decisions": [
+    "D-12-01"
+  ],
+  "files": [
+    "metamorphic/suite.py",
+    "judge/mutation_suite.py",
+    "tests/unit/test_property.py",
+    "tests/generator/test_rng_isolation.py",
+    "tests/env/test_interleaved_isolation.py",
+    "tests/metamorphic/test_phase13_metamorphic_and_mutants.py"
+  ],
+  "gate_evidence": "RC-003, RC-010, RC-011 PASS -> metamorphic_report.json (7/7 PASS), mutation_test_report.json (26/26 killed = 100.0%)."
+}

@@ -1,0 +1,158 @@
+{
+  "aggregate_sha256": "caf9405ee71a1aaacb81b3afcba05bb66bfd3e035b5224bbcf143695a5d414a9",
+  "files": [
+    {
+      "bytes": 1109,
+      "path": "contracts/__init__.py",
+      "sha256": "d15fd6b1d88a8e99aee5a1b97da3dbc1a874278885a34fd9823892e6483e073d"
+    },
+    {
+      "bytes": 4509,
+      "path": "contracts/canonical.py",
+      "sha256": "c8a8b43e96b4c82d1b45480ef0578bbffc5b034af37b7dc66314e720e6f530ef"
+    },
+    {
+      "bytes": 1972,
+      "path": "contracts/company.schema.json",
+      "sha256": "02de96297dabebda1fcffc0ed7cbf0093e8cc62380e46f31206f06c50063dfe7"
+    },
+    {
+      "bytes": 409,
+      "path": "contracts/config.schema.json",
+      "sha256": "34323fbe4c3e6b2f29dc19cb126d8fea1673a302903214d1dfd10337612fd0e2"
+    },
+    {
+      "bytes": 389,
+      "path": "contracts/currency.json",
+      "sha256": "16a58ff3ee5807d0acb8dfdee7a896f0af81732be8de5084fa69422d6370ee8e"
+    },
+    {
+      "bytes": 1582,
+      "path": "contracts/currency.py",
+      "sha256": "2a733a87a7c11f6ba8e84da4c8137ed2ff68fa924771d2fbb8f59473bed5d355"
+    },
+    {
+      "bytes": 1723,
+      "path": "contracts/episode_manifest.schema.json",
+      "sha256": "902809c4542e3871da3632ff3f237594d736a6b85aa7afb9fcf533a1ab203eb9"
+    },
+    {
+      "bytes": 1199,
+      "path": "contracts/finding.schema.json",
+      "sha256": "aa9fcc8faccf4868a2ced5ae06700ce20ce39d2344b262fbee6c0534fe5202d4"
+    },
+    {
+      "bytes": 1717,
+      "path": "contracts/loader.py",
+      "sha256": "610f073f34bb0a06d23234cde2b7efb3ce946a2d923dcd6761a9b4e361bb211a"
+    },
+    {
+      "bytes": 10557,
+      "path": "contracts/models.py",
+      "sha256": "f5b9d95f15858eee0935ef4155f6e51d2dbf3400ab5ae76b12c3475c4b8b4df5"
+    },
+    {
+      "bytes": 2330,
+      "path": "contracts/policy.schema.json",
+      "sha256": "23249ab000e2ec2295360bc83e80ee310b11ae9a340d73f61665ceeb69b081ee"
+    },
+    {
+      "bytes": 1301,
+      "path": "contracts/receipt.schema.json",
+      "sha256": "a34078a8da28c84c648b9d50be983649a7e25f03a4e4ac9813ad7a4c5d84dcfb"
+    },
+    {
+      "bytes": 975,
+      "path": "contracts/rubric_check.schema.json",
+      "sha256": "387bb586b3bac80389a6714a62b9e5806149f1b1984550ae66e1e00201d35919"
+    },
+    {
+      "bytes": 799,
+      "path": "contracts/tool_request.schema.json",
+      "sha256": "18c17a534c6033cb655c5d47d9c040e21139da1126d8f7f8f8c0288cb4fc812c"
+    },
+    {
+      "bytes": 1038,
+      "path": "contracts/tool_response.schema.json",
+      "sha256": "4b16fa20d19dc9aef16b3e64d40d134dab594d31f694e795a6eafac8c26f4021"
+    },
+    {
+      "bytes": 1040,
+      "path": "contracts/trajectory_event.schema.json",
+      "sha256": "4459d405fa8971ae50a7131ba753b41b4b9888e2deed2eb55c5c0db1e09e75a4"
+    },
+    {
+      "bytes": 1805,
+      "path": "contracts/truth.schema.json",
+      "sha256": "e060990aa5ae47b5c073c0c5818e36f31c98f6c491b3c8989e208b66e1918345"
+    },
+    {
+      "bytes": 5611,
+      "path": "contracts/validate.py",
+      "sha256": "76b42381cef4b9c17b639f10eaa2b545e6c4ee5d3f2990b7ca0767ed309f383d"
+    },
+    {
+      "bytes": 1934,
+      "path": "contracts/verifier_report.schema.json",
+      "sha256": "81915f75dc539e6533f4e49e07fc16fb38679553b4c64b0fc9dbd98581ca7780"
+    },
+    {
+      "bytes": 387,
+      "path": "contracts/version.json",
+      "sha256": "ad0c1e4f62cffaea5083d03bf70121de386c00f28172fa032f486e0e369cdb83"
+    },
+    {
+      "bytes": 467,
+      "path": "contracts/version.py",
+      "sha256": "f5d9a1cc77a97c4f0d269103183039ef884361bce1adf474c4af89ac762aebab"
+    },
+    {
+      "bytes": 281,
+      "path": "configs/arena/default.json",
+      "sha256": "20bfb6a5891c03f139a364fe4f47fcf971b22a8121f8e9dee5d42b6566bf9699"
+    },
+    {
+      "bytes": 363,
+      "path": "configs/environment/default.json",
+      "sha256": "2e05dd6919b8da4d9062b90dc5ef0bd6f2a0e95296c2187c5d7386e3325c24f2"
+    },
+    {
+      "bytes": 307,
+      "path": "configs/generator/default.json",
+      "sha256": "6fb899118527c9d588761fe558bcb9c048064dd3f33e012092447396415c0b90"
+    },
+    {
+      "bytes": 3151,
+      "path": "configs/official_eval_manifest.json",
+      "sha256": "68b3c5b415e14c0792bd863cbfa716acf6226fa772e4995e60ce0958aa60c9b9"
+    },
+    {
+      "bytes": 561,
+      "path": "configs/robustness/default.json",
+      "sha256": "0062d468e1e7bd303f078a1c598047bcec247942883a7174a9b60c563853d541"
+    },
+    {
+      "bytes": 181,
+      "path": "configs/rubric/default.json",
+      "sha256": "4bf799d8d52d793ed11cf4b4f6b5ae08cc9d2f490f00fa8e14ff4d373d717615"
+    },
+    {
+      "bytes": 272,
+      "path": "configs/scoring/default.json",
+      "sha256": "adabe905c30d6213388e4731b34a2432372295defec475fc189dd0845beef0d1"
+    },
+    {
+      "bytes": 4514,
+      "path": "judge/rubric_map.json",
+      "sha256": "e1674f1822baae5bd39d9e4c1745e4c0a1754790c1c4138087f595b30757424a"
+    },
+    {
+      "bytes": 237211,
+      "path": "docs/reference/TwinLedger_v3_Master_TZ_AI_Agents.txt",
+      "sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36"
+    }
+  ],
+  "frozen_file_count": 30,
+  "release_version": "twinledger@1.0.0",
+  "schema_version": "1.0.0"
+}

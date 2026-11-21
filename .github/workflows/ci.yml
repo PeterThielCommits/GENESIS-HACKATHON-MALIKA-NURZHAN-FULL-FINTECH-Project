@@ -21,12 +21,20 @@ jobs:
         run: make test
       - name: Property tests (stdlib fallback)
         run: make test-property
-      - name: Verify core
-        run: make verify-core
+      - name: Full verification + Judge Kit reports
+        run: make verify && make report
       - name: Upload verify artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: verify-summary
+          name: verify-reports
           path: artifacts/reports/latest/
           if-no-files-found: warn
+
+  docker-offline:
+    runs-on: ubuntu-latest
+    needs: core
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run hardened offline container (--network=none, read-only rootfs, cap-drop ALL)
+        run: make docker-check

@@ -29,6 +29,7 @@ from harness.sandbox import (
     IsolatedPolicyWorkspace,
     build_sanitized_env,
     make_posix_preexec,
+    wrap_argv_with_kernel_sandbox,
 )
 
 
@@ -42,6 +43,7 @@ class PolicySubprocess:
         include_repo_pythonpath: bool = True,
         extra_pythonpath: Path | None = None,
         forbidden_tokens: Sequence[str] = (),
+        mask_dirs: Sequence[Path | str] = (),
     ) -> None:
         if not argv or not all(isinstance(a, str) and a for a in argv):
             raise ValueError("policy argv must be a non-empty sequence of non-empty strings")
@@ -49,6 +51,7 @@ class PolicySubprocess:
         self._include_repo_pythonpath = include_repo_pythonpath
         self._extra_pythonpath = extra_pythonpath
         self._forbidden_tokens = tuple(forbidden_tokens)
+        self._mask_dirs = tuple(Path(d) for d in mask_dirs)
         self._workspace: IsolatedPolicyWorkspace | None = None
         self._proc: subprocess.Popen[bytes] | None = None
         self._started_ns: int | None = None
@@ -79,10 +82,17 @@ class PolicySubprocess:
         ws.__enter__()
         self._workspace = ws
 
+        effective_argv, _ = wrap_argv_with_kernel_sandbox(
+            self._argv,
+            mask_dirs=self._mask_dirs,
+            chdir=ws.cwd,
+            readonly_chdir=True,
+        )
+
         try:
             self._started_ns = time.monotonic_ns()
             self._proc = subprocess.Popen(
-                list(self._argv),
+                effective_argv,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,

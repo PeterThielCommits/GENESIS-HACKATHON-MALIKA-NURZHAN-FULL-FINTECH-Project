@@ -153,11 +153,7 @@ def run_closed_eval_episode(
         cursor_seed=cursor_seed,
         require_closed_eval=True,
     )
-    policy_proc = PolicySubprocess(
-        policy_argv,
-        include_repo_pythonpath=True,
-        forbidden_tokens=forbidden_tokens,
-    )
+    policy_proc: PolicySubprocess | None = None
 
     steps_used = 0
     terminated = False
@@ -186,6 +182,15 @@ def run_closed_eval_episode(
         submit_counts = bool(init_obs["limits"]["submit_counts_as_step"])
         max_exchanges = max_steps + 8
 
+        policy_masks: list[Path] = [ep_path]
+        if env_proc.staged_public_dir is not None:
+            policy_masks.append(env_proc.staged_public_dir.parent)
+        policy_proc = PolicySubprocess(
+            policy_argv,
+            include_repo_pythonpath=True,
+            forbidden_tokens=forbidden_tokens,
+            mask_dirs=policy_masks,
+        )
         policy_proc.start()
         policy_proc.send_reset(init_obs)
 
@@ -313,10 +318,10 @@ def run_closed_eval_episode(
         )
     finally:
         # STRICT TEARDOWN BARRIER: close Policy & Env processes BEFORE Scorer starts!
-        policy_exited_ns = policy_proc.close()
+        policy_exited_ns = policy_proc.close() if policy_proc is not None else time.monotonic_ns()
         env_exited_ns = env_proc.close()
 
-    assert not policy_proc.is_alive, "policy subprocess still alive after close()"
+    assert policy_proc is None or not policy_proc.is_alive, "policy subprocess still alive after close()"
     assert not env_proc.is_alive, "env subprocess still alive after close()"
 
     trajectory_path = out_dir / f"{episode_id}__{policy_id}.trajectory.jsonl"

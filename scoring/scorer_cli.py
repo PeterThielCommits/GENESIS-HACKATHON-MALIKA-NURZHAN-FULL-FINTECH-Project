@@ -31,7 +31,9 @@ from typing import Any
 from contracts.canonical import canonical_bytes, canonical_json, sha256_hex
 from contracts.loader import validate_instance
 from contracts.models import Finding, TruthFinding
+from scoring.crosscheck import CrosscheckError, crosscheck
 from scoring.diagnostics import build_diagnostics
+from scoring.explanation_linter import lint_findings_explanations
 from scoring.matcher import optimal_matching
 from scoring.official_scorer import (
     collect_accessible_ids_from_episode_dir,
@@ -151,13 +153,16 @@ def execute_score_episode(
     truths_raw = json.loads(truth_path.read_text(encoding="utf-8"))
     provenance = json.loads(prov_path.read_text(encoding="utf-8"))
     salt_hex = str(provenance.get("commitment_salt_hex", ""))
+    effective_salt_mode = str(provenance.get("salt_mode") or salt_mode)
+    if effective_salt_mode not in ("PRODUCTION_SECRET", "TEST_FIXTURE"):
+        effective_salt_mode = salt_mode
 
     # 1. Commit-reveal check (REQ-SEAL-010..013)
     reveal_res = verify_reveal(
         manifest["truth_commitment"],
         truths_raw,
         salt_hex,
-        salt_mode=salt_mode,
+        salt_mode=effective_salt_mode,
     )
 
     # 2. Trajectory hash-chain check (REQ-SEAL-021)
@@ -188,8 +193,40 @@ def execute_score_episode(
         accessible_ids=accessible_ids,
     )
 
-    # 4. Frozen v1.0.0 contract scoring + diagnostics (when findings fit frozen contract)
+    # 4. Stage-2 semantic truth crosscheck against independent verifier_report.json (L4 fix)
     truth_models = [TruthFinding.from_dict(t) for t in truths_raw]
+    verifier_report_path = episode_dir / "verifier_report.json"
+    semantic_truth_ok = True
+    verifier_quality_block: dict[str, Any] | None = None
+    semantic_truth_block: dict[str, Any]
+    if verifier_report_path.is_file():
+        try:
+            v_rep = json.loads(verifier_report_path.read_text(encoding="utf-8"))
+            cc_res = crosscheck(v_rep, truth_models)
+            verifier_quality_block = cc_res.to_dict()
+            semantic_truth_ok = not cc_res.release_blocked
+            semantic_truth_block = {
+                "status": "VERIFIED" if semantic_truth_ok else "REJECTED",
+                "release_blocked": cc_res.release_blocked,
+                "blocking_reasons": list(cc_res.blocking_reasons),
+                "verifier_report_hash": cc_res.verifier_report_hash,
+                "crosscheck_hash": cc_res.crosscheck_hash,
+            }
+        except (CrosscheckError, ValueError) as exc:
+            semantic_truth_ok = False
+            semantic_truth_block = {
+                "status": "REJECTED",
+                "release_blocked": True,
+                "blocking_reasons": [str(exc)],
+            }
+    else:
+        semantic_truth_block = {
+            "status": "SKIPPED_NO_VERIFIER_REPORT",
+            "release_blocked": False,
+            "blocking_reasons": [],
+        }
+
+    # 5. Frozen v1.0.0 contract scoring + explanation linter + verifier quality diagnostics
     raw_list = _extract_raw_findings_list(findings_payload)
     contract_findings = _coerce_contract_findings(raw_list)
     scoring_cfg = load_scoring_config()
@@ -203,19 +240,27 @@ def execute_score_episode(
             config=scoring_cfg,
             match_result=match_res,
         )
+        expl_lint = lint_findings_explanations(
+            contract_findings,
+            accessible_public_ids=accessible_ids,
+        )
+        run_info: dict[str, Any] = {
+            "steps_used": steps_used,
+            "truncated": truncated,
+            "no_submit": no_submit,
+            "timeout": timed_out,
+            "policy_identifier": policy_id,
+            "requested_evidence_ids": submission.get("requested_evidence_ids"),
+            "explanation_consistency": expl_lint,
+        }
+        if verifier_quality_block is not None:
+            run_info["verifier_quality"] = verifier_quality_block
         diag = build_diagnostics(
             contract_findings,
             truth_models,
             match_res,
             reward_bd,
-            run_info={
-                "steps_used": steps_used,
-                "truncated": truncated,
-                "no_submit": no_submit,
-                "timeout": timed_out,
-                "policy_identifier": policy_id,
-                "requested_evidence_ids": submission.get("requested_evidence_ids"),
-            },
+            run_info=run_info,
         )
         contract_score_block = {
             "available": True,
@@ -228,7 +273,7 @@ def execute_score_episode(
             "reason": "submission used non-typed or structurally invalid findings outside v1.0.0 contract",
         }
 
-    integrity_ok = reveal_res.verified and chain_res.valid
+    integrity_ok = reveal_res.verified and chain_res.valid and semantic_truth_ok
     verification_status = "VERIFIED" if integrity_ok else "REJECTED"
 
     score_report: dict[str, Any] = {
@@ -242,19 +287,19 @@ def execute_score_episode(
         "no_submit": no_submit,
         "timed_out": timed_out,
         "commit_reveal": reveal_res.to_dict(),
+        "semantic_truth_verification": semantic_truth_block,
         "trajectory_verification": chain_res.to_dict(),
         "official_score": official_res.to_score_dict(),
         "official_valid": official_res.valid,
         "official_error": official_res.error,
         "contract_v1_score": contract_score_block,
         "salt_reveal": {
-            "mode": salt_mode,
+            "mode": effective_salt_mode,
             "salt_hex": salt_hex,
         },
     }
     scorer_report_hash = sha256_hex(score_report)
 
-    verifier_report_path = episode_dir / "verifier_report.json"
     verifier_report_hash = (
         sha256_hex(json.loads(verifier_report_path.read_text(encoding="utf-8")))
         if verifier_report_path.is_file()

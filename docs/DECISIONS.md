@@ -238,3 +238,28 @@ allowlist, `shell=False`, POSIX soft `rlimit`s) and unavailable kernel controls
 (`container_mount_namespace`, `container_network_disabled_flag`,
 `seccomp_bpf_syscall_filter`) per Master TZ Principle P-012 and Risk R-09.
 
+## D-09-05 (2026-11-21) — Linux kernel namespace + seccomp-BPF sandbox & CSPRNG production rekey (supersedes D-09-04 on Linux)
+
+Remediates `R-09` and `L4`:
+- On Linux kernels where `probe_kernel_sandbox_capabilities()` succeeds, `harness/sandbox.py` + `harness/ns_launcher.py` wrap `policy` and `env` inside `unshare --user --map-root-user --net --mount` with `MS_REC|MS_PRIVATE` `tmpfs` path masking over `episodes/` and `episode_dir`, read-only `tmpfs` `cwd` (`EROFS`), `PR_SET_NO_NEW_PRIVS`, and `x86_64`/`aarch64` `seccomp-BPF` blocking `socket`, `mount`, `umount2`, `pivot_root`, `ptrace`, `process_vm_readv`, and `process_vm_writev` (`profile_id = "linux-kernel-ns-seccomp-v1"`, `is_full_os_sandbox = True`), with automatic honest fallback to `posix-subprocess-isolated-v1` on non-Linux hosts.
+- `seal/rekey.py` (`python3 -m seal.cli rekey-production`) re-keys episodes with 256-bit `secrets.token_hex(32)` `PRODUCTION_SECRET` salts, and `scoring/scorer_cli.py` performs Stage-2 `scoring/crosscheck.py` `semantic_truth_verification` whenever `verifier_report.json` is supplied.
+
+## D-10-01 (2026-11-21) — Isolated multilingual (`ru`/`kk`/`en`) & prompt-injection RNG streams + diagnostic explanation linter
+
+`gen/core/text.py` renders `en`, `ru`, `kk`, and `mixed` narrative layers and benign prompt-injection strings solely via derived RNG streams (`"text_layer"` and `"injection_layer"`), guaranteeing byte-identical accounting numbers, dates, IDs, `TruthFinding` digests, and Stage-1 `verifier_report` findings across language variants (`REQ-NLP-001..005`). `scoring/explanation_linter.py` populates `diagnostics.explanation_consistency` strictly as a diagnostic column without influencing official `F1` or `reward` (preserving `D-06-05`).
+
+## D-12-01 (2026-11-21) — Privilege-separated oracle, 22-attack Arena, seed-grouped AutoHacker & within-table shortcut audit
+
+- `oracle_test_only` is forbidden in public runs (`ValueError` unless `allow_privileged_oracle=True`, `REQ-ARENA-005`).
+- `arena/attacks/catalog.py` executes all 22 TZ §18.3 red-team attacks (`AT-01..AT-22`), and `arena/autohacker.py` optimizes `AuditorParams` strictly on seed-grouped `TRAIN`/`DEV` splits before single-shot `HELDOUT` evaluation with 95% bootstrap CIs (`REQ-AUTO-001..004`).
+- `judge/shortcut_audit.py` orthogonalizes `(anomaly_class, id_style, timezone)` and trains per-table L2 Logistic Regression classifiers on public metadata features (`macro_ROC_AUC <= 0.55`, `REQ-SHORTCUT-001..003`).
+
+## D-14-01 (2026-11-21) — Complete 12-Gate Judge Kit & Offline Self-Contained HTML Report
+
+`judge/verify.py` executes all 12 provisional Master TZ §23 rubricator gates (`RC-001..RC-012`) while preserving `official_score_claimed: false` (`D-01-06`). `judge/report.py` synthesizes a 100% offline self-contained `artifacts/reports/latest/report.html` (zero external `http://` or `https://` links, zero canary/salt leaks) indexing all 21 JSON/CSV/MD/HTML evidence artifacts.
+
+## D-17-01 (2026-11-21) — Post-release cryptographic contract & config freeze manifest
+
+`tools/freeze_release.py` locks SHA-256 digests over all 30 frozen contract schemas (`contracts/*.schema.json`, `contracts/version.json`), operational configs (`configs/*`), provisional rubricator (`judge/rubric_map.json`), official check spec (`spec/official_fintech_checks_2026-11-20.md`), and Master TZ v3.0.0 (`docs/reference/TwinLedger_v3_Master_TZ_AI_Agents.txt`) in `configs/release_freeze.json`.
+
+

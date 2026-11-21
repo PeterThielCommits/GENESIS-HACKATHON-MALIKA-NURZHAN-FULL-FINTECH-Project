@@ -74,6 +74,75 @@ class TestStdlibProperties(unittest.TestCase):
             mut_events[target_idx]["response_digest"] = ("0" if orig_d[0] != "0" else "1") + orig_d[1:]
             self.assertFalse(verify_hash_chain(commitment, f"ep-prop-{trial}", mut_events, expected_head=head).valid)
 
+    def test_unicode_nfc_and_skeleton_idempotence_property(self):
+        # REQ-NLP-005: deterministic Unicode property loop across Cyrillic, Kazakh, and Latin
+        import unicodedata
+        from nlp import normalize_accounting_text, normalize_nfc, transliterate_to_ascii_skeleton
+
+        samples = [
+            'ТОО «Алтын Орда» #1',
+            '«Жетісу Агро» ЖШС — төлем тапсырмасы',
+            'Caspian Steppe LLP\u200b (Invoice #42)',
+            'Тәңірі Логистика АҚ / ҚҚС-сыз',
+        ]
+        for s in samples:
+            for form in ("NFC", "NFD", "NFKC", "NFKD"):
+                variant = unicodedata.normalize(form, s)
+                once = normalize_nfc(variant)
+                twice = normalize_nfc(once)
+                self.assertEqual(once, twice)
+                norm1 = normalize_accounting_text(variant)
+                norm2 = normalize_accounting_text(norm1)
+                self.assertEqual(norm1, norm2)
+                skel = transliterate_to_ascii_skeleton(variant)
+                self.assertTrue(skel.isascii())
+
+    def test_explanation_never_changes_base_reward_property(self):
+        # TZ §20.2: arbitrary free-text explanation changes leave official reward 100% invariant
+        from contracts.models import Finding, TruthFinding
+        from scoring.reward import compute_reward
+
+        truth = TruthFinding.from_dict(
+            {
+                "schema_version": "1.0.0",
+                "truth_id": "T-PROP-01",
+                "type": "DUPLICATE_PAYMENT",
+                "affected_ids": ["INV:10", "PAY:20"],
+                "amount_minor": 25000,
+                "currency": "KZT",
+                "tolerance_minor": 0,
+                "evidence_sets": [["INV:10", "PAY:20"]],
+                "evidence_enumeration_complete": True,
+                "minimal_evidence_size": 2,
+                "invariant_signature": {"invariant_id": "INV-04"},
+                "operator_version": "gen-operators@1.0.0",
+            }
+        )
+        explanations = [
+            None,
+            "",
+            "x",
+            "Оплата дублирована по счету INV:10 на 250.00 KZT",
+            "Қайталанған төлем PAY:20 (25000 тиын)",
+            "Long detailed explanation " * 15,
+        ]
+        ref_reward = None
+        for exp in explanations:
+            kw = dict(
+                type="DUPLICATE_PAYMENT",
+                affected_ids=("INV:10", "PAY:20"),
+                claimed_amount=25000,
+                currency="KZT",
+                evidence_ids=("INV:10", "PAY:20"),
+            )
+            if exp is not None:
+                kw["explanation"] = exp
+            r = compute_reward([Finding(**kw)], [truth], 12).reward
+            if ref_reward is None:
+                ref_reward = r
+            else:
+                self.assertEqual(r, ref_reward)
+
 
 if __name__ == "__main__":
     unittest.main()

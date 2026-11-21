@@ -426,7 +426,11 @@ def _run_rule_auditor_policy(client: _JsonlClient) -> int:
     return 0
 
 
-def _run_malicious_probe_policy(client: _JsonlClient) -> int:
+def _run_malicious_probe_policy(client: _JsonlClient, known_sealed_path: str | None = None) -> int:
+    import ctypes
+    import ctypes.util
+    import socket
+
     first = client.read_frame()
     if not first or first.get("type") != "reset":
         return 1
@@ -448,18 +452,37 @@ def _run_malicious_probe_policy(client: _JsonlClient) -> int:
     )
 
     sealed_found = False
-    for probe_rel in (
-        "sealed/truth.json",
-        "../sealed/truth.json",
-        "../../sealed/truth.json",
-        "truth.json",
-        "provenance.json",
-    ):
+    probe_paths = [
+        cwd / "sealed/truth.json",
+        cwd / "../sealed/truth.json",
+        cwd / "../../sealed/truth.json",
+        cwd / "truth.json",
+        cwd / "provenance.json",
+    ]
+    if known_sealed_path:
+        probe_paths.append(Path(known_sealed_path))
+    for probe_p in probe_paths:
         try:
-            if (cwd / probe_rel).exists():
+            if probe_p.exists():
                 sealed_found = True
         except OSError:
             pass
+
+    net_blocked = False
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.close()
+    except OSError:
+        net_blocked = True
+
+    umount_blocked = False
+    try:
+        libc = ctypes.CDLL(ctypes.util.find_library("c") or "libc.so.6", use_errno=True)
+        rc = libc.umount2(b"/tmp", 2)
+        if rc == -1:
+            umount_blocked = True
+    except Exception:
+        umount_blocked = True
 
     r_trav = client.call_tool("get_document", {"id": "INV:../../manifest.json"})
     r_calc = client.call_tool("calc", {"expression": "__import__('os').listdir('.')"})
@@ -472,11 +495,13 @@ def _run_malicious_probe_policy(client: _JsonlClient) -> int:
         f"cwd_writable={cwd_writable};"
         f"env_leaks={len(leaked_env_keys)};"
         f"sealed_found={sealed_found};"
-        f"trav_blocked={traversal_blocked};"
-        f"calc_blocked={calc_inject_blocked}"
+        f"net_blk={net_blocked};"
+        f"umnt_blk={umount_blocked};"
+        f"trav_blk={traversal_blocked};"
+        f"calc_blk={calc_inject_blocked}"
     )
 
-    client.call_tool("submit", {"findings": []}, req_id=status_tag[:120])
+    client.call_tool("submit", {"findings": []}, req_id=status_tag[:128])
     _ = client.read_frame()
     return 0
 
@@ -488,6 +513,11 @@ def main(argv: list[str] | None = None) -> int:
         choices=["silent_v1", "rule_auditor_v1", "truncate_exhaust_v1", "malicious_probe_v1"],
         required=True,
     )
+    parser.add_argument(
+        "--known-sealed-path",
+        default=None,
+        help="Optional exact host path to probe for kernel mount-namespace masking test",
+    )
     args = parser.parse_args(argv)
 
     client = _JsonlClient()
@@ -498,7 +528,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.policy == "truncate_exhaust_v1":
         return _run_truncate_policy(client)
     if args.policy == "malicious_probe_v1":
-        return _run_malicious_probe_policy(client)
+        return _run_malicious_probe_policy(client, known_sealed_path=args.known_sealed_path)
     return 2
 
 

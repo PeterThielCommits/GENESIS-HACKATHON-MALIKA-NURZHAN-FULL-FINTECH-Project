@@ -1,0 +1,57 @@
+# TwinLedger hardened offline container profile (Master TZ §16.2, §22.4).
+# Enforces network_mode: "none", non-root UID 10001, read-only rootfs,
+# dropped capabilities, no-new-privileges, and unmounted sealed directories
+# for env/policy workers.
+
+services:
+  verify:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: twinledger:eval
+    network_mode: "none"
+    user: "10001:10001"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=256m
+      - /app/artifacts/reports/latest:rw,noexec,nosuid,size=64m
+      - /app/artifacts/trajectories:rw,noexec,nosuid,size=64m
+    cpus: 2.0
+    mem_limit: 4g
+    command: ["make", "verify"]
+
+  policy-sandbox:
+    image: twinledger:eval
+    network_mode: "none"
+    user: "10001:10001"
+    read_only: true
+    working_dir: /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:ro,noexec,nosuid,size=16m
+      - /app/episodes:ro,noexec,nosuid,size=64k
+    cpus: 1.0
+    mem_limit: 1g
+    command: ["python3", "-m", "harness.reference_policies", "--policy", "rule_auditor_v1"]
+
+  env-sandbox:
+    image: twinledger:eval
+    network_mode: "none"
+    user: "10001:10001"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cpus: 1.0
+    mem_limit: 2g
+    command: ["python3", "-m", "env.jsonl_server", "/app/episodes/dev/ep_dev_001_clean_distractors/public"]

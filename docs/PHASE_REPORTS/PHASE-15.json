@@ -1,0 +1,34 @@
+{
+  "phase": 15,
+  "title": "COMPLETE DOCUMENTATION & 3-MINUTE DETERMINISTIC JURY WALKTHROUGH",
+  "outcome": "DONE",
+  "exit_gate_15": "DONE",
+  "exit_gate_note": "EXIT GATE 15 PASS: Reproducible 5-segment jury walkthrough CLI (master_seed=2025) and complete, honest documentation across README, LIMITATIONS, THREAT_MODEL, STATUS, CURRENT_STATE, DECISIONS, and PHASE_REPORTS.",
+  "date": "2026-11-21",
+  "branch": "arena/3a99279e-genesis-hackathon-malika-nurzh",
+  "base_commit": "da42d26008f948c294920ae8b02a30b08f541732",
+  "master_tz_sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36",
+  "req_ids": [
+    "REQ-DOC-001",
+    "REQ-DOC-002",
+    "REQ-DOC-003",
+    "REQ-DEMO-001"
+  ],
+  "tasks": {
+    "15.1": "DONE",
+    "15.2": "DONE",
+    "15.3": "DONE"
+  },
+  "decisions": [
+    "D-14-01"
+  ],
+  "files": [
+    "tools/demo_walkthrough.py",
+    "README.md",
+    "docs/LIMITATIONS.md",
+    "docs/THREAT_MODEL.md",
+    "docs/STATUS.md",
+    "docs/CURRENT_STATE.md"
+  ],
+  "gate_evidence": "python3 tools/demo_walkthrough.py PASS (5 segments deterministic on seed=2025, zero pre-finalize truth exposure)."
+}

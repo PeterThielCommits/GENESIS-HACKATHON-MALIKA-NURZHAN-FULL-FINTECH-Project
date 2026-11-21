@@ -1,25 +1,21 @@
-# Threat Model (Phase 9 — Process Separation, Sealed Evaluation & Receipts)
+# Threat Model (Release v1.0.0 — Kernel-Sandboxed Sealed Evaluation & Anti-Leakage)
 
-## Trust boundaries
+## 1. Assets Protected
+- **Sealed Ground Truth & Salts:** `episodes/*/*/sealed/truth.json`, `provenance.json`, and 256-bit `PRODUCTION_SECRET` commitment salts (`seal/rekey.py`).
+- **Scoring & Lifecycle Integrity:** Official matcher/reward (`scoring/`), trajectory hash chains (`seal/hashchain.py`), and size-bound RFC-6962 Merkle batch receipts (`seal/merkle.py`).
+- **Evaluation Fairness:** Prevention of metadata shortcuts (`AUC <= 0.55`), prompt-injection hijacking, and post-submission tampering.
 
-| Boundary | Trusted side | Untrusted / restricted side | Enforced control |
+## 2. Trust Boundaries & Enforced Controls
+
+| Boundary | Trusted Side | Untrusted / Restricted Side | Enforced Controls |
 | --- | --- | --- | --- |
-| Policy ↔ Environment | `env` subprocess (`env.jsonl_server`) | `policy` subprocess | Separate OS processes; JSONL v1.0 pipe only; empty `0o555` scratch `cwd`; sanitized env allowlist; `close_fds=True` (REQ-ARC-004, REQ-SEAL-002, REQ-SEAL-004) |
-| Environment ↔ Sealed truth | Post-episode `scorer` subprocess (`scoring.scorer_cli`) | `env` & `policy` subprocesses | `StagedPublicWorkspace` copies ONLY the 12 allowlisted `public/` files (`0o444`/`0o555`) with zero `sealed/`, `manifest.json`, symlinks, or dotfiles; `scorer` starts strictly after `policy` + `env` exit (`ScorerPrematureStartError`, REQ-ARC-005, REQ-SEAL-001, REQ-SEAL-003) |
-| Generator ↔ Verifier | Independent audit | Common-mode bug | Separate modules (`gen/` vs `verifier/`), AST import check, Stage-2 `scoring/crosscheck.py` (REQ-ARC-001..002) |
-| Benchmark ↔ Post-hoc tampering | Offline auditor (`seal.cli`) | Operator / runner | Salted truth commitment (`seal/commitment.py`), wall-clock-free trajectory hash chain (`seal/hashchain.py`), size-bound RFC-6962 Merkle receipt (`seal/merkle.py`, `seal/receipt.py`), fresh-process replay (`harness/replay.py`) |
+| `POLICY` ↔ `ENV` | `env.jsonl_server` | External `policy` process | Separate OS process; JSONL v1.0 over stdin/stdout only; Linux `unshare --user --map-root-user --net --mount` + `harness.ns_launcher` masking `episodes/`, `episode_dir`, and staged `env` dir with read-only `tmpfs`; read-only `tmpfs` `cwd` (`EROFS`); `PR_SET_NO_NEW_PRIVS` + `seccomp-BPF` blocking `socket`/`mount`/`umount2`/`pivot_root`/`ptrace`/`process_vm_*`; sanitized env allowlist; `close_fds=True` |
+| `ENV` ↔ `sealed/` | Post-episode `scorer` (`scoring.scorer_cli`) | `env` & `policy` processes | `StagedPublicWorkspace` copies ONLY the 12 allowlisted `public/` files (`0o444`/`0o555`) with zero `sealed/`, symlinks, or dotfiles; kernel mount namespace masks repository `episodes/`; `ScorerPrematureStartError` + monotonic nanosecond `ProcessLifecycleProof` (`env_exited_ns <= scorer_started_ns`) |
+| `gen/` ↔ `verifier/` | Independent Stage-1 discovery | Common-mode generator bug | Disjoint AST import zones (`tools/check_import_boundaries.py`: `verifier` imports neither `gen` nor `nlp`); Stage-2 `scoring/crosscheck.py` attestation (`semantic_truth_verification: VERIFIED`) |
+| Untrusted Document Text ↔ Policy | Structured accounting tables | Free-text descriptions/memos | `nlp/injection_guard.py` + 4-tier evidence hierarchy (`nlp/hierarchy.py` rejecting Tier-4 text-only proof); paired prompt-injection twin audit (`judge/robustness_audit.py`) |
+| Container Host ↔ Evaluation Run | Judge host | Containerized run | `Dockerfile` (`python:3.11-slim-bookworm`, non-root UID `10001`), `docker-compose.yml` (`network_mode: none`, `read_only: true`, `cap_drop: [ALL]`, `no-new-privileges:true`), CI `docker-offline` job |
 
-## Threats & mitigations
-
-- **T1 Direct file read of `sealed/truth.json` or `provenance.json`:** Mitigated by `StagedPublicWorkspace` (never stages `sealed/`) and `IsolatedPolicyWorkspace` (empty `0o555` temp `cwd` outside repository tree) plus AST import-boundary scan (`tools/check_import_boundaries.py`). Verified in `tests/security/test_phase09_isolation.py`.
-- **T2 Environment variable or open FD leakage:** Mitigated by `build_sanitized_env` (strict minimal allowlist; strips `SECRET`, `TOKEN`, `SALT`, `CANARY`, `SEED`, `TRUTH`) and `subprocess.Popen(..., close_fds=True)`.
-- **T3 Premature scorer execution or reward oracle in `CLOSED_EVAL`:** Mitigated by `--require-closed-eval` (`reward: null` on `submit`) and `ScorerPrematureStartError` barrier + monotonic nanosecond `ProcessLifecycleProof` (`env_exited_ns <= scorer_started_ns`).
-- **T4 Path traversal via `get_document` / `get_record`:** Mitigated by typed-ID lookup against pre-loaded allowlisted public tables and outbound leakage guard (`assert_policy_outbound_clean`).
-- **T5 Code injection via `calc`:** Mitigated by safe AST whitelist + length/depth caps (`env/calc.py`, REQ-ENV-013) + no `eval`.
-- **T6 Resource exhaustion / oversized JSONL frames:** Mitigated by `MAX_JSONL_LINE_BYTES = 65_536`, `max_steps`, `max_page_size`, monotonic episode timeout, and best-effort POSIX soft `RLIMIT_CPU` / `RLIMIT_FSIZE` / `RLIMIT_NOFILE`.
-- **T7 Shortcut exploitation on clean/anomalous episodes:** Mitigated by clean twins (`REQ-DATA-020`), salted `truth_commitment` (`REQ-SEAL-010`), opaque HMAC cursors, and hash-derived entity IDs without anomaly labels.
-- **T8 Post-hoc tampering of truth, trajectory, public snapshot, or batch receipts:** Mitigated by `verify_reveal` (`hmac.compare_digest`), SHA-256 manifest verification, `verify_hash_chain`, size-bound Merkle inclusion proofs (`0x00`/`0x01`/`0x02`), and `python3 -m harness.replay`.
-
-## Residual limits (honesty note — Master TZ P-012 / Risk R-09)
-
-Plain POSIX subprocess isolation (`SecurityProfile.is_full_os_sandbox == False`) is **not** a kernel mandatory-access-control (MAC) sandbox against arbitrary native code execution if a hostile binary knows absolute host paths outside its scratch `cwd`. Full filesystem mount-namespace hiding, `--network=none`, and syscall filtering require outer containerization (`Dockerfile` / `docker-compose.yml`, Phase 13 `make docker-check`).
+## 3. Red-Team & Fuzzing Verification Evidence
+- **Live Malicious Policy Probe (`tests/security/test_phase09_isolation.py`):** Even when handed the exact host path to `sealed/truth.json`, `malicious_probe_v1` observes `cwd_empty=True`, `cwd_writable=False`, `env_leaks=0`, `sealed_found=False`, `net_blk=True`, `umnt_blk=True`, `trav_blk=True`, `calc_blk=True`.
+- **10-Channel Canary & API Fuzzer (`judge/canary_fuzzer.py`):** 0 hits across 10 policy-visible channels and 9 encoding transforms (`exact`, `casefold`, `hex`, `base64`, `urlsafe_b64`, `url_percent`, `NFC`, `NFKC`).
+- **22-Attack Red-Team Catalog (`arena/attacks/catalog.py`):** `AT-01..AT-22` all defended (`reward_strategy_report.json`).
