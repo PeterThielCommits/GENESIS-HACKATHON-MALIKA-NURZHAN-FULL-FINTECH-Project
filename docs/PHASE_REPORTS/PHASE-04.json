@@ -50,7 +50,15 @@
       "gen.test_registry": 11,
       "invariants.test_invariants": 25,
       "integration.test_serialize": 16,
-      "security.test_sealed_boundary": 13
+      "security.test_sealed_boundary": 13,
+      "docs.test_docs_consistency": 19
+    },
+    "full_suite_current": {
+      "total": 273,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "note": "254 at gate time; 19 documentation-consistency tests added after the gate"
     }
   },
   "sweep": {
@@ -104,6 +112,44 @@
       "command": "python3 tools/phase4_sweep.py --seeds 24",
       "exit_code": 0,
       "result": "all_gates_pass=true"
+    },
+    {
+      "command": "python3 tools/export_context.py --check",
+      "exit_code": 0,
+      "result": "OK: docs/CONTEXT/PROJECT_CONTEXT.json is current"
     }
+  ],
+  "documentation": {
+    "set": "docs/README.md map + reference documents organised by question",
+    "generated_context": "docs/CONTEXT/PROJECT_CONTEXT.json (tools/export_context.py)",
+    "consistency_tests": "tests/docs/test_docs_consistency.py (19)",
+    "documents": [
+      "docs/README.md",
+      "docs/STATUS.md",
+      "docs/CURRENT_STATE.md",
+      "docs/DECISIONS.md",
+      "docs/GLOSSARY.md",
+      "docs/CONTEXT/NEXT_AGENT.md",
+      "docs/CONTEXT/AI_HANDOFF_PROTOCOL.md",
+      "docs/CONTEXT/ARCHITECTURE.md",
+      "docs/CONTEXT/INVARIANTS.md",
+      "docs/CONTEXT/ERROR_MATRIX.md",
+      "docs/CONTEXT/DATA_CONTRACTS.md",
+      "docs/CONTEXT/DETERMINISM.md",
+      "docs/CONTEXT/TESTING.md",
+      "docs/CONTEXT/CLEAN_TWIN_MODEL.md",
+      "docs/CONTEXT/OPERATIONS.md",
+      "docs/CONTEXT/PROJECT_CONTEXT.json",
+      "docs/PHASE_REPORTS/PHASE-04.md",
+      "docs/PHASE_REPORTS/PHASE-04.json",
+      "docs/AGENT_REPORTS/2026-11-21/arena-agent-phase-04.md",
+      "docs/AGENT_REPORTS/2026-11-21/documentation-consolidation.md"
+    ]
+  },
+  "decisions_added": [
+    "D-008 documentation generated where it can drift",
+    "D-009 docs organised by question, not phase history",
+    "D-010 layer rule declared in one place",
+    "D-011 docs tested against code, not against docs"
   ]
 }

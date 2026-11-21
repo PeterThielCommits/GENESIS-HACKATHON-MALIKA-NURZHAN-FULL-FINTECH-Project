@@ -17,7 +17,9 @@ from diff facts plus invariant signatures, the first distractor pair per anomaly
 bounded rejection sampling. Episodes are produced for both anomaly families and pass every
 quality gate that exists in the repository today.
 
-Everything below is measured, not asserted: **254 stdlib tests pass with zero skips**, and a
+Everything below is measured, not asserted: **254 stdlib tests passed at gate time with zero
+skips** (the suite has since grown to 273 with the documentation-consistency tests — see
+`docs/STATUS.md`), and a
 48-episode sweep (24 seeds × L1/L2) publishes **48/48 episodes with 0 rejects**, balanced
 **36 DUPLICATE_PAYMENT / 36 PARTIAL_PAYMENT_ALLOCATION** findings, with six gate checks all
 green (`make verify`).

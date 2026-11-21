@@ -14,7 +14,7 @@ no external LLM.
 | Item | Value |
 |---|---|
 | Current phase | **4 — DONE** (exit gate passed) |
-| Test suite | 254 tests, 0 failures, 0 skips |
+| Test suite | 273 tests, 0 failures, 0 skips |
 | Gate sweep | 48/48 episodes published, 0 rejects, 6/6 gates |
 | Anomaly families implemented | `DUPLICATE_PAYMENT`, `PARTIAL_PAYMENT_ALLOCATION` (3 subtypes each family covered) |
 
@@ -24,6 +24,7 @@ Details: [`docs/STATUS.md`](docs/STATUS.md), [`docs/PHASE_REPORTS/PHASE-04.md`](
 
 ```bash
 make test      # full test suite (stdlib unittest, no dependencies)
+make test-docs # documentation <-> code consistency (generated context freshness)
 make sweep     # 24 seeds x L1/L2 gate sweep -> artifacts/phase-04/sweep-24.json
 make verify    # both; the Phase 4 exit gate
 ```
@@ -79,8 +80,19 @@ docs/        official TZ, phase reports, agent reports, decisions, current state
 
 ## Documentation
 
+Start at [`docs/README.md`](docs/README.md) — a four-minute orientation and the map of every
+document. For AI agents picking the project up cold:
+
+* [`docs/README.md`](docs/README.md) — documentation map and the five rules that matter
+* [`docs/CONTEXT/NEXT_AGENT.md`](docs/CONTEXT/NEXT_AGENT.md) — handover brief, traps, extension recipe
+* [`docs/CONTEXT/AI_HANDOFF_PROTOCOL.md`](docs/CONTEXT/AI_HANDOFF_PROTOCOL.md) — how context is exchanged without drift
+* [`docs/CONTEXT/PROJECT_CONTEXT.json`](docs/CONTEXT/PROJECT_CONTEXT.json) — generated, test-checked snapshot
+
+Reference:
+
 * [`docs/STATUS.md`](docs/STATUS.md) — current state, one screen
 * [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) — architecture and load-bearing invariants
 * [`docs/DECISIONS.md`](docs/DECISIONS.md) — append-only decision log
-* [`docs/CONTEXT/NEXT_AGENT.md`](docs/CONTEXT/NEXT_AGENT.md) — handover for the next agent
+* [`docs/CONTEXT/ARCHITECTURE.md`](docs/CONTEXT/ARCHITECTURE.md), [`INVARIANTS`](docs/CONTEXT/INVARIANTS.md), [`ERROR_MATRIX`](docs/CONTEXT/ERROR_MATRIX.md), [`DATA_CONTRACTS`](docs/CONTEXT/DATA_CONTRACTS.md), [`DETERMINISM`](docs/CONTEXT/DETERMINISM.md), [`TESTING`](docs/CONTEXT/TESTING.md), [`OPERATIONS`](docs/CONTEXT/OPERATIONS.md)
+* [`docs/GLOSSARY.md`](docs/GLOSSARY.md) — domain terms as the code uses them
 * [`docs/official/`](docs/official) — the master TZ and the universal phase-execution prompt

@@ -8,12 +8,14 @@ SEEDS ?= 24
 DIFFICULTIES ?= L1,L2
 ARTIFACTS ?= artifacts/phase-04
 
-.PHONY: help test test-unit test-contracts test-gen test-invariants test-integration test-security sweep verify clean-pyc
+.PHONY: help test test-unit test-contracts test-gen test-invariants test-integration test-security test-docs sweep verify docs-check clean-pyc
 
 help:
 	@echo "make test         run the full stdlib test suite (no skips expected)"
 	@echo "make sweep        run the Phase 4 gate sweep ($(SEEDS) seeds x $(DIFFICULTIES))"
 	@echo "make verify       run tests + sweep, i.e. the Phase 4 exit gate"
+	@echo "make test-docs    documentation <-> code consistency tests"
+	@echo "make docs-check   fail if docs/CONTEXT/PROJECT_CONTEXT.json is stale"
 	@echo "make clean-pyc    remove __pycache__ directories"
 
 test:
@@ -37,6 +39,12 @@ test-integration:
 
 test-security:
 	$(PYTHON) -m unittest tests.security.test_sealed_boundary
+
+test-docs:
+	$(PYTHON) -m unittest tests.docs.test_docs_consistency
+
+docs-check:
+	$(PYTHON) tools/export_context.py --check
 
 sweep:
 	mkdir -p $(ARTIFACTS)

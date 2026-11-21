@@ -1,0 +1,418 @@
+{
+  "anomaly_types": {
+    "error_matrix": {
+      "DUPLICATE_PAYMENT": {
+        "allowed": [
+          "INV-03",
+          "INV-05",
+          "INV-17"
+        ],
+        "forbidden": [
+          "INV-01",
+          "INV-06",
+          "INV-07",
+          "INV-09",
+          "INV-11",
+          "INV-12",
+          "INV-13",
+          "INV-14",
+          "INV-15",
+          "INV-16"
+        ],
+        "intended": [
+          "INV-04"
+        ]
+      },
+      "PARTIAL_PAYMENT_ALLOCATION": {
+        "allowed": [
+          "INV-03",
+          "INV-05",
+          "INV-17"
+        ],
+        "forbidden": [
+          "INV-01",
+          "INV-06",
+          "INV-07",
+          "INV-09",
+          "INV-11",
+          "INV-12",
+          "INV-13",
+          "INV-14",
+          "INV-16"
+        ],
+        "intended": [
+          "INV-04",
+          "INV-15"
+        ]
+      }
+    },
+    "implemented": [
+      "DUPLICATE_PAYMENT",
+      "PARTIAL_PAYMENT_ALLOCATION"
+    ],
+    "required_by_phase_4": [
+      "DUPLICATE_PAYMENT",
+      "PARTIAL_PAYMENT_ALLOCATION"
+    ],
+    "subtype_matrix": {
+      "PARTIAL_PAYMENT_ALLOCATION/ALLOCATE_TO_ALREADY_SETTLED_INVOICE": {
+        "allowed": [
+          "INV-03",
+          "INV-05",
+          "INV-17"
+        ],
+        "forbidden": [
+          "INV-01",
+          "INV-06",
+          "INV-07",
+          "INV-09",
+          "INV-11",
+          "INV-12",
+          "INV-13",
+          "INV-14",
+          "INV-16"
+        ],
+        "intended": [
+          "INV-04"
+        ]
+      },
+      "PARTIAL_PAYMENT_ALLOCATION/ALLOCATIONS_EXCEED_PAYMENT": {
+        "allowed": [
+          "INV-03",
+          "INV-04",
+          "INV-05",
+          "INV-17"
+        ],
+        "forbidden": [
+          "INV-01",
+          "INV-06",
+          "INV-07",
+          "INV-09",
+          "INV-11",
+          "INV-12",
+          "INV-13",
+          "INV-14",
+          "INV-16"
+        ],
+        "intended": [
+          "INV-15"
+        ]
+      },
+      "PARTIAL_PAYMENT_ALLOCATION/OVER_ALLOCATE_TO_ONE_INVOICE": {
+        "allowed": [
+          "INV-03",
+          "INV-05",
+          "INV-17"
+        ],
+        "forbidden": [
+          "INV-01",
+          "INV-06",
+          "INV-07",
+          "INV-09",
+          "INV-11",
+          "INV-12",
+          "INV-13",
+          "INV-14",
+          "INV-16"
+        ],
+        "intended": [
+          "INV-04",
+          "INV-15"
+        ]
+      }
+    }
+  },
+  "book": {
+    "json_tables": [
+      "company",
+      "policy",
+      "opening_balances",
+      "period_calendar"
+    ],
+    "public_file_count": 12,
+    "public_files": [
+      "company.json",
+      "policy.json",
+      "accounts.jsonl",
+      "counterparties.jsonl",
+      "journal_entries.jsonl",
+      "invoices.jsonl",
+      "credit_notes.jsonl",
+      "payments.jsonl",
+      "bank_lines.jsonl",
+      "fx_rates.jsonl",
+      "opening_balances.json",
+      "period_calendar.json"
+    ],
+    "sealed_files": [
+      "truth.json",
+      "provenance.json",
+      "verifier_crosscheck.json",
+      "reject_log.json"
+    ],
+    "tables": [
+      "accounts",
+      "counterparties",
+      "journal_entries",
+      "invoices",
+      "credit_notes",
+      "payments",
+      "bank_lines",
+      "fx_rates"
+    ]
+  },
+  "commands": [
+    {
+      "command": "make test",
+      "purpose": "full stdlib test suite (no skips expected)"
+    },
+    {
+      "command": "make sweep",
+      "purpose": "24 seeds x L1/L2 gate sweep with JSON output"
+    },
+    {
+      "command": "make verify",
+      "purpose": "tests + sweep = the phase exit gate"
+    },
+    {
+      "command": "python3 tools/export_context.py --check",
+      "purpose": "detect stale context snapshot"
+    },
+    {
+      "command": "python3 tools/phase4_sweep.py --seeds 8 --json /tmp/s.json",
+      "purpose": "small ad-hoc gate sweep"
+    }
+  ],
+  "context_version": "1.0.0",
+  "difficulty_profiles": {
+    "L1": {
+      "anomaly_count": 1,
+      "distractor_pairs": 1,
+      "invoices_per_month": 4
+    },
+    "L2": {
+      "anomaly_count": 2,
+      "distractor_pairs": 2,
+      "invoices_per_month": 6
+    },
+    "L3": {
+      "anomaly_count": 3,
+      "distractor_pairs": 3,
+      "invoices_per_month": 8
+    }
+  },
+  "documentation": {
+    "agent_reports": "docs/AGENT_REPORTS/",
+    "architecture": "docs/CONTEXT/ARCHITECTURE.md",
+    "data_contracts": "docs/CONTEXT/DATA_CONTRACTS.md",
+    "decisions": "docs/DECISIONS.md",
+    "determinism": "docs/CONTEXT/DETERMINISM.md",
+    "entry_point": "docs/README.md",
+    "error_matrix": "docs/CONTEXT/ERROR_MATRIX.md",
+    "glossary": "docs/GLOSSARY.md",
+    "handover": "docs/CONTEXT/NEXT_AGENT.md",
+    "invariants": "docs/CONTEXT/INVARIANTS.md",
+    "phase_reports": "docs/PHASE_REPORTS/",
+    "protocol": "docs/CONTEXT/AI_HANDOFF_PROTOCOL.md",
+    "status": "docs/STATUS.md",
+    "testing": "docs/CONTEXT/TESTING.md"
+  },
+  "generated_by": "tools/export_context.py",
+  "generated_for": "TwinLedger v3.0 generator (Phase 4 complete)",
+  "invariants": {
+    "catalogue": {
+      "INV-01": "JE_BALANCE — debit equals credit in every entry",
+      "INV-02": "TRIAL_BALANCE — functional postings net to zero across the book",
+      "INV-03": "AP_SUBLEDGER_VS_DOCS — receivable ledger equals document open balances",
+      "INV-04": "OPEN_BALANCE — open balance reconciled with payments and credit notes",
+      "INV-05": "AGING — aging buckets follow due date and remaining balance",
+      "INV-06": "BANK_MATCH — bank lines match payments or carry a justified status",
+      "INV-07": "FX_POLICY — booked rate equals the policy-required rate",
+      "INV-08": "FX_RECALC — functional amount recomputes from the booked rate",
+      "INV-09": "CUTOFF — posting period follows the recognition policy",
+      "INV-10": "PERIOD_TOTALS — period totals use the entry's own timestamp date",
+      "INV-11": "ID_UNIQUENESS — ids unique per table and across document tables",
+      "INV-12": "REFERENTIAL — every explicit reference resolves",
+      "INV-13": "CURRENCY_EXPONENT — scale and minor units are correct",
+      "INV-14": "TIMEZONE_VALID — timestamps are unambiguous ISO-8601 with offset",
+      "INV-15": "ALLOCATION_CONSERVATION — allocations do not exceed the payment",
+      "INV-16": "CREDIT_NOTE_LIMIT — credit notes respect the policy cap",
+      "INV-17": "DOCUMENT_STATUS — stored status equals derived status"
+    },
+    "count": 17
+  },
+  "layers": {
+    "contracts": {
+      "may_import": [
+        "core"
+      ],
+      "must_not_import": [
+        "gen",
+        "invariants",
+        "verifier"
+      ],
+      "role": "frozen schemas, row models, immutable Book, canonical JSON, error types"
+    },
+    "core": {
+      "may_import": [
+        "contracts"
+      ],
+      "must_not_import": [
+        "gen",
+        "invariants",
+        "verifier"
+      ],
+      "role": "money (integer minor units), time rules (zoneinfo/DST), deterministic ids"
+    },
+    "gen": {
+      "may_import": [
+        "contracts",
+        "core",
+        "invariants"
+      ],
+      "must_not_import": [],
+      "role": "clean twin builder, mutation operators, diff, truth, reject, publish"
+    },
+    "invariants": {
+      "may_import": [
+        "contracts",
+        "core"
+      ],
+      "must_not_import": [
+        "gen"
+      ],
+      "role": "INV-01..17 checks over the public book model"
+    },
+    "verifier": {
+      "may_import": [
+        "contracts",
+        "core"
+      ],
+      "must_not_import": [
+        "gen",
+        "invariants"
+      ],
+      "role": "independent verifier (Phase 8) — public data only"
+    }
+  },
+  "operators": [
+    {
+      "allowed_side_effects": [
+        "INV-03",
+        "INV-05",
+        "INV-17"
+      ],
+      "anomaly_type": "DUPLICATE_PAYMENT",
+      "forbidden_invariants": [
+        "INV-01",
+        "INV-06",
+        "INV-07",
+        "INV-09",
+        "INV-11",
+        "INV-12",
+        "INV-13",
+        "INV-14",
+        "INV-15",
+        "INV-16"
+      ],
+      "intended_invariants": [
+        "INV-04"
+      ],
+      "operator_id": "OP-DUPLICATE_PAYMENT",
+      "operator_version": "1.0.0",
+      "subtypes": []
+    },
+    {
+      "allowed_side_effects": [
+        "INV-03",
+        "INV-05",
+        "INV-17"
+      ],
+      "anomaly_type": "PARTIAL_PAYMENT_ALLOCATION",
+      "forbidden_invariants": [
+        "INV-01",
+        "INV-06",
+        "INV-07",
+        "INV-09",
+        "INV-11",
+        "INV-12",
+        "INV-13",
+        "INV-14",
+        "INV-16"
+      ],
+      "intended_invariants": [
+        "INV-04",
+        "INV-15"
+      ],
+      "operator_id": "OP-PARTIAL_PAYMENT_ALLOCATION",
+      "operator_version": "1.0.0",
+      "subtypes": [
+        "OVER_ALLOCATE_TO_ONE_INVOICE",
+        "ALLOCATE_TO_ALREADY_SETTLED_INVOICE",
+        "ALLOCATIONS_EXCEED_PAYMENT"
+      ]
+    }
+  ],
+  "project": {
+    "config_version": "1.0.0",
+    "contract_status": "FROZEN_FOR_MVP",
+    "contract_version": "1.0.0",
+    "generator_version": "1.0.0",
+    "kind": "synthetic twin accounting benchmark, generator side",
+    "name": "TwinLedger v3.0",
+    "offline": true,
+    "python": ">=3.11",
+    "runtime_dependencies": []
+  },
+  "reject_reasons": [
+    "CLEAN_TWIN_INVARIANT_VIOLATION",
+    "NO_CANDIDATE_PARAMS",
+    "OPERATOR_PRECONDITION_FAILED",
+    "OPERATOR_APPLICATION_FAILED",
+    "SIGNATURE_MISMATCH",
+    "UNREACHABLE_EVIDENCE",
+    "DIFF_INCONSISTENT",
+    "CLEAN_TWIN_MUTATED",
+    "DUPLICATE_AFFECTED_IDS",
+    "AMBIGUOUS_FINDINGS"
+  ],
+  "schemas": {
+    "count": 16,
+    "declared_in_version_json": [
+      "anomaly_catalog.schema.json",
+      "book.schema.json",
+      "company.schema.json",
+      "episode_manifest.schema.json",
+      "finding.schema.json",
+      "invariant_signature.schema.json",
+      "period_calendar.schema.json",
+      "policy.schema.json",
+      "provenance.schema.json",
+      "receipt.schema.json",
+      "rubric_check.schema.json",
+      "tool_request.schema.json",
+      "tool_response.schema.json",
+      "trajectory_event.schema.json",
+      "truth.schema.json",
+      "verifier_report.schema.json"
+    ],
+    "files": [
+      "anomaly_catalog.schema.json",
+      "book.schema.json",
+      "company.schema.json",
+      "episode_manifest.schema.json",
+      "finding.schema.json",
+      "invariant_signature.schema.json",
+      "period_calendar.schema.json",
+      "policy.schema.json",
+      "provenance.schema.json",
+      "receipt.schema.json",
+      "rubric_check.schema.json",
+      "tool_request.schema.json",
+      "tool_response.schema.json",
+      "trajectory_event.schema.json",
+      "truth.schema.json",
+      "verifier_report.schema.json"
+    ]
+  }
+}

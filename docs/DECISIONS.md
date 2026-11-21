@@ -123,3 +123,76 @@ minority, determinism) and exits non-zero if any fails; `make verify` runs tests
 the verdict reproducible and makes regressions visible in CI terms.
 
 **Consequence:** `make verify` is the canonical evidence command for Phase 4.
+
+---
+
+## D-008 — Documentation is generated where it can drift, written where it must be argued
+
+**Date:** 2026-11-21 (documentation consolidation)
+**Status:** accepted
+
+Facts that mirror code (invariant list, operator registry, schema inventory, public file set,
+commands, difficulty profiles) are exported by `tools/export_context.py` into
+`docs/CONTEXT/PROJECT_CONTEXT.json`, and a test fails when the committed copy is stale.
+Prose that requires judgement (architecture rationale, invariant semantics, decisions, traps)
+stays hand-written.
+
+**Why:** prose duplication is the main way AI-agent context rots. Mechanical facts should be
+derived, not retyped; reasoning should be written, not generated.
+
+**Consequence:** `make test` includes `tests/docs/test_docs_consistency.py`, so documentation
+rot is a test failure rather than a slow-burning inconsistency.
+
+---
+
+## D-009 — Documentation set is organised by *question*, not by phase history
+
+**Date:** 2026-11-21 (documentation consolidation)
+**Status:** accepted
+
+`docs/` is organised so a fresh agent can answer one question per file
+(`ARCHITECTURE`, `INVARIANTS`, `ERROR_MATRIX`, `DATA_CONTRACTS`, `DETERMINISM`, `TESTING`,
+`CLEAN_TWIN_MODEL`, `OPERATIONS`, `GLOSSARY`, `AI_HANDOFF_PROTOCOL`), with `docs/README.md` as
+the map. Phase history lives separately in `docs/PHASE_REPORTS/` and `docs/AGENT_REPORTS/`.
+
+**Why:** new agents arrive with a task, not with a timeline. Searching by question beats
+reconstructing history. History is still preserved, just not mixed into the reference path.
+
+**Consequence:** adding a new topic means adding a question-shaped document and one line in
+`docs/README.md`, not appending to an ever-growing single file.
+
+---
+
+## D-010 — Layer rule is `contracts`/`core`/`invariants` ↛ `gen`; declared in one place
+
+**Date:** 2026-11-21 (documentation consolidation)
+**Status:** accepted, supersedes the informal statement in D-001
+
+The dependency rule is stated once, in `docs/CONTEXT/ARCHITECTURE.md` §2 and mirrored in
+`tools/export_context.py::LAYERS`, and enforced by `LayeringTests`. The verifier entry
+(`verifier/` may import `contracts`/`core`, never `gen`/`invariants`) is declared now so the
+Phase 8 boundary cannot be quietly relaxed.
+
+**Why:** an architectural rule that exists in three slightly different forms is not a rule.
+
+**Consequence:** changing the allowed import direction requires editing the doc, the exporter
+and the test together — which is exactly the friction such a change deserves.
+
+---
+
+## D-011 — Documentation tests check docs against code, never docs against docs
+
+**Date:** 2026-11-21 (documentation consolidation)
+**Status:** accepted
+
+`tests/docs/test_docs_consistency.py` verifies: required documents exist and are non-trivial,
+internal links resolve, the generated snapshot is current, every `INV-NN` named in prose
+exists in the checker, the documented schema count equals the schemas on disk, the documented
+public-file count equals `PUBLIC_FILE_ORDER`, and phase reports contain the required evidence
+sections and executed-command tables.
+
+**Why:** docs-to-docs consistency proves only that the documents agree with each other, which
+is what stale documentation always does.
+
+**Consequence:** a documentation test failing means the code and the docs disagree — and the
+code is the authority.

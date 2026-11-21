@@ -5,6 +5,9 @@
 **Branch:** `arena/d94e8b76-genesis-hackathon-malika-nurzh` (base `c961a00`)
 **Python:** 3.11 stdlib only, offline, deterministic
 
+> Orientation for a new agent: start at [`docs/README.md`](README.md), then
+> [`STATUS.md`](STATUS.md), then [`CONTEXT/NEXT_AGENT.md`](CONTEXT/NEXT_AGENT.md).
+
 ---
 
 ## 1. Where the project stands
@@ -26,13 +29,14 @@ Phase 4 evidence: `docs/PHASE_REPORTS/PHASE-04.md`, `docs/PHASE_REPORTS/PHASE-04
 
 | Metric | Value | Command |
 |---|---|---|
-| Full test suite | 254 tests, 0 failures, 0 skips | `make test` |
+| Full test suite | 273 tests, 0 failures, 0 skips | `make test` |
 | Gate sweep (24 seeds × L1/L2) | 48 published / 0 rejected | `make sweep` |
 | Findings per family | DUPLICATE_PAYMENT 36 / PARTIAL_PAYMENT_ALLOCATION 36 | `make sweep` |
 | Forbidden-invariant violations | 0 | `make sweep` |
 | Determinism | identical digests across runs and processes | `make test` |
 | Clean twin invariant sweep | 0/180 unclean (60 seeds × L1/L2/L3) | ad-hoc sweep |
-| Schemas | 17 frozen, all validating | `tests.contracts.test_schemas` |
+| Schemas | 16 frozen, all validating | `tests.contracts.test_schemas` |
+| Documentation consistency | 19 tests, generated snapshot current | `tests.docs.test_docs_consistency` |
 
 ---
 
@@ -43,13 +47,16 @@ contracts/   frozen schemas, row models, immutable Book model, canonical JSON, e
 core/        money (integer minor units, Decimal), time rules (zoneinfo, DST), ids
 invariants/  INV-01..17 over the public book model (no gen import)
 gen/         clean twin builder, mutation operators + registry, diff, truth, reject, episodes, publish
-tools/       phase4_sweep.py (gate as executable)
-tests/       unit, contracts, gen, invariants, integration, security
+tools/       phase4_sweep.py (gate as executable), export_context.py (docs snapshot)
+tests/       unit, contracts, gen, invariants, integration, security, docs
+docs/        map + reference documents + generated context + phase/agent reports
 ```
 
 Layering rule, enforced by `tests/security/test_sealed_boundary.py::LayeringTests`:
 `contracts` and `core` may not import `gen`, `invariants` or `verifier`;
 `invariants` may not import `gen`.
+
+Full detail: [`CONTEXT/ARCHITECTURE.md`](CONTEXT/ARCHITECTURE.md).
 
 ---
 
@@ -68,15 +75,40 @@ Layering rule, enforced by `tests/security/test_sealed_boundary.py::LayeringTest
 7. **Checks are total**: given an adversarial book they report a violation or defer, never raise.
 8. **Public surface is closed**: `public/` holds exactly 12 files; no canary, seed, operator id,
    truth attribute or provenance field appears there or in `manifest.json`.
+9. **Documentation cannot drift**: generated facts come from code and are test-checked.
 
 ---
 
-## 5. Working commands
+## 5. Documentation state
+
+| Need | Document |
+|---|---|
+| orientation | [`README.md`](README.md) |
+| status | [`STATUS.md`](STATUS.md) |
+| handover | [`CONTEXT/NEXT_AGENT.md`](CONTEXT/NEXT_AGENT.md) |
+| context exchange rules | [`CONTEXT/AI_HANDOFF_PROTOCOL.md`](CONTEXT/AI_HANDOFF_PROTOCOL.md) |
+| architecture | [`CONTEXT/ARCHITECTURE.md`](CONTEXT/ARCHITECTURE.md) |
+| invariants | [`CONTEXT/INVARIANTS.md`](CONTEXT/INVARIANTS.md) |
+| anomaly matrix | [`CONTEXT/ERROR_MATRIX.md`](CONTEXT/ERROR_MATRIX.md) |
+| episode/contract shapes | [`CONTEXT/DATA_CONTRACTS.md`](CONTEXT/DATA_CONTRACTS.md) |
+| determinism model | [`CONTEXT/DETERMINISM.md`](CONTEXT/DETERMINISM.md) |
+| test map | [`CONTEXT/TESTING.md`](CONTEXT/TESTING.md) |
+| clean twin model | [`CONTEXT/CLEAN_TWIN_MODEL.md`](CONTEXT/CLEAN_TWIN_MODEL.md) |
+| recipes and troubleshooting | [`CONTEXT/OPERATIONS.md`](CONTEXT/OPERATIONS.md) |
+| terminology | [`GLOSSARY.md`](GLOSSARY.md) |
+| decisions | [`DECISIONS.md`](DECISIONS.md) |
+| machine snapshot | [`CONTEXT/PROJECT_CONTEXT.json`](CONTEXT/PROJECT_CONTEXT.json) |
+
+---
+
+## 6. Working commands
 
 ```bash
-make test      # 254 tests, exit 0
+make test      # 273 tests, exit 0
 make sweep     # 48 episodes, 6/6 gates, writes artifacts/phase-04/sweep-24.json
-make verify    # both of the above, i.e. the Phase 4 exit gate
-python3 -m unittest tests.gen.test_diff_truth       # single suite
-python3 tools/phase4_sweep.py --seeds 8 --json /tmp/s.json
+make verify    # both, i.e. the Phase 4 exit gate
+python3 tools/export_context.py            # refresh docs/CONTEXT/PROJECT_CONTEXT.json
+python3 tools/export_context.py --check    # fail if the snapshot is stale
+python3 -m unittest tests.gen.test_diff_truth       # one suite
+python3 -m unittest tests.docs.test_docs_consistency # documentation vs code
 ```
