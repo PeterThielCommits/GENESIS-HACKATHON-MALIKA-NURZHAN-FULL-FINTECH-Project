@@ -3,6 +3,12 @@
 Reads ONLY the 12 allowlisted public files inside ``public/``. Rejects hidden
 dotfiles, ``index_hints.json``, unrecognised files, and symlinks escaping the
 public directory boundary (REQ-ARC-002, REQ-ENV-001).
+
+Row order contract (README "Canonical Tables"): **file row order is preserved
+verbatim on load** — pagination cursors page over records exactly as stored,
+which is what the paired permutation checks (``P01..P05``, ``P11..P20``)
+require. All reads are bounded by ``contracts.loader`` byte/row caps so an
+oversized or hostile episode file can never exhaust memory (D-10-03).
 """
 
 from __future__ import annotations
@@ -12,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from contracts.loader import validate_instance
+from contracts.loader import check_row_cap, read_text_bounded, validate_instance
 from env.errors import EnvError
 
 PUBLIC_JSON_FILES = frozenset(
@@ -87,17 +93,23 @@ def _assert_inside_public(root_resolved: Path, entry: Path) -> Path:
 
 def _read_json(path: Path) -> Any:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        return json.loads(read_text_bounded(path))
+    except json.JSONDecodeError as exc:
         raise EnvError("INTERNAL", f"failed reading {path.name}: {exc}") from exc
+    except OSError as exc:
+        raise EnvError("INTERNAL", f"failed reading {path.name}: {exc}") from exc
+    except ValueError as exc:
+        raise EnvError("LIMIT", f"failed reading {path.name}: {exc}") from exc
 
 
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     try:
-        text = path.read_text(encoding="utf-8")
+        text = read_text_bounded(path)
     except OSError as exc:
         raise EnvError("INTERNAL", f"failed reading {path.name}: {exc}") from exc
+    except ValueError as exc:
+        raise EnvError("LIMIT", f"failed reading {path.name}: {exc}") from exc
     for lineno, raw in enumerate(text.splitlines(), start=1):
         line = raw.strip()
         if not line:
@@ -109,6 +121,10 @@ def _read_jsonl(path: Path) -> list[dict[str, Any]]:
         if not isinstance(item, dict):
             raise EnvError("INTERNAL", f"{path.name}:{lineno} expected JSON object")
         rows.append(item)
+        try:
+            check_row_cap(len(rows), path.name)
+        except ValueError as exc:
+            raise EnvError("LIMIT", str(exc)) from exc
     return rows
 
 
@@ -163,10 +179,12 @@ def load_public_book(public_dir: Path | str) -> LoadedPublicBook:
         rows = raw_tables[table_name]
         if not isinstance(rows, list):
             raise EnvError("BAD_ARGS", f"table {table_name} must be a list")
-        ordered = sorted(rows, key=lambda r: (str(r.get(pk_field, "")), str(r.get("currency", ""))))
-        tables[table_name] = tuple(ordered)
+        # File row order is preserved verbatim (README "Canonical Tables"):
+        # never re-sort here — pagination cursors must page over records
+        # exactly as stored (paired permutation checks P01..P05, P11..P20).
+        tables[table_name] = tuple(rows)
         if prefix:
-            for row in ordered:
+            for row in rows:
                 raw_id = str(row.get(pk_field, ""))
                 if not raw_id:
                     continue

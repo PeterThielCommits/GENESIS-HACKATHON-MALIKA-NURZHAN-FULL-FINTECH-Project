@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from contracts.canonical import canonicalize, sha256_hex
-from contracts.loader import validate_instance
+from contracts.loader import check_row_cap, read_text_bounded, validate_instance
 
 #: Allowlisted public filenames (Master TZ section 8.2).
 REQUIRED_PUBLIC_FILES: tuple[str, ...] = (
@@ -116,6 +116,10 @@ def _parse_jsonl(text: str, source_name: str) -> list[dict[str, Any]]:
                 f"{source_name}:{lineno}: JSONL record must be a JSON object"
             )
         rows.append(parsed)
+        try:
+            check_row_cap(len(rows), source_name)
+        except ValueError as exc:
+            raise PublicEpisodeError(str(exc)) from exc
     return rows
 
 
@@ -368,7 +372,11 @@ def load_public_episode(public_dir: str | Path) -> PublicEpisode:
 
     loaded: dict[str, Any] = {}
     for name in present_files:
-        text = (root / name).read_text(encoding="utf-8")
+        # Bounded read (D-10-03): public episode inputs may be oversized/hostile.
+        try:
+            text = read_text_bounded(root / name)
+        except (OSError, ValueError) as exc:
+            raise PublicEpisodeError(f"failed reading {name!r}: {exc}") from exc
         if name.endswith(".jsonl"):
             loaded[name] = _parse_jsonl(text, name)
         else:

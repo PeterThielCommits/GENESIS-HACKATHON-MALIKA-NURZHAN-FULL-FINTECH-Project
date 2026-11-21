@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from contracts.currency import exponent_of
+from contracts.loader import check_row_cap, read_text_bounded
 from env.calc import evaluate_calc
 from env.cursors import CursorCodec
 from env.errors import EnvError
@@ -115,12 +116,22 @@ def _safe_resolve_under(base: Path, target: Path) -> Path:
     return resolved
 
 
+def _bounded_text(path: Path) -> str:
+    """Read an episode-supplied file with the shared byte/row-safe bounds (D-10-03)."""
+    try:
+        return read_text_bounded(path)
+    except OSError as exc:
+        raise EnvError("INTERNAL", f"failed reading {path.name}: {exc}") from exc
+    except ValueError as exc:
+        raise EnvError("LIMIT", str(exc)) from exc
+
+
 def _read_public_json(base: Path, candidates: tuple[str, ...]) -> Any | None:
     for name in candidates:
         p = base / name
         if p.is_file():
             resolved = _safe_resolve_under(base, p)
-            return json.loads(resolved.read_text(encoding="utf-8"))
+            return json.loads(_bounded_text(resolved))
     return None
 
 
@@ -130,7 +141,7 @@ def _read_public_rows(base: Path, candidates: tuple[str, ...]) -> list[dict[str,
         if not p.is_file():
             continue
         resolved = _safe_resolve_under(base, p)
-        text = resolved.read_text(encoding="utf-8")
+        text = _bounded_text(resolved)
         if p.suffix == ".jsonl":
             rows: list[dict[str, Any]] = []
             for raw in text.splitlines():
@@ -140,10 +151,19 @@ def _read_public_rows(base: Path, candidates: tuple[str, ...]) -> list[dict[str,
                 obj = json.loads(line)
                 if isinstance(obj, dict):
                     rows.append(obj)
+                    try:
+                        check_row_cap(len(rows), p.name)
+                    except ValueError as exc:
+                        raise EnvError("LIMIT", str(exc)) from exc
             return rows
         obj = json.loads(text)
         if isinstance(obj, list):
-            return [r for r in obj if isinstance(r, dict)]
+            out = [r for r in obj if isinstance(r, dict)]
+            try:
+                check_row_cap(len(out), p.name)
+            except ValueError as exc:
+                raise EnvError("LIMIT", str(exc)) from exc
+            return out
     return []
 
 
@@ -231,12 +251,14 @@ def load_official_public_book(episode_dir: Path | str) -> OfficialPublicBook:
             if entry.name.startswith(".") or not entry.is_file():
                 continue
             resolved = _safe_resolve_under(pub_resolved, entry)
+            # Single bounded read (D-10-03): never load oversized/hostile docs whole.
+            text = _bounded_text(resolved)
             try:
-                content: Any = json.loads(resolved.read_text(encoding="utf-8"))
+                content: Any = json.loads(text)
                 if not isinstance(content, dict):
                     content = {"doc_id": entry.stem, "content": content}
             except json.JSONDecodeError:
-                content = {"doc_id": entry.stem, "text": resolved.read_text(encoding="utf-8")}
+                content = {"doc_id": entry.stem, "text": text}
             documents_by_id[entry.stem] = content
             documents_by_id[entry.name] = content
 
