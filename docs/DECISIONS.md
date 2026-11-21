@@ -127,3 +127,11 @@ only from caller-supplied requested evidence IDs, is labelled
 EXPERIMENTAL and lives in a separate diagnostics column that never
 feeds the reward. Explanation-consistency (Phase 10) and verifier
 quality (Phase 8) diagnostics are explicit NOT_AVAILABLE markers.
+
+## D-07-01 — Provisional normalized operator boundary
+
+Implement FX and cutoff against normalized journal inputs without introducing
+an episode schema or affected-ID translation. For FX select the latest allowed
+quote date only under the declared fallback policy; reject distinct permitted
+booked amounts rather than guessing a source-priority rule. Keep official
+semantics open under Q-004/Q-006; integrate only after A0 resolves CR-06-01.
