@@ -36,6 +36,8 @@ from fractions import Fraction
 from pathlib import Path
 from typing import Any, Collection, Mapping, Sequence
 
+from contracts.loader import check_row_cap, read_text_bounded
+
 OFFICIAL_MAX_FINDINGS = 30
 OFFICIAL_MAX_EVIDENCE_IDS = 10
 OFFICIAL_MAX_EXPLANATION_CODEPOINTS = 1000
@@ -470,7 +472,8 @@ def collect_accessible_ids_from_episode_dir(episode_dir: Path | str) -> set[str]
             p = pub / name
             if not p.is_file():
                 continue
-            text = p.read_text(encoding="utf-8")
+            # Bounded reads (D-10-03): episode inputs can be oversized/hostile.
+            text = read_text_bounded(p)
             if p.suffix == ".jsonl":
                 rows: list[dict[str, Any]] = []
                 for ln in text.splitlines():
@@ -479,10 +482,13 @@ def collect_accessible_ids_from_episode_dir(episode_dir: Path | str) -> set[str]
                         obj = json.loads(ln)
                         if isinstance(obj, dict):
                             rows.append(obj)
+                            check_row_cap(len(rows), p.name)
                 return rows
             obj = json.loads(text)
             if isinstance(obj, list):
-                return [x for x in obj if isinstance(x, dict)]
+                out = [x for x in obj if isinstance(x, dict)]
+                check_row_cap(len(out), p.name)
+                return out
         return []
 
     table_files: list[tuple[tuple[str, ...], tuple[str, ...], str]] = [
@@ -539,7 +545,7 @@ def load_truths_from_episode_dir(episode_dir: Path | str) -> list[OfficialTruth]
     ]
     for path in candidates:
         if path.is_file():
-            raw = json.loads(path.read_text(encoding="utf-8"))
+            raw = json.loads(read_text_bounded(path))
             if isinstance(raw, dict):
                 raw_list = raw.get("findings", raw.get("issues", raw.get("truth", [])))
             elif isinstance(raw, list):

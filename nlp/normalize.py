@@ -1,6 +1,6 @@
-"""Deterministic multilingual text normalization for ``ru`` / ``kk`` / ``en`` (Phase 10).
+"""Deterministic multilingual text normalization for ``ru`` / ``kk`` / ``en`` (Phase 10, Task 10.2–10.3).
 
-Implements TZ §11.2:
+Implements Master TZ §17.2 (deterministic text transforms) and §17.4 (local NLP baseline):
   - Unicode NFC canonicalization;
   - Zero-width and control character stripping;
   - Casefolding + punctuation/quote normalization;

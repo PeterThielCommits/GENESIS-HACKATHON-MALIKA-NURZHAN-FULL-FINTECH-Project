@@ -8,7 +8,7 @@ mixed-script Central Asian accounting text across descriptive fields ONLY:
   - ``credit_notes[*].reason``
   - ``journal_entries[*].description``
 
-Hard RNG & Truth Isolation Guarantee (TZ §11, §22.1):
+Hard RNG & Truth Isolation Guarantee (TZ §17.2 text RNG namespaces, §20.4):
   - Consumes randomness EXCLUSIVELY from an isolated ``random.Random`` passed by
     ``scoped_rng(master_seed, "text_layer", episode_id, attempt)`` (and
     ``"injection_layer"`` for Phase 11 prompt-injection twins).
@@ -17,6 +17,9 @@ Hard RNG & Truth Isolation Guarantee (TZ §11, §22.1):
     ``verifier.discover(public)`` remain 100% byte-for-byte invariant across
     ``enable_text_layer=False/True``, language profiles, noise levels, and
     prompt-injection toggles.
+  - All template dictionaries carry pinned versions (``TEXT_LAYER_VERSION``,
+    ``TEMPLATE_DICTIONARY_VERSION``) recorded in generation provenance
+    (TZ §17.2: "фиксированные версии словарей").
 """
 
 from __future__ import annotations
@@ -27,6 +30,11 @@ from datetime import date
 from typing import Any
 
 from gen.core.clean_twin import CleanTwin
+
+#: Pinned text-layer implementation version (recorded in provenance).
+TEXT_LAYER_VERSION = "text-layer@1.0.0"
+#: Pinned ru/kk/en template-dictionary version (TZ §17.2).
+TEMPLATE_DICTIONARY_VERSION = "ru-kk-en-dicts@1.0.0"
 
 SUPPORTED_LANGUAGE_PROFILES = ("en", "ru", "kk", "mixed")
 
@@ -367,6 +375,8 @@ def apply_multilingual_text_layer(
         je["description"] = unicodedata.normalize("NFC", desc)
 
     return {
+        "text_layer_version": TEXT_LAYER_VERSION,
+        "dictionary_version": TEMPLATE_DICTIONARY_VERSION,
         "language_profile": language_profile,
         "noise_level": noise_level,
         "language_counts": lang_counts,
@@ -419,6 +429,7 @@ def apply_benign_prompt_injections(
                 "payload_id": payload["payload_id"],
                 "attack_family": payload["attack_family"],
                 "directive": payload["directive"],
+                "text_layer_version": TEXT_LAYER_VERSION,
             }
         )
     return applied
@@ -427,6 +438,8 @@ def apply_benign_prompt_injections(
 __all__ = [
     "BENIGN_INJECTION_TEMPLATES",
     "SUPPORTED_LANGUAGE_PROFILES",
+    "TEMPLATE_DICTIONARY_VERSION",
+    "TEXT_LAYER_VERSION",
     "apply_benign_prompt_injections",
     "apply_multilingual_text_layer",
 ]

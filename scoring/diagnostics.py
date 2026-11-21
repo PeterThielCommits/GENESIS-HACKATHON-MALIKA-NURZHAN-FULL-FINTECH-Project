@@ -40,6 +40,10 @@ NOT_AVAILABLE_VERIFIER = {
     "status": "NOT_AVAILABLE",
     "reason": "verifier quality metrics are Phase 8 scope",
 }
+NOT_AVAILABLE_EVIDENCE_HIERARCHY = {
+    "status": "NOT_AVAILABLE",
+    "reason": "evidence hierarchy enforcement is Phase 10 scope",
+}
 
 
 def _exact(value: Fraction) -> dict[str, str]:
@@ -138,6 +142,11 @@ def build_diagnostics(
             info["explanation_consistency"]
             if isinstance(info.get("explanation_consistency"), dict)
             else NOT_AVAILABLE_EXPLANATION
+        ),
+        "evidence_hierarchy": dict(
+            info["evidence_hierarchy"]
+            if isinstance(info.get("evidence_hierarchy"), dict)
+            else NOT_AVAILABLE_EVIDENCE_HIERARCHY
         ),
         "verifier_quality": dict(
             info["verifier_quality"]
