@@ -5,3 +5,4 @@
 - Q-05-03 (A0 / organizer): Is submit free including invalid submit? What happens exactly on exhaustion? Close with official budget examples.
 - Q-05-04 (A0 / organizer): Is calc required? Close via organizer contract and approved Phase 1 contract decision; if yes implement whitelist calculator and fuzz tests.
 - Q-05-05 (A2 / A6): What public-file schemas and stable primary keys do Phase 3/4 producers actually emit? Close through cross-phase integration and contract tests.
+- Q-05-06 (A0): Which of the distinct proposed Phase 1 (`7821154`) and Phase 4 (`e740784`) schemas and generators, if either, should be adopted? They disagree on tool envelopes, tool names, findings and public data shapes. Close with owner decision, compatibility plan, any approved CR, and tests. See follow-up report.

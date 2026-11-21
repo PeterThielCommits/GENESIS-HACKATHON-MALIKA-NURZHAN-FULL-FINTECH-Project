@@ -42,3 +42,7 @@ D-05-01..04 are provisional; CR-05-01 is draft, not approval. Cursors require a 
 GitHub issue #3 was created; branch publication / PR and CI are tracked separately in the agent report and actual Git history. Do not infer a CI pass from PR #1/#2's runs.
 
 Publication: code commit `151c101` pushed to the current branch; [draft PR #4](https://github.com/PeterThielCommits/GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project/pull/4) created. REMOTE GITHUB UPDATE DONE. PR is draft; no current-branch CI or independent review is claimed.
+
+## 2026-11-21 follow-up
+
+The current branch now supports the separate Phase 4 snapshot's public layout and FX composite keys. A real generated public episode passed the local inspection smoke, and the snapshot's own suite and sweep passed when run in a separate exported directory. See [follow-up report](PHASE-05-FOLLOWUP.md). This does not merge upstream code, establish an official contract, close the adapter gate, or constitute independent truth verification. Overall status remains PARTIAL / gate BLOCKED.

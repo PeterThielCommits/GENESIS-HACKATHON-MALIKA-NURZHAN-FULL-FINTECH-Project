@@ -1,0 +1,4 @@
+sample=0 {"status": "PASS", "tables": ["counterparties", "journal_entries", "invoices", "credit_notes", "payments", "bank_lines", "fx_rates", "accounts"], "submit": "accepted", "official_contract": "unknown"}
+sample=1 {"status": "PASS", "tables": ["counterparties", "journal_entries", "invoices", "credit_notes", "payments", "bank_lines", "fx_rates", "accounts"], "submit": "accepted", "official_contract": "unknown"}
+sample=2 {"status": "PASS", "tables": ["counterparties", "journal_entries", "invoices", "credit_notes", "payments", "bank_lines", "fx_rates", "accounts"], "submit": "accepted", "official_contract": "unknown"}
+sample=3 {"status": "PASS", "tables": ["counterparties", "journal_entries", "invoices", "credit_notes", "payments", "bank_lines", "fx_rates", "accounts"], "submit": "accepted", "official_contract": "unknown"}

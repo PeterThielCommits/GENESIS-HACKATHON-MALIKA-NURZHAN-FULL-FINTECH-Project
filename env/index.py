@@ -16,3 +16,16 @@ FILTERS = {
     'fx_rates': {'fx_rate_id', 'pair', 'effective_date'},
     'accounts': {'account_id'},
 }
+
+
+def record_key(table, row):
+    """Stable external key; FX may use the Phase 4 pair/date composite."""
+    if not isinstance(row, dict):
+        raise ValueError('invalid public row')
+    if table == 'fx_rates' and 'fx_rate_id' not in row:
+        pair, day = row.get('pair'), row.get('effective_date')
+        if (not isinstance(pair, str) or not isinstance(day, str) or
+                not pair or not day or '@' in pair or '@' in day):
+            raise ValueError('invalid FX key')
+        return pair + '@' + day
+    return row.get(TABLES[table])

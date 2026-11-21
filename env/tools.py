@@ -1,7 +1,7 @@
 from .budget import MAX_PAGE_SIZE
 from .errors import PublicError
 from .filters import apply_filters
-from .index import TABLES
+from .index import TABLES, record_key
 
 def _fields(args, required, allowed):
     if not isinstance(args, dict) or not required <= args.keys() or not args.keys() <= allowed:
@@ -27,15 +27,15 @@ def execute(env, tool, args):
         cursor = args.get('cursor')
         if cursor is not None:
             last = env.cursors.read(cursor, table, filters)
-            rows = [r for r in rows if r[TABLES[table]] > last]
+            rows = [r for r in rows if record_key(table, r) > last]
         page = rows[:limit]
-        next_cursor = env.cursors.issue(table, filters, page[-1][TABLES[table]]) if len(rows) > limit else None
+        next_cursor = env.cursors.issue(table, filters, record_key(table, page[-1])) if len(rows) > limit else None
         return {'rows': page, 'next_cursor': next_cursor}
     if tool == 'get_record':
         _fields(args, {'table', 'id'}, {'table', 'id'})
         table = args['table']; _table(table); _id(args['id'])
         for row in env.data[table]:
-            if row[TABLES[table]] == args['id']:
+            if record_key(table, row) == args['id']:
                 return {'record': row}
         raise PublicError('NOT_FOUND')
     if tool == 'get_document':

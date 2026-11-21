@@ -7,12 +7,12 @@ import hashlib
 import json
 import os
 import stat
-from .index import TABLES
+from .index import TABLES, record_key
 
 FILES = {'company.json': 'object', 'policy.json': 'object', 'accounts.json': 'array',
-         'opening_balances.json': 'array', 'period_calendar.json': 'array',
+         'opening_balances.json': 'object_or_array', 'period_calendar.json': 'object_or_array',
          **{name + '.jsonl': 'jsonl' for name in TABLES if name != 'accounts'}}
-OPTIONAL = {'document_links.jsonl': 'jsonl'}
+OPTIONAL = {'document_links.jsonl': 'jsonl', 'accounts.jsonl': 'jsonl'}
 MAX_FILE_BYTES = 10 * 1024 * 1024
 FORBIDDEN_KEYS = {'truth', 'provenance', 'seed', 'master_seed', 'mutation', 'operator', 'index_hints', 'truth_id', 'affected_ids', 'distractor_of', 'distinguishing_fact'}
 
@@ -69,12 +69,12 @@ def load_public(path):
             try:
                 f = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
             except FileNotFoundError:
-                if name in OPTIONAL:
+                if name in OPTIONAL or name == 'accounts.json':
                     continue
                 raise
             try:
                 info = os.fstat(f)
-                if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_FILE_BYTES:
+                if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_size > MAX_FILE_BYTES:
                     raise ValueError('invalid public file')
                 with os.fdopen(f, 'rb') as stream:
                     f = -1
@@ -88,16 +88,23 @@ def load_public(path):
                 value = [_decode(line) for line in data.splitlines() if line.strip()]
             else:
                 value = _decode(data)
-            if (kind == 'object' and not isinstance(value, dict)) or (kind != 'object' and not isinstance(value, list)):
+            if ((kind == 'object' and not isinstance(value, dict)) or
+                (kind in ('array', 'jsonl') and not isinstance(value, list)) or
+                (kind == 'object_or_array' and not isinstance(value, (dict, list)))):
                 raise ValueError('invalid public shape')
             _safe(value)
-            result[name.rsplit('.', 1)[0]] = value
+            key = name.rsplit('.', 1)[0]
+            if key in result:
+                raise ValueError('ambiguous public files')
+            result[key] = value
     finally:
         os.close(fd)
-    for table, key in TABLES.items():
+    for table in TABLES:
+        if table not in result:
+            raise ValueError('missing public table')
         rows = result[table]
-        ids = [row.get(key) if isinstance(row, dict) else None for row in rows]
+        ids = [record_key(table, row) for row in rows]
         if any(not isinstance(x, str) or not x or len(x) > 256 for x in ids) or len(set(ids)) != len(ids):
             raise ValueError('invalid public table identifier')
-        result[table] = sorted(rows, key=lambda row: row[key])
+        result[table] = sorted(rows, key=lambda row: record_key(table, row))
     return result, hashlib.sha256(canonical(result)).hexdigest()

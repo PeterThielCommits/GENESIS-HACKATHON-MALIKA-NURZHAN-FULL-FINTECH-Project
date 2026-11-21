@@ -7,13 +7,58 @@
   "branch": "arena/eb1e0f8a-genesis-hackathon-malika-nurzh",
   "start_commit": "c961a009611e1711463f5116b2df926bb4726de8",
   "master_tz_sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36",
-  "tasks": {"5.1":"PARTIAL","5.2":"PARTIAL","5.3":"PARTIAL","5.4":"PARTIAL","5.5":"PARTIAL","5.6":"PARTIAL","5.7":"BLOCKED","5.8":"PARTIAL"},
+  "tasks": {
+    "5.1": "PARTIAL",
+    "5.2": "PARTIAL",
+    "5.3": "PARTIAL",
+    "5.4": "PARTIAL",
+    "5.5": "PARTIAL",
+    "5.6": "PARTIAL",
+    "5.7": "BLOCKED",
+    "5.8": "PARTIAL"
+  },
   "checks": [
-    {"command":"make test", "exit_code":0, "status":"PASS", "tests":12, "log":"docs/PHASE_REPORTS/logs/phase-05-test.txt"},
-    {"command":"make smoke", "exit_code":0, "status":"PASS", "log":"docs/PHASE_REPORTS/logs/phase-05-smoke.txt"},
-    {"command":"python3 -m compileall -q env tests", "exit_code":0, "status":"PASS"},
-    {"command":"official adapter contract suite", "exit_code":null, "status":"BLOCKED"}
+    {
+      "command": "make test",
+      "exit_code": 0,
+      "status": "PASS",
+      "tests": 12,
+      "log": "docs/PHASE_REPORTS/logs/phase-05-test.txt"
+    },
+    {
+      "command": "make smoke",
+      "exit_code": 0,
+      "status": "PASS",
+      "log": "docs/PHASE_REPORTS/logs/phase-05-smoke.txt"
+    },
+    {
+      "command": "python3 -m compileall -q env tests",
+      "exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "official adapter contract suite",
+      "exit_code": null,
+      "status": "BLOCKED"
+    }
   ],
-  "issue":"https://github.com/PeterThielCommits/GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project/issues/3",
-  "limitations":["Organizer contract and adapter absent", "Phase 1 proposed schema conflict unresolved", "Phase 3/4 producer absent", "No OS sandbox, scorer or finalize", "Calculator requirement unresolved", "Independent review not run"]
+  "issue": "https://github.com/PeterThielCommits/GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project/issues/3",
+  "limitations": [
+    "Organizer contract and adapter absent",
+    "Phase 1 proposed schema conflict unresolved",
+    "Phase 3/4 producer absent",
+    "No OS sandbox, scorer or finalize",
+    "Calculator requirement unresolved",
+    "Independent review not run"
+  ],
+  "followup": {
+    "date": "2026-11-21",
+    "report": "docs/PHASE_REPORTS/PHASE-05-FOLLOWUP.md",
+    "local_tests": 17,
+    "phase4_snapshot": "e7407843f9daf4f133ad7d1f032969713f7dd54e",
+    "snapshot_tests": 273,
+    "snapshot_sweep_episodes": 48,
+    "generated_public_smoke": "PASS (five examples: three L1, two L2)",
+    "official_exit_gate": "BLOCKED"
+  }
 }
