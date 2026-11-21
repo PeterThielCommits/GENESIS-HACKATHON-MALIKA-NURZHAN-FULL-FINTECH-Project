@@ -15,7 +15,9 @@ terminated and closed (REQ-ARC-005, REQ-SEAL-003):
       --receipts <r1.json> <r2.json> ... \\
       --output-summary <merkle_batch.json>
 
-Imports ONLY ``contracts/``, ``seal/``, ``scoring/``, and Python 3.11 stdlib
+Imports ONLY ``contracts/``, ``seal/``, ``scoring/``, ``nlp.hierarchy``
+(the strict TZ §17.3 evidence-hierarchy rule module — never the optional fuzzy
+helpers ``nlp.matching`` / ``nlp.normalize``), and Python 3.11 stdlib
 (obeys ``scoring/`` import boundaries).
 """
 
@@ -31,6 +33,7 @@ from typing import Any
 from contracts.canonical import canonical_bytes, canonical_json, sha256_hex
 from contracts.loader import validate_instance
 from contracts.models import Finding, TruthFinding
+from nlp.hierarchy import build_evidence_hierarchy_report
 from scoring.crosscheck import CrosscheckError, crosscheck
 from scoring.diagnostics import build_diagnostics
 from scoring.explanation_linter import lint_findings_explanations
@@ -244,6 +247,13 @@ def execute_score_episode(
             contract_findings,
             accessible_public_ids=accessible_ids,
         )
+        # Phase 10, Task 10.5 enforcement: TZ §17.3 evidence hierarchy verdict per
+        # finding (structural reachability only — no fuzzy matching). Diagnostic
+        # only: it never alters matching, F1, or the official reward.
+        evidence_hierarchy = build_evidence_hierarchy_report(
+            contract_findings,
+            accessible_public_ids=accessible_ids,
+        )
         run_info: dict[str, Any] = {
             "steps_used": steps_used,
             "truncated": truncated,
@@ -252,6 +262,7 @@ def execute_score_episode(
             "policy_identifier": policy_id,
             "requested_evidence_ids": submission.get("requested_evidence_ids"),
             "explanation_consistency": expl_lint,
+            "evidence_hierarchy": evidence_hierarchy,
         }
         if verifier_quality_block is not None:
             run_info["verifier_quality"] = verifier_quality_block

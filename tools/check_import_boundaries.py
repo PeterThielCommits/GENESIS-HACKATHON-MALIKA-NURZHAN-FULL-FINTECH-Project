@@ -28,17 +28,29 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # (directory prefix, forbidden top-level modules, description)
 RULES: list[tuple[str, tuple[str, ...], str]] = [
-    ("core", ("gen", "verifier", "scoring", "env", "invariants"), "primitives must be independent"),
-    ("invariants", ("gen", "verifier", "env", "scoring"), "group checks must not depend on producers"),
-    ("env", ("gen", "verifier", "scoring", "seal"), "env must not import gen/verifier/scoring/seal (REQ-ARC-002)"),
-    ("verifier", ("gen", "nlp"), "verifier must not import gen or nlp (REQ-VER-002, Phase 10)"),
+    ("core", ("gen", "verifier", "scoring", "env", "invariants", "nlp"), "primitives must be independent"),
+    ("invariants", ("gen", "verifier", "env", "scoring", "nlp"), "group checks must not depend on producers"),
+    ("env", ("gen", "verifier", "scoring", "seal", "nlp"), "env must not import gen/verifier/scoring/seal/nlp (REQ-ARC-002, Phase 10)"),
+    ("verifier", ("gen", "nlp"), "verifier must not import gen or nlp (REQ-VER-002, Phase 10 EXIT GATE)"),
     ("nlp", ("gen", "verifier", "scoring", "seal", "env", "harness"), "nlp may import only contracts + stdlib (Phase 10)"),
     ("arena/policies", ("gen", "verifier", "scoring", "seal", "truth", "provenance"), "policies must not import private internals (REQ-ARC-003)"),
     ("arena/attacks", ("gen", "verifier", "scoring", "seal", "truth", "provenance"), "attacks must not import private internals (REQ-ARC-003)"),
-    ("scoring", ("gen", "verifier", "env", "harness"), "scoring may import only contracts/seal (TZ 6)"),
-    ("seal", ("gen", "verifier", "env", "scoring", "harness"), "seal may import only contracts + stdlib (TZ 6)"),
-    ("gen", ("verifier", "scoring", "seal"), "gen must not import verifier/scoring/seal (TZ 6)"),
-    ("harness", ("gen", "verifier", "scoring", "seal"), "harness must not import gen/verifier/scoring/seal (TZ 6)"),
+    ("scoring", ("gen", "verifier", "env", "harness"), "scoring may import contracts/seal and only nlp.hierarchy (TZ 6, Phase 10)"),
+    ("seal", ("gen", "verifier", "env", "scoring", "harness", "nlp"), "seal may import only contracts + stdlib (TZ 6)"),
+    ("gen", ("verifier", "scoring", "seal", "nlp"), "gen must not import verifier/scoring/seal/nlp (TZ 6, Phase 10)"),
+    ("harness", ("gen", "verifier", "scoring", "seal", "nlp"), "harness must not import gen/verifier/scoring/seal/nlp (TZ 6, Phase 10)"),
+]
+
+# Granular module rules: (directory prefix, exact-or-prefix module matcher, allowed modules, description).
+# Phase 10 EXIT GATE: the optional fuzzy NLP helpers must never enter core scoring paths;
+# scoring/ may use ONLY the strict evidence-hierarchy rule module ``nlp.hierarchy``.
+GRANULAR_RULES: list[tuple[str, str, tuple[str, ...], str]] = [
+    (
+        "scoring",
+        "nlp",
+        ("nlp.hierarchy",),
+        "scoring may import only nlp.hierarchy from nlp; fuzzy helpers are forbidden (Phase 10 EXIT GATE)",
+    ),
 ]
 
 # String literals that indicate sealed/private path access in public zones.
@@ -96,6 +108,11 @@ def scan(repo_root: Path = REPO_ROOT) -> list[str]:
             if rel == prefix or rel.startswith(prefix + "/"):
                 for lineno, module in _imports_in_file(path):
                     if _top_level(module) in forbidden:
+                        violations.append(f"{rel}:{lineno}: forbidden import {module!r} — {desc}")
+        for prefix, target_top, allowed, desc in GRANULAR_RULES:
+            if rel == prefix or rel.startswith(prefix + "/"):
+                for lineno, module in _imports_in_file(path):
+                    if _top_level(module) == target_top and module not in allowed:
                         violations.append(f"{rel}:{lineno}: forbidden import {module!r} — {desc}")
         for prefix, tokens, desc in FORBIDDEN_PATH_TOKENS:
             if rel.startswith(prefix + "/"):

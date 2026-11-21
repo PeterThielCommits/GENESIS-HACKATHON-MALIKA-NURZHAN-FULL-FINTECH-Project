@@ -97,6 +97,27 @@ class TestStdlibProperties(unittest.TestCase):
                 skel = transliterate_to_ascii_skeleton(variant)
                 self.assertTrue(skel.isascii())
 
+    def test_text_similarity_and_ngrams_unicode_stability_property(self):
+        # REQ-NLP-005: candidate-matching text transforms are Unicode-form invariant
+        import unicodedata
+        from nlp import char_ngrams, text_similarity_bps
+
+        pairs = [
+            ('ТОО «Алтын Орда» #1', 'Altyn Orda LLP #1'),
+            ('«Жетісу Агро» ЖШС', 'Zhetysu Agro LLP'),
+            ('Тәңірі Логистика АҚ', 'Tengri Logistika LLP'),
+            ('Сарыарка Тех ЖШС', 'Saryarka Tech LLP'),
+        ]
+        for a, b in pairs:
+            base = text_similarity_bps(a, b)
+            base_ngrams = char_ngrams(a, 3)
+            for form in ("NFC", "NFD", "NFKC", "NFKD"):
+                va = unicodedata.normalize(form, a)
+                vb = unicodedata.normalize(form, b)
+                self.assertEqual(text_similarity_bps(va, vb), base)
+                self.assertEqual(char_ngrams(va, 3), base_ngrams)
+            self.assertEqual(text_similarity_bps(a, b), text_similarity_bps(b, a))
+
     def test_explanation_never_changes_base_reward_property(self):
         # TZ §20.2: arbitrary free-text explanation changes leave official reward 100% invariant
         from contracts.models import Finding, TruthFinding

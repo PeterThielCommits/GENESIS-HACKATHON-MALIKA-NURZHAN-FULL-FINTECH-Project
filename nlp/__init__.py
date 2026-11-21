@@ -1,42 +1,50 @@
-"""TwinLedger multilingual normalization, candidate matching, and evidence hierarchy (Phases 10–11)."""
+"""TwinLedger multilingual normalization, candidate matching, and evidence hierarchy (Phases 10–11).
 
-from nlp.hierarchy import (
-    EVIDENCE_TIERS,
-    EvidenceSupportAssessment,
-    TextOnlyProofRejectedError,
-    assess_evidence_support,
-    require_structural_proof,
-)
-from nlp.injection_guard import UntrustedTextInspection, inspect_untrusted_text
-from nlp.matching import (
-    CandidateMatch,
-    extract_typed_id_mentions,
-    rank_counterparty_candidates,
-    text_similarity_bps,
-)
-from nlp.normalize import (
-    LEGAL_FORM_SYNONYMS,
-    char_ngrams,
-    normalize_accounting_text,
-    normalize_nfc,
-    transliterate_to_ascii_skeleton,
-)
+Lazy facade (PEP 562): importing :mod:`nlp` itself loads NO submodules. Each
+public name is resolved on first attribute access from its defining submodule,
+so core consumers that need only the strict TZ §17.3 rule module
+(:mod:`nlp.hierarchy`) never load the optional fuzzy helpers
+(:mod:`nlp.matching`, :mod:`nlp.normalize`) — Phase 10 EXIT GATE:
+the NLP layer is fully optional for core semantics.
+"""
 
-__all__ = [
-    "CandidateMatch",
-    "EVIDENCE_TIERS",
-    "EvidenceSupportAssessment",
-    "LEGAL_FORM_SYNONYMS",
-    "TextOnlyProofRejectedError",
-    "UntrustedTextInspection",
-    "assess_evidence_support",
-    "char_ngrams",
-    "extract_typed_id_mentions",
-    "inspect_untrusted_text",
-    "normalize_accounting_text",
-    "normalize_nfc",
-    "rank_counterparty_candidates",
-    "require_structural_proof",
-    "text_similarity_bps",
-    "transliterate_to_ascii_skeleton",
-]
+from __future__ import annotations
+
+import importlib
+from typing import Any
+
+_EXPORTS: dict[str, str] = {
+    "CandidateMatch": "nlp.matching",
+    "EVIDENCE_TIERS": "nlp.hierarchy",
+    "EvidenceSupportAssessment": "nlp.hierarchy",
+    "LEGAL_FORM_SYNONYMS": "nlp.normalize",
+    "TextOnlyProofRejectedError": "nlp.hierarchy",
+    "UntrustedTextInspection": "nlp.injection_guard",
+    "assess_evidence_reachability": "nlp.hierarchy",
+    "assess_evidence_support": "nlp.hierarchy",
+    "build_evidence_hierarchy_report": "nlp.hierarchy",
+    "char_ngrams": "nlp.normalize",
+    "extract_typed_id_mentions": "nlp.matching",
+    "inspect_untrusted_text": "nlp.injection_guard",
+    "normalize_accounting_text": "nlp.normalize",
+    "normalize_nfc": "nlp.normalize",
+    "rank_counterparty_candidates": "nlp.matching",
+    "require_structural_proof": "nlp.hierarchy",
+    "text_similarity_bps": "nlp.matching",
+    "transliterate_to_ascii_skeleton": "nlp.normalize",
+}
+
+__all__ = sorted(_EXPORTS)
+
+
+def __getattr__(name: str) -> Any:
+    mod_name = _EXPORTS.get(name)
+    if mod_name is None:
+        raise AttributeError(f"module 'nlp' has no attribute {name!r}")
+    value = getattr(importlib.import_module(mod_name), name)
+    globals()[name] = value  # cache for subsequent access
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(_EXPORTS))

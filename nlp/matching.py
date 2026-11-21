@@ -1,4 +1,4 @@
-"""Deterministic candidate entity & document ranker (Phase 10 — TZ §11.2).
+"""Deterministic candidate entity & document ranker (Phase 10, Task 10.4 — Master TZ §17.4).
 
 Strictly emits HYPOTHESIS-TIER candidates (``requires_structured_verification=True``).
 Never auto-confirms an anomaly or substitutes for structured foreign-key / amount /
