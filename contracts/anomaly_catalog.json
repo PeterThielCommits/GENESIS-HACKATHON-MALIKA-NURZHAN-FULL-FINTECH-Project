@@ -1,0 +1,150 @@
+{
+  "catalog_version": "1.0.0",
+  "note": "Frozen for contract 1.0.0. Phase 4 ships DUPLICATE_PAYMENT and PARTIAL_PAYMENT_ALLOCATION; the catalog declares all four types with status so later phases extend without contract drift.",
+  "types": [
+    {
+      "type": "DUPLICATE_PAYMENT",
+      "operator_id": "OP-DUPLICATE_PAYMENT",
+      "operator_version": "1.0.0",
+      "status": "IMPLEMENTED",
+      "intended_invariants": [
+        "INV-04"
+      ],
+      "allowed_side_effects": [
+        "INV-03",
+        "INV-05",
+        "INV-17"
+      ],
+      "forbidden_invariants": [
+        "INV-01",
+        "INV-06",
+        "INV-07",
+        "INV-09",
+        "INV-11",
+        "INV-12",
+        "INV-13",
+        "INV-14",
+        "INV-15",
+        "INV-16"
+      ],
+      "affected_id_rule": "The new payment id created by the operator plus the journal-entry id that records exactly that payment. Original payment and invoice stay evidence-only.",
+      "evidence_requirements": [
+        "target invoice row with currency, total_minor and due date",
+        "original allocation of the same invoice by the original payment",
+        "duplicate payment row with its allocation to the same invoice",
+        "absence of credit note / refund / void that would explain the overpayment"
+      ],
+      "amount_definition": "Sum of allocations to the invoice above total_minor minus valid credit notes, expressed in invoice currency minor units.",
+      "distractor_suite": [
+        "D-DUP-01",
+        "D-DUP-02",
+        "D-DUP-03",
+        "D-DUP-04"
+      ]
+    },
+    {
+      "type": "PARTIAL_PAYMENT_ALLOCATION",
+      "operator_id": "OP-PARTIAL_PAYMENT_ALLOCATION",
+      "operator_version": "1.0.0",
+      "status": "IMPLEMENTED",
+      "intended_invariants": [
+        "INV-04",
+        "INV-15"
+      ],
+      "allowed_side_effects": [
+        "INV-03",
+        "INV-05",
+        "INV-17"
+      ],
+      "forbidden_invariants": [
+        "INV-01",
+        "INV-06",
+        "INV-07",
+        "INV-09",
+        "INV-11",
+        "INV-12",
+        "INV-13",
+        "INV-14",
+        "INV-16"
+      ],
+      "affected_id_rule": "The payment id carrying the wrong allocation plus the invoice id whose remaining balance is directly affected.",
+      "amount_definition": "Difference between the allocated amount and the amount the policy allocation rule requires, in invoice currency minor units.",
+      "evidence_requirements": [
+        "payment row with amount_minor and its allocations",
+        "target invoice total, prior allocations and credit notes",
+        "policy allocation_rule and advance treatment",
+        "absence of a second payment that legitimately closes the remainder"
+      ],
+      "distractor_suite": [
+        "D-PART-01",
+        "D-PART-02",
+        "D-PART-03",
+        "D-PART-04"
+      ]
+    },
+    {
+      "type": "FX_RATE_MISMATCH",
+      "operator_id": "OP-FX_RATE_MISMATCH",
+      "operator_version": "1.0.0",
+      "status": "PLANNED_PHASE_7",
+      "intended_invariants": [
+        "INV-07",
+        "INV-08"
+      ],
+      "allowed_side_effects": [],
+      "forbidden_invariants": [
+        "INV-01",
+        "INV-09",
+        "INV-11",
+        "INV-12",
+        "INV-13",
+        "INV-14"
+      ],
+      "affected_id_rule": "Journal entries whose booked rate differs from the policy-required rate.",
+      "amount_definition": "Functional-currency difference between booked and policy-required functional amount.",
+      "evidence_requirements": [
+        "fx_rates rows",
+        "policy fx_fallback_rule",
+        "posting timestamp"
+      ],
+      "distractor_suite": [
+        "D-FX-01",
+        "D-FX-02",
+        "D-FX-03",
+        "D-FX-04"
+      ]
+    },
+    {
+      "type": "PERIOD_CUTOFF",
+      "operator_id": "OP-PERIOD_CUTOFF",
+      "operator_version": "1.0.0",
+      "status": "PLANNED_PHASE_7",
+      "intended_invariants": [
+        "INV-09",
+        "INV-10"
+      ],
+      "allowed_side_effects": [],
+      "forbidden_invariants": [
+        "INV-01",
+        "INV-07",
+        "INV-11",
+        "INV-12",
+        "INV-13",
+        "INV-14"
+      ],
+      "affected_id_rule": "Journal entries whose posting_period disagrees with the policy recognition period.",
+      "amount_definition": "Functional amount recognised in the wrong period.",
+      "evidence_requirements": [
+        "recognition_rule",
+        "service timestamps",
+        "company timezone"
+      ],
+      "distractor_suite": [
+        "D-CUT-01",
+        "D-CUT-02",
+        "D-CUT-03",
+        "D-CUT-04"
+      ]
+    }
+  ]
+}

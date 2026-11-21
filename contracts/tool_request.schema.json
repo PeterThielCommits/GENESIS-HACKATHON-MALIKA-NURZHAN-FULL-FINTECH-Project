@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TwinLedger tool request (public environment API)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tool", "arguments"],
+  "properties": {
+    "tool": {
+      "type": "string",
+      "enum": ["list_records", "get_record", "get_document", "get_policy", "submit_findings", "request_hint"]
+    },
+    "arguments": {"type": "object"},
+    "request_id": {"type": "string", "maxLength": 64}
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TwinLedger public period calendar",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["timezone", "period_rule", "fiscal_year_start_month", "fiscal_year_start_day",
+               "fiscal_year_start", "cutoff_day_offset", "ambiguity_policy", "periods"],
+  "properties": {
+    "timezone": {"type": "string", "minLength": 3},
+    "period_rule": {"type": "string", "enum": ["monthly", "quarterly", "annual"]},
+    "fiscal_year_start_month": {"type": "integer", "minimum": 1, "maximum": 12},
+    "fiscal_year_start_day": {"type": "integer", "minimum": 1, "maximum": 31},
+    "fiscal_year_start": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "integer"}},
+    "cutoff_day_offset": {"type": "integer", "minimum": -3, "maximum": 3},
+    "ambiguity_policy": {"type": "string", "enum": ["prefer_earlier", "prefer_later", "raise"]},
+    "periods": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^[0-9]{4}-(M[0-9]{2}|Q[1-4]|FY)$"}}
+  }
+}

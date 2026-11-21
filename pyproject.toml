@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "twinledger-generator"
+version = "0.4.0"
+description = "TwinLedger v3.0 synthetic twin accounting benchmark — generator side (Phase 4)"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools]
+packages = [
+    "contracts",
+    "core",
+    "gen",
+    "gen.core",
+    "gen.errors",
+    "gen.distractors",
+    "invariants",
+]
+
+[tool.unittest]
+start-directory = "tests"
+top-level-directory = "."

@@ -1,0 +1,17 @@
+# Python 3.11+, standard library only (offline, deterministic).
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Generated episodes and run artifacts are reproducible from seeds; keep the small
+# gate-evidence summaries in Git but never bulk output.
+artifacts/episodes/
+artifacts/runs/
+artifacts/**/tmp/
+*.tmp
+.DS_Store

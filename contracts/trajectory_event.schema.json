@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TwinLedger trajectory event (append-only, hash-chained)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sequence", "episode_id", "event_type", "payload", "prev_hash", "event_hash", "timestamp_utc"],
+  "properties": {
+    "sequence": {"type": "integer", "minimum": 0},
+    "episode_id": {"type": "string"},
+    "event_type": {"type": "string", "enum": ["RESET", "ACTION", "OBSERVATION", "ERROR", "SUBMIT", "CLOSE"]},
+    "payload": {"type": "object"},
+    "prev_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "event_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "timestamp_utc": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2}$"}
+  }
+}

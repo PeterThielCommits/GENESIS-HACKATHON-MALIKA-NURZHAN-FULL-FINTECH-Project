@@ -1,0 +1,286 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TwinLedger sealed provenance (never public)",
+  "description": "Operator history, clean/mutated linkage and canaries. Must never be served to a policy or included in public reports (REQ-GH-007, REQ-DATA-020).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "provenance_version",
+    "episode_id",
+    "master_seed_digest",
+    "base_config_hash",
+    "clean_public_digest",
+    "mutated_public_digest",
+    "operator_applications",
+    "canaries",
+    "reject_stats"
+  ],
+  "properties": {
+    "provenance_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "episode_id": {
+      "type": "string",
+      "pattern": "^EP-[A-Z0-9-]{6,40}$"
+    },
+    "master_seed_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "base_config_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "clean_public_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "mutated_public_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "operator_applications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "index",
+          "operator_id",
+          "operator_version",
+          "params",
+          "affected_ids",
+          "pre_state_digest",
+          "post_state_digest",
+          "status"
+        ],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "operator_id": {
+            "type": "string",
+            "pattern": "^OP-[A-Z_]+$"
+          },
+          "operator_version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+          },
+          "params": {
+            "type": "object"
+          },
+          "affected_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pre_state_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "post_state_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "APPLIED",
+              "REJECTED",
+              "DEFERRED"
+            ]
+          },
+          "reject_reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "canaries": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{32}$"
+      }
+    },
+    "reject_stats": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attempts",
+        "accepted",
+        "by_reason"
+      ],
+      "properties": {
+        "attempts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "accepted": {
+          "type": "boolean"
+        },
+        "by_reason": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "distractors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "distractor_id",
+          "distractor_of",
+          "distinguishing_fact",
+          "public_evidence_ids"
+        ],
+        "properties": {
+          "distractor_id": {
+            "type": "string",
+            "pattern": "^D-[A-Z]+-[0-9]{2}$"
+          },
+          "distractor_of": {
+            "type": "string",
+            "enum": [
+              "DUPLICATE_PAYMENT",
+              "PARTIAL_PAYMENT_ALLOCATION"
+            ]
+          },
+          "distinguishing_fact": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 400
+          },
+          "public_evidence_ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "diff_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "added",
+        "removed",
+        "modified",
+        "by_table",
+        "clean_digest",
+        "mutated_digest"
+      ],
+      "properties": {
+        "added": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "removed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "modified": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "by_table": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "clean_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "mutated_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "signature_decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "anomaly_type",
+          "subtype",
+          "accepted",
+          "reasons",
+          "observed",
+          "intended_hit",
+          "intended_missing",
+          "forbidden_hit",
+          "unexpected"
+        ],
+        "properties": {
+          "anomaly_type": {
+            "type": "string"
+          },
+          "subtype": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "accepted": {
+            "type": "boolean"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "observed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "intended_hit": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "intended_missing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "forbidden_hit": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unexpected": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "attempt_index": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

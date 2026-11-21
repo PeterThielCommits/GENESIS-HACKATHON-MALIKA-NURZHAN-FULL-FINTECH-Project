@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TwinLedger rubric map entry (REQ-JUDGE-*/23.4)",
+  "description": "Maps a rubric criterion to REQ ids, executables and evidence. provisional=true whenever the official rubric has not been confirmed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "criterion_id",
+    "title",
+    "provisional",
+    "requirements",
+    "checks"
+  ],
+  "properties": {
+    "criterion_id": {
+      "type": "string",
+      "pattern": "^RC-[A-Z0-9-]{2,24}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 120
+    },
+    "provisional": {
+      "type": "boolean"
+    },
+    "weight": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 100
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^REQ-[A-Z]+-[0-9]{3}$"
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "check_id",
+          "command",
+          "test_id",
+          "status"
+        ],
+        "properties": {
+          "check_id": {
+            "type": "string",
+            "minLength": 3
+          },
+          "command": {
+            "type": "string",
+            "minLength": 3
+          },
+          "test_id": {
+            "type": "string",
+            "minLength": 3
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "FAIL",
+              "SKIPPED",
+              "NOT RUN",
+              "BLOCKED"
+            ]
+          },
+          "evidence": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

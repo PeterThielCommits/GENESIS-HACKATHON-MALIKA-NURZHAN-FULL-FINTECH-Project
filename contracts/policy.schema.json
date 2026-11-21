@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TwinLedger accounting policy (public)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policy_version", "rounding_mode", "functional_currency", "fx_source_priority",
+    "fx_fallback_rule", "recognition_rule", "allocation_rule", "credit_note_cap_bps",
+    "tolerance_rule_version", "advance_account_id", "revenue_account_id",
+    "receivable_account_id", "bank_account_id", "fx_gain_loss_account_id"
+  ],
+  "properties": {
+    "policy_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "rounding_mode": {
+      "type": "string",
+      "enum": ["ROUND_HALF_EVEN", "ROUND_HALF_UP", "ROUND_DOWN", "ROUND_UP", "ROUND_CEILING", "ROUND_FLOOR"]
+    },
+    "functional_currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "fx_source_priority": {
+      "type": "array", "minItems": 1, "maxItems": 3, "uniqueItems": true,
+      "items": {"type": "string", "minLength": 2, "maxLength": 24}
+    },
+    "fx_fallback_rule": {"type": "string", "enum": ["last_available_on_or_before", "exact_date_only"]},
+    "fx_rate_date_basis": {"type": "string", "enum": ["document_date", "payment_date", "posting_date"]},
+    "recognition_rule": {"type": "string", "enum": ["service_start", "service_end", "issue_date", "delivery_date"]},
+    "allocation_rule": {"type": "string", "enum": ["oldest_open_first", "pro_rata_open", "explicit"]},
+    "credit_note_cap_bps": {"type": "integer", "minimum": 0, "maximum": 10000},
+    "tolerance_rule_version": {"type": "string", "enum": ["rounding_ops_v1"]},
+    "advance_account_id": {"type": "string", "minLength": 3},
+    "revenue_account_id": {"type": "string", "minLength": 3},
+    "receivable_account_id": {"type": "string", "minLength": 3},
+    "bank_account_id": {"type": "string", "minLength": 3},
+    "fx_gain_loss_account_id": {"type": "string", "minLength": 3},
+    "notes": {"type": "array", "maxItems": 12, "items": {"type": "string", "maxLength": 400}}
+  }
+}

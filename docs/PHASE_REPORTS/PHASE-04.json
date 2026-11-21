@@ -1,0 +1,109 @@
+{
+  "phase": 4,
+  "title": "ПЕРВЫЕ МУТАЦИОННЫЕ ОПЕРАТОРЫ И DIFF TRUTH",
+  "status": "DONE",
+  "date": "2026-11-21",
+  "branch": "arena/d94e8b76-genesis-hackathon-malika-nurzh",
+  "base_commit": "c961a009611e1711463f5116b2df926bb4726de8",
+  "python": "3.11.2 (stdlib only, offline)",
+  "exit_gate": {
+    "statement": "two anomaly types generate and pass all current quality gates",
+    "verdict": "PASS",
+    "evidence": "artifacts/phase-04/sweep-24.json",
+    "gates": {
+      "G1_both_families_generated": true,
+      "G2_clean_twin_passed_everywhere": true,
+      "G3_findings_are_diff_backed": true,
+      "G4_no_forbidden_invariant": true,
+      "G5_rejection_is_a_minority": true,
+      "G6_deterministic": true
+    }
+  },
+  "scope": {
+    "4.1_twin_snapshots": "contracts/book_model.py + gen/twins.py",
+    "4.2_duplicate_payment": "gen/errors/duplicate_payment.py",
+    "4.3_partial_allocation": "gen/errors/partial_allocation.py (3 subtypes)",
+    "4.4_structural_diff": "gen/truthdiff.py",
+    "4.5_candidate_truth": "gen/truth_build.py",
+    "4.6_distractors": "gen/distractors/__init__.py",
+    "4.7_rejection_sampling": "gen/reject.py",
+    "operator_registry": "gen/errors/registry.py"
+  },
+  "tests": {
+    "full_suite": {
+      "command": "python3 -m unittest discover -s tests -t .",
+      "exit_code": 0,
+      "total": 254,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "suites": {
+      "unit.test_money": 33,
+      "unit.test_time_rules": 22,
+      "unit.test_ids": 17,
+      "contracts.test_schemas": 24,
+      "gen.test_clean_twin": 24,
+      "gen.test_operators": 33,
+      "gen.test_diff_truth": 18,
+      "gen.test_reject_and_episodes": 18,
+      "gen.test_registry": 11,
+      "invariants.test_invariants": 25,
+      "integration.test_serialize": 16,
+      "security.test_sealed_boundary": 13
+    }
+  },
+  "sweep": {
+    "seeds": 24,
+    "difficulties": [
+      "L1",
+      "L2"
+    ],
+    "published": 48,
+    "rejected": 0,
+    "rejection_rate": 0.0,
+    "anomaly_types": {
+      "DUPLICATE_PAYMENT": 36,
+      "PARTIAL_PAYMENT_ALLOCATION": 36
+    },
+    "subtypes": {
+      "ALLOCATE_TO_ALREADY_SETTLED_INVOICE": 23,
+      "ALLOCATIONS_EXCEED_PAYMENT": 9,
+      "OVER_ALLOCATE_TO_ONE_INVOICE": 4
+    },
+    "forbidden_violations": [],
+    "deterministic": true,
+    "elapsed_seconds": 24.28
+  },
+  "defects_found_and_fixed": [
+    "credit-note JE referenced the invoice and was judged against the invoice recognition period (INV-09/INV-07 scope corrected)",
+    "style-D numeric ids collided across document tables, breaking cross-table references",
+    "INV-05 reporting date derived from the data it judged, making the check unreachable",
+    "invariant checks raised on adversarial input instead of reporting violations",
+    "public-layer invariants imported gen.twins (moved Book to contracts/book_model.py)",
+    "candidate selection was positional, starving two of three allocation subtypes",
+    "operator retries could not recover when a family had no viable target"
+  ],
+  "not_in_scope": [
+    "independent verifier package (Phase 8)",
+    "anomaly types 3-4 (catalogue PLANNED)",
+    "optimal_steps computation (later query-plan phase)"
+  ],
+  "commands": [
+    {
+      "command": "make test",
+      "exit_code": 0,
+      "result": "254 tests OK"
+    },
+    {
+      "command": "make sweep",
+      "exit_code": 0,
+      "result": "48 published / 0 rejected, 6/6 gates pass"
+    },
+    {
+      "command": "python3 tools/phase4_sweep.py --seeds 24",
+      "exit_code": 0,
+      "result": "all_gates_pass=true"
+    }
+  ]
+}

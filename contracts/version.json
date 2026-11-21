@@ -1,0 +1,32 @@
+{
+  "contract_version": "1.0.0",
+  "status": "FROZEN_FOR_MVP",
+  "frozen_at": "2026-11-21",
+  "freeze_basis": "Master TZ v3.0.0 sections 7.1-7.4 and 24/PHASE-1 exit gate",
+  "schemas": {
+    "episode_manifest.schema.json": "1.0.0",
+    "company.schema.json": "1.0.0",
+    "policy.schema.json": "1.0.0",
+    "book.schema.json": "1.0.0",
+    "finding.schema.json": "1.0.0",
+    "truth.schema.json": "1.0.0",
+    "provenance.schema.json": "1.0.0",
+    "tool_request.schema.json": "1.0.0",
+    "tool_response.schema.json": "1.0.0",
+    "trajectory_event.schema.json": "1.0.0",
+    "receipt.schema.json": "1.0.0",
+    "verifier_report.schema.json": "1.0.0",
+    "invariant_signature.schema.json": "1.0.0",
+    "rubric_check.schema.json": "1.0.0",
+    "anomaly_catalog.schema.json": "1.0.0",
+    "period_calendar.schema.json": "1.0.0"
+  },
+  "change_control": {
+    "rule": "Any incompatible change raises the major contract version and requires an approved CR in docs/CR/.",
+    "authority": "A0 ORCHESTRATOR"
+  },
+  "notes": [
+    "Schemas are executable: contracts/jsonschema_subset.py validates them, and tests/contracts prove valid fixtures pass and malformed fixtures fail.",
+    "The JSON-Schema subset validator intentionally implements only the keywords used by these documents; unsupported keywords raise rather than being ignored."
+  ]
+}

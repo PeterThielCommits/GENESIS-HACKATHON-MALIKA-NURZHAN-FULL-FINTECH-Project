@@ -1,0 +1,33 @@
+{
+  "all_gates_pass": true,
+  "anomaly_types": {
+    "DUPLICATE_PAYMENT": 36,
+    "PARTIAL_PAYMENT_ALLOCATION": 36
+  },
+  "catalogue_problems": [],
+  "deterministic": true,
+  "difficulties": [
+    "L1",
+    "L2"
+  ],
+  "elapsed_seconds": 24.28,
+  "forbidden_violations": [],
+  "gates": {
+    "G1_both_families_generated": true,
+    "G2_clean_twin_passed_everywhere": true,
+    "G3_findings_are_diff_backed": true,
+    "G4_no_forbidden_invariant": true,
+    "G5_rejection_is_a_minority": true,
+    "G6_deterministic": true
+  },
+  "published": 48,
+  "rejected": 0,
+  "rejection_rate": 0.0,
+  "seed_count": 24,
+  "subtypes": {
+    "ALLOCATE_TO_ALREADY_SETTLED_INVOICE": 23,
+    "ALLOCATIONS_EXCEED_PAYMENT": 9,
+    "OVER_ALLOCATE_TO_ONE_INVOICE": 4
+  },
+  "total_attempts": 7
+}

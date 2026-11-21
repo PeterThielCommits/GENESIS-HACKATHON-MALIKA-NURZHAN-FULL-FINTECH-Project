@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TwinLedger episode receipt (commit-reveal + replay)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["receipt_version", "episode_id", "commitment_hex", "revealed_truth_digest",
+               "salt_hex", "merkle_root", "trajectory_head_hash", "public_digest", "replay_verified"],
+  "properties": {
+    "receipt_version": {"type": "string", "const": "1.0.0"},
+    "episode_id": {"type": "string"},
+    "commitment_hex": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "revealed_truth_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "salt_hex": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "merkle_root": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "trajectory_head_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "public_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "replay_verified": {"type": "boolean"},
+    "commitment_valid": {"type": "boolean"}
+  }
+}

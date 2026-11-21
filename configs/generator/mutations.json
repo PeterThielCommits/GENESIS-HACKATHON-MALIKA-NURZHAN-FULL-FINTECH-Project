@@ -1,0 +1,53 @@
+{
+  "config_version": "1.0.0",
+  "mutation": {
+    "operator_order": [
+      "OP-DUPLICATE_PAYMENT",
+      "OP-PARTIAL_PAYMENT_ALLOCATION"
+    ],
+    "reject_attempt_limit": 40,
+    "max_anomalies_per_episode": 3,
+    "allow_composite": false
+  },
+  "duplicate_payment": {
+    "operator_version": "1.0.0",
+    "replay_delay_days": [
+      3,
+      14
+    ],
+    "bank_reference_strategy": "new_reference",
+    "payment_channel_pool": [
+      "WIRE",
+      "ACH"
+    ]
+  },
+  "partial_payment_allocation": {
+    "operator_version": "1.0.0",
+    "subtype_weights_bps": {
+      "OVER_ALLOCATE_TO_ONE_INVOICE": 4000,
+      "ALLOCATE_TO_ALREADY_SETTLED_INVOICE": 3500,
+      "ALLOCATIONS_EXCEED_PAYMENT": 2500
+    },
+    "partial_ratio_bps_pool": [
+      3500,
+      4500,
+      6000,
+      7500
+    ]
+  },
+  "distractors": {
+    "duplicate_payment": [
+      "D-DUP-01",
+      "D-DUP-02",
+      "D-DUP-03",
+      "D-DUP-04"
+    ],
+    "partial_payment_allocation": [
+      "D-PART-01",
+      "D-PART-02",
+      "D-PART-03",
+      "D-PART-04"
+    ],
+    "max_active_per_episode": 2
+  }
+}

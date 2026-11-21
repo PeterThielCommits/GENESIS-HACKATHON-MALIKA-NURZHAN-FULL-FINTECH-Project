@@ -1,0 +1,28 @@
+{
+  "registry_version": "1.0.0",
+  "note": "Synthetic currency exponent registry. Not derived from any external library at runtime (REQ-MONEY-001..006).",
+  "default_rounding_mode": "ROUND_HALF_EVEN",
+  "max_abs_minor_units": 9007199254740991,
+  "currencies": {
+    "AED": {"exponent": 2, "kind": "fiat_synthetic"},
+    "AUD": {"exponent": 2, "kind": "fiat_synthetic"},
+    "CAD": {"exponent": 2, "kind": "fiat_synthetic"},
+    "CHF": {"exponent": 2, "kind": "fiat_synthetic"},
+    "CNY": {"exponent": 2, "kind": "fiat_synthetic"},
+    "EUR": {"exponent": 2, "kind": "fiat_synthetic"},
+    "GBP": {"exponent": 2, "kind": "fiat_synthetic"},
+    "GEL": {"exponent": 2, "kind": "fiat_synthetic"},
+    "HKD": {"exponent": 2, "kind": "fiat_synthetic"},
+    "INR": {"exponent": 2, "kind": "fiat_synthetic"},
+    "JPY": {"exponent": 0, "kind": "fiat_synthetic"},
+    "KGS": {"exponent": 2, "kind": "fiat_synthetic"},
+    "KWD": {"exponent": 3, "kind": "fiat_synthetic"},
+    "KZT": {"exponent": 2, "kind": "fiat_synthetic"},
+    "RUB": {"exponent": 2, "kind": "fiat_synthetic"},
+    "SGD": {"exponent": 2, "kind": "fiat_synthetic"},
+    "TRY": {"exponent": 2, "kind": "fiat_synthetic"},
+    "USD": {"exponent": 2, "kind": "fiat_synthetic"},
+    "UZS": {"exponent": 2, "kind": "fiat_synthetic"},
+    "XTS": {"exponent": 2, "kind": "test_synthetic"}
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "config_version": "1.0.0",
+  "generator_version": "1.0.0",
+  "history": {
+    "start_year": 2025,
+    "start_month": 1,
+    "months": 6,
+    "period_rule": "monthly",
+    "fiscal_year_start_month": 1,
+    "fiscal_year_start_day": 1,
+    "cutoff_day_offset": 0,
+    "ambiguity_policy": "prefer_earlier"
+  },
+  "company": {
+    "jurisdiction_pool": [
+      "XA",
+      "XB",
+      "XC"
+    ],
+    "timezone_pool": [
+      "Asia/Almaty",
+      "Asia/Aqtobe",
+      "UTC"
+    ],
+    "functional_currency": "KZT",
+    "supported_currencies": [
+      "KZT",
+      "USD",
+      "EUR",
+      "JPY"
+    ],
+    "size": "medium",
+    "id_style_pool": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "text_profile": "ru_kk_en"
+  },
+  "volumes": {
+    "counterparty_count": 7,
+    "customer_ratio_bps": 6000,
+    "invoices_per_month": 5,
+    "foreign_currency_ratio_bps": 3500,
+    "lines_per_invoice_max": 3,
+    "payment_delay_days_max": 12,
+    "early_payment_ratio_bps": 3500,
+    "credit_note_ratio_bps": 2800,
+    "recurring_invoice_ratio_bps": 2200,
+    "unapplied_cash_ratio_bps": 600,
+    "partial_payment_ratio_bps": 2600,
+    "remainder_settlement_ratio_bps": 7800,
+    "identical_amount_coincidence_bps": 4500,
+    "advance_receipt_ratio_bps": 5000
+  },
+  "fx": {
+    "rate_scale": 6,
+    "pairs": [
+      "USD/KZT",
+      "EUR/KZT",
+      "JPY/KZT"
+    ],
+    "base_rate_scaled": {
+      "USD/KZT": 512000,
+      "EUR/KZT": 558000,
+      "JPY/KZT": 3400
+    },
+    "mean_reversion_numerator": 3,
+    "mean_reversion_denominator": 20,
+    "noise_amplitude_scaled": {
+      "USD/KZT": 1800,
+      "EUR/KZT": 2100,
+      "JPY/KZT": 12
+    },
+    "sources": [
+      "TLFX-PRIMARY",
+      "TLFX-SECONDARY"
+    ],
+    "weekend_publication": false
+  },
+  "amounts": {
+    "min_invoice_minor": 4500000,
+    "max_invoice_minor": 480000000,
+    "tax_rate_bps_pool": [
+      0,
+      1200
+    ],
+    "round_price_to_minor": 100
+  },
+  "difficulty_profiles": {
+    "L1": {
+      "anomaly_count": 1,
+      "distractor_pairs": 1,
+      "invoices_per_month": 4
+    },
+    "L2": {
+      "anomaly_count": 2,
+      "distractor_pairs": 2,
+      "invoices_per_month": 6
+    },
+    "L3": {
+      "anomaly_count": 3,
+      "distractor_pairs": 3,
+      "invoices_per_month": 8
+    }
+  },
+  "default_profile": "L1"
+}

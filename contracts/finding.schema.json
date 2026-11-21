@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TwinLedger policy-submitted finding",
+  "description": "External finding shape submitted by a policy. Strict: unknown fields are rejected (REQ-CONTRACT-003), except namespaced x_twinledger_* extensions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "affected_ids", "amount_minor", "currency", "evidence_ids"],
+  "properties": {
+    "finding_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "type": {"type": "string", "enum": ["DUPLICATE_PAYMENT", "PARTIAL_PAYMENT_ALLOCATION", "FX_RATE_MISMATCH", "PERIOD_CUTOFF"]},
+    "affected_ids": {"type": "array", "minItems": 1, "maxItems": 6, "uniqueItems": true, "items": {"type": "string", "minLength": 2, "maxLength": 48}},
+    "amount_minor": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+    "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "evidence_ids": {"type": "array", "minItems": 1, "maxItems": 24, "uniqueItems": true, "items": {"type": "string", "minLength": 2, "maxLength": 48}},
+    "explanation": {"type": "string", "maxLength": 1200},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "posting_period": {"type": "string", "pattern": "^[0-9]{4}-(M[0-9]{2}|Q[1-4]|FY)$"}
+  }
+}
