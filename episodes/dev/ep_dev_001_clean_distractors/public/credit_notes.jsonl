@@ -1,0 +1,4 @@
+{"amount_minor":8000,"counterparty_id":"CP-D9AC3A322CB303D90A52D347","credit_note_id":"CN-2DBAE5754A52F1FE28AFEDAE","currency":"KZT","invoice_id":"INV-79765E2E4D2E78670C15540F","reason_code":"return","timestamp":"2025-04-09T10:00:00+05:00"}
+
+{"amount_minor":45000,"counterparty_id":"CP-D9AC3A322CB303D90A52D347","credit_note_id":"CN-8D34488117DA8F6B1C1AE49E","currency":"KZT","invoice_id":"INV-A8648E84B2635845D435972C","reason_code":"overpayment_credit","timestamp":"2025-04-06T10:00:00+05:00"}
+

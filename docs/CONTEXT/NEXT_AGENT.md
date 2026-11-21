@@ -1,19 +1,21 @@
-# Next agent — Phase 8 → Phase 9 / Integration continuation
+# Next agent — Phase 9 (Processes + Seal + Receipts)
 
-First, A0: resolve issue #3 / draft CR-06-01 and merge approved Phase 3–5 +
-Phase 7 commits compatible with the pinned v1.0.0 contracts. Read
-`docs/CURRENT_STATE.md`, `docs/PHASE_REPORTS/PHASE-08.md`,
-`docs/INDEPENDENCE.md`, and `spec/verifier_algorithm.md`.
+All upstream Phases 1–8 are now integrated and green on the frozen `v1.0.0`
+contract line (`CR-06-01` resolved, 10/10 generated episodes in `episodes/dev`
+and `episodes/train` verified with `release_blocked=False`).
 
-Run `make verify` before any edits.
+Read before starting:
+- `docs/CURRENT_STATE.md`
+- `docs/STATUS.md`
+- `docs/PHASE_REPORTS/PHASE-08.md`
+- `contracts/receipt.schema.json`, `contracts/trajectory_event.schema.json`
+- `tools/check_import_boundaries.py`
 
-Once generated episodes exist in `episodes/dev` and `episodes/train`:
-1. Run Stage-1 independent discovery on every generated episode's `public/`
-   directory (`python3 -m verifier <ep>/public --out <ep>/verifier_report.json`)
-   and Stage-2 `scoring.crosscheck.crosscheck()` against sealed truth to close
-   EXIT GATE 8 (`100%` generated release episodes verified).
-2. Reconcile any official organiser clarifications for `Q-004/Q-005/Q-006`
-   without weakening `verifier/` independence (`verifier/` must never import
-   `gen/`, `core/`, `invariants/`, or `scoring/`).
-3. Proceed to Phase 9 (`seal/` commit-reveal/Merkle/receipts & `harness/`
-   process isolation).
+Start command:
+```bash
+make verify && python3 tools/make_dataset.py --split all
+```
+
+Owner: Zone 2 (`seal/`, `harness/`). Implement Phase 9 strictly obeying import
+boundaries (`seal/` → `contracts/` + stdlib only; `harness/` ↛ `gen/verifier/scoring/seal`)
+and frozen `contracts/{receipt,trajectory_event}.schema.json`.

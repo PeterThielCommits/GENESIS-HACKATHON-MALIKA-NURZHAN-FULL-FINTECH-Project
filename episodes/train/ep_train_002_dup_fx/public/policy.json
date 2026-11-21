@@ -1,0 +1,2 @@
+{"allocation_policy":{"allow_advances":false,"allow_multi_invoice_split":true},"credit_note_cap_minor":500000000,"cutoff_policy":{"recognition_event":"service_date","timezone_source":"company"},"eta":0.1,"fx_policy":{"fallback_rule":"last_available","quote_convention":"functional_per_foreign","rate_date_rule":"document_date","source_codes":["NBK"]},"max_evidence_ids":20,"max_findings":20,"max_page_size":50,"max_steps":100,"rounding_mode":"half_even","schema_version":"1.0.0"}
+

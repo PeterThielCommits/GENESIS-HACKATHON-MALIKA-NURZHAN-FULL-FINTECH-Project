@@ -1,0 +1,40 @@
+{"amount_minor":700000,"bank_line_id":"BANK-07789EB34D14A0F85CBA62AF","counterparty_text":"Altai Logistics Partner 5","currency":"KZT","direction":"outbound","reference_text":"Settlement INV-2531885929F043E3410E0211","timestamp":"2025-04-09T14:00:00+05:00"}
+
+{"amount_minor":51000,"bank_line_id":"BANK-1C2F4D4740B2AB9B5636D173","counterparty_text":"CP-D9AC3A322CB303D90A52D347","currency":"KZT","direction":"outbound","reference_text":"Ref PAY-62EEE35FC9041D21589E8E1F","timestamp":"2025-04-07T10:00:00+05:00"}
+
+{"amount_minor":35000,"bank_line_id":"BANK-34D9FE318B06F943C70E5BB4","counterparty_text":"CP-D9AC3A322CB303D90A52D347","currency":"KZT","direction":"outbound","reference_text":"Ref PAY-D39B15E27A89B50FAA9D28DA","timestamp":"2025-04-05T10:00:00+05:00"}
+
+{"amount_minor":38000,"bank_line_id":"BANK-35079C81579693E4EBF3A563","counterparty_text":"CP-D9AC3A322CB303D90A52D347","currency":"KZT","direction":"outbound","reference_text":"Ref PAY-FD672D01E31430C9DE0FFFDB","timestamp":"2025-04-05T10:00:00+05:00"}
+
+{"amount_minor":796000,"bank_line_id":"BANK-3960FDFA32426A15A53601D7","counterparty_text":"Irtysh Cloud Partner 2","currency":"KZT","direction":"outbound","reference_text":"Settlement INV-61DFF343666B7C29198AB23D","timestamp":"2025-04-10T14:00:00+05:00"}
+
+{"amount_minor":45000,"bank_line_id":"BANK-465CCCB61C8EB81750805986","counterparty_text":"CP-D9AC3A322CB303D90A52D347","currency":"KZT","direction":"outbound","reference_text":"Ref PAY-F846664F20AF1411CEFD0F59","timestamp":"2025-04-04T10:00:00+05:00"}
+
+{"amount_minor":45000,"bank_line_id":"BANK-5B116FFB1E8646BDCC1F62E7","counterparty_text":"CP-D9AC3A322CB303D90A52D347","currency":"KZT","direction":"outbound","reference_text":"Ref PAY-80529DE366C4BFB7D1D9826F","timestamp":"2025-04-05T10:00:00+05:00"}
+
+{"amount_minor":494000,"bank_line_id":"BANK-624C7D4637172D5E03324BF8","counterparty_text":"Zhetysu Analytics Partner 4","currency":"KZT","direction":"outbound","reference_text":"Settlement INV-53AFEB4FA57E34A3318758D0","timestamp":"2025-04-12T14:00:00+05:00"}
+
+{"amount_minor":25000,"bank_line_id":"BANK-63B488DE93B806F9B07EE60C","counterparty_text":"CP-D9AC3A322CB303D90A52D347","currency":"KZT","direction":"outbound","reference_text":"Ref PAY-EBED88F053FC59C7871651B9","timestamp":"2025-03-05T10:00:00+05:00"}
+
+{"amount_minor":51000,"bank_line_id":"BANK-7F6EF63D1F501A859E8947F7","counterparty_text":"CP-D9AC3A322CB303D90A52D347","currency":"KZT","direction":"outbound","reference_text":"Ref PAY-917AC8F73CEBD18B3FF234BA","timestamp":"2025-04-06T10:00:00+05:00"}
+
+{"amount_minor":38000,"bank_line_id":"BANK-8832994E6CC4212CA9D50B4B","counterparty_text":"CP-D9AC3A322CB303D90A52D347","currency":"KZT","direction":"outbound","reference_text":"Ref PAY-01CF745E3962CF8D79828291","timestamp":"2025-04-05T11:00:00+05:00"}
+
+{"amount_minor":55000,"bank_line_id":"BANK-A13E69E8310E1605F20C0B7A","counterparty_text":"CP-D9AC3A322CB303D90A52D347","currency":"KZT","direction":"outbound","reference_text":"Ref PAY-5EBBA7D5C6191007845519A7","timestamp":"2025-04-07T10:00:00+05:00"}
+
+{"amount_minor":743000,"bank_line_id":"BANK-A2ECB223058176ACB4060A22","counterparty_text":"Caspian Trade Partner 3","currency":"KZT","direction":"outbound","reference_text":"Settlement INV-7CED2837978E33157B3FF940","timestamp":"2025-04-07T14:00:00+05:00"}
+
+{"amount_minor":25000,"bank_line_id":"BANK-A8BC5AF46EE212F6072EB70C","counterparty_text":"CP-D9AC3A322CB303D90A52D347","currency":"KZT","direction":"outbound","reference_text":"Ref PAY-2D5630FD3E57CF4C9DA8CF8F","timestamp":"2025-04-05T10:00:00+05:00"}
+
+{"amount_minor":42000,"bank_line_id":"BANK-B53B10828165C3FB6A70DE47","counterparty_text":"CP-D9AC3A322CB303D90A52D347","currency":"KZT","direction":"outbound","reference_text":"Ref PAY-93AB7F1A39A11F910F2F4C64","timestamp":"2025-04-08T10:00:00+05:00"}
+
+{"amount_minor":51000,"bank_line_id":"BANK-C100B061C46877E56FD3C520","counterparty_text":"CP-D9AC3A322CB303D90A52D347","currency":"KZT","direction":"inbound","reference_text":"Ref PAY-4B07CAF80DE1B2B2BE99EA7D","timestamp":"2025-04-08T10:00:00+05:00"}
+
+{"amount_minor":289000,"bank_line_id":"BANK-D7138C560AACF6C968726715","counterparty_text":"Saryarka Engineering Partner 1","currency":"KZT","direction":"outbound","reference_text":"Settlement INV-8396CA26A3BE8250375E483B","timestamp":"2025-04-05T14:00:00+05:00"}
+
+{"amount_minor":749000,"bank_line_id":"BANK-DD7E862848B53353E89D4492","counterparty_text":"Alatau Supply Partner 6","currency":"KZT","direction":"outbound","reference_text":"Settlement INV-2936A5E792902455C3D31DC6","timestamp":"2025-04-14T14:00:00+05:00"}
+
+{"amount_minor":25000,"bank_line_id":"BANK-E2436321E37019119C67FD26","counterparty_text":"CP-D9AC3A322CB303D90A52D347","currency":"KZT","direction":"outbound","reference_text":"Ref PAY-5D91E24A6A3430DC72AC2B42","timestamp":"2025-04-09T10:00:00+05:00"}
+
+{"amount_minor":14000,"bank_line_id":"BANK-F8267F5B9DBCA21E2BF6ABCD","counterparty_text":"CP-D9AC3A322CB303D90A52D347","currency":"USD","direction":"outbound","reference_text":"Ref PAY-40B6AB380BB523E2C46E795A","timestamp":"2025-04-15T10:00:00+05:00"}
+

@@ -17,6 +17,7 @@ artifacts/reports/latest/*.csv
 artifacts/reports/latest/*.html
 # Sealed episode data: never commit without explicit Phase 0 decision (TZ 5)
 episodes/*/sealed/
+episodes/*/*/sealed/
 episodes/hidden/
 # Local secrets / env
 .env

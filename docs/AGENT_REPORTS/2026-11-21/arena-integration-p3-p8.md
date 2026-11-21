@@ -1,0 +1,9 @@
+# Arena agent — Phases 3–5 & 7–8 integration + EXIT GATE 8 closure (2026-11-21)
+
+DONE (all internal gates Phases 1–8 closed on frozen `contracts/` v1.0.0; external organiser clarifications `Q-003..Q-006` and Docker check transparently noted).
+
+Started cleanly from `be114f0` (`main` after PR #7). Resolved `docs/CR/CR-06-01.md` on the Phase 1 frozen `v1.0.0` contract line (zero frozen schema modifications) and completed full end-to-end integration:
+- **Phases 3, 4, 7 (`gen/`)**: deterministic Clean Twin generator (`gen/core/rng.py`, `gen/core/clean_twin.py`), 16-class clean distractor catalog (`gen/distractors/catalog.py`), all 4 anomaly operators (`gen/errors/operators.py`, reusing `gen/errors/fx_cutoff.py`), structural diff + salted `truth_commitment` (`gen/truth.py`), canonical manifest serializer (`gen/serialize.py`), rejection-sampling pipeline (`gen/pipeline.py`), and CLI tools (`tools/{make_dataset,verify_manifest,inspect_episode}.py`). Added `episodes/*/*/sealed/` to `.gitignore`.
+- **Phase 5 (`env/`, `adapter/`)**: public-only allowlisted environment (`env/{errors,loader,cursors,calc,environment,jsonl_server}.py`) conforming 100% to frozen `tool_request`/`tool_response`/`finding` schemas, safe AST Decimal calculator, opaque HMAC cursors, `CLOSED_EVAL` zero-reward guarantee, JSONL stdio server, and provisional `adapter/organizer.py`.
+- **EXIT GATE 8**: generated 10 deterministic episodes (`episodes/dev`: 6, `episodes/train`: 4) and verified 100% (10/10) through manifest SHA-256 verification, Stage-1 public-only `verifier.discover`, Stage-2 `scoring.crosscheck` (`release_blocked=False`), and `TwinLedgerEnv` public reachability.
+- **Verification**: `make lint` CLEAN, `python3 tools/make_dataset.py --split all` 10/10 PASS, `make test` 214/214 PASS, `make test-property` 3/3 PASS, `make verify` PASS (`RC-001..003`), `make report` PASS.
