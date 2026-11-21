@@ -25,3 +25,8 @@
 24-pair robustness engineering gate PASS; 360 tests and 12/12 verify gates PASS.
 Release-freeze verification FAIL (existing loader hash drift); human sign-off pending.
 See `docs/PHASE_REPORTS/PHASE-11.md`; do not interpret earlier DONE rows as release approval.
+
+## Phase 12 re-audit (2026-11-21)
+Arena 7 baselines + oracle separated, 22/22 attacks AT-01..AT-22 defended, seed-grouped AutoHacker delta +0.2502, shortcut 0.5389 ≤0.55, 0 canary hits (10 channels) — 12/12 verify PASS, 360 tests, lint CLEAN; env/loader D-10-03 bounded-read restoration applied (RC-001 fix).
+Release-freeze verification still FAIL (contracts/loader.py drift predates Phase 12); maintainer authorization required.
+See `docs/PHASE_REPORTS/PHASE-12.md` and `docs/AGENT_REPORTS/2026-11-21/arena-phase-12-re-audit.md`.

@@ -5,8 +5,8 @@
   "exit_gate_12": "DONE",
   "exit_gate_note": "EXIT GATE 12 PASS: 7 public baselines + separated oracle_test_only, 22/22 red-team attacks AT-01..AT-22 defended, seed-grouped AutoHacker positive heldout delta (+0.2502), shortcut macro_ROC_AUC=0.5389 <= 0.55, and 0 canary hits across 10 channels.",
   "date": "2026-11-21",
-  "branch": "arena/3a99279e-genesis-hackathon-malika-nurzh",
-  "base_commit": "da42d26008f948c294920ae8b02a30b08f541732",
+  "branch": "arena/3f693c20-genesis-hackathon-malika-nurzh",
+  "base_commit": "2dc365a6ebc0aa2b907bacb6a79189e8b590fbb8",
   "master_tz_sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36",
   "req_ids": [
     "REQ-ARENA-001",
@@ -22,7 +22,10 @@
     "REQ-SHORTCUT-002",
     "REQ-SHORTCUT-003",
     "REQ-LEAK-001",
-    "REQ-LEAK-002"
+    "REQ-LEAK-002",
+    "REQ-LEAK-003",
+    "REQ-LEAK-004",
+    "REQ-LEAK-005"
   ],
   "tasks": {
     "12.1": "DONE",
@@ -30,18 +33,26 @@
     "12.3": "DONE",
     "12.4": "DONE",
     "12.5": "DONE",
-    "12.6": "DONE"
+    "12.6": "DONE",
+    "12.7": "DONE"
   },
   "decisions": [
     "D-12-01"
   ],
   "files": [
     "arena/policies/catalog.py",
+    "arena/policies/base.py",
+    "arena/policies/random_policy.py",
+    "arena/policies/simple_reconciliation.py",
+    "arena/policies/mass_flagging.py",
+    "arena/policies/worker.py",
     "arena/attacks/catalog.py",
     "arena/autohacker.py",
     "judge/shortcut_audit.py",
     "judge/canary_fuzzer.py",
-    "tests/arena/test_phase12_arena.py"
+    "configs/arena/default.json",
+    "tests/arena/test_arena_and_audits.py",
+    "env/loader.py"
   ],
-  "gate_evidence": "RC-007, RC-008, RC-009 PASS -> reward_strategy_report.json, shortcut_audit.json (macro_roc_auc=0.5389), canary_fuzz_report.json (0 hits)."
+  "gate_evidence": "RC-007, RC-008, RC-009 PASS -> reward_strategy_report.json (22/22 defended, delta +0.2502), shortcut_audit.json (macro_roc_auc=0.5389), canary_fuzz_report.json (0 hits across 10 channels); full verify 12/12 PASS; env/loader D-10-03 restoration included (RC-001 360 tests); freeze --verify FAIL pre-existing (contracts/loader.py drift) not re-frozen."
 }

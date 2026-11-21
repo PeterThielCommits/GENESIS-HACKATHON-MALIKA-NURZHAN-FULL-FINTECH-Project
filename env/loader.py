@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from contracts.loader import validate_instance
+from contracts.loader import check_row_cap, read_text_bounded, validate_instance
 from env.errors import EnvError
 
 PUBLIC_JSON_FILES = frozenset(
@@ -85,19 +85,33 @@ def _assert_inside_public(root_resolved: Path, entry: Path) -> Path:
     return resolved
 
 
-def _read_json(path: Path) -> Any:
+def _bounded_text(path: Path) -> str:
+    """Read an episode-supplied file with shared byte-safe bounds (D-10-03)."""
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        return read_text_bounded(path)
+    except ValueError as exc:
+        raise EnvError("LIMIT", str(exc)) from exc
+    except OSError as exc:
         raise EnvError("INTERNAL", f"failed reading {path.name}: {exc}") from exc
+
+
+def _read_json(path: Path) -> Any:
+    text = _bounded_text(path)
+    try:
+        obj = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise EnvError("INTERNAL", f"{path.name}: invalid JSON: {exc}") from exc
+    if isinstance(obj, list):
+        try:
+            check_row_cap(len(obj), path.name)
+        except ValueError as exc:
+            raise EnvError("LIMIT", str(exc)) from exc
+    return obj
 
 
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:
+    text = _bounded_text(path)
     rows: list[dict[str, Any]] = []
-    try:
-        text = path.read_text(encoding="utf-8")
-    except OSError as exc:
-        raise EnvError("INTERNAL", f"failed reading {path.name}: {exc}") from exc
     for lineno, raw in enumerate(text.splitlines(), start=1):
         line = raw.strip()
         if not line:
@@ -109,6 +123,10 @@ def _read_jsonl(path: Path) -> list[dict[str, Any]]:
         if not isinstance(item, dict):
             raise EnvError("INTERNAL", f"{path.name}:{lineno} expected JSON object")
         rows.append(item)
+        try:
+            check_row_cap(len(rows), path.name)
+        except ValueError as exc:
+            raise EnvError("LIMIT", str(exc)) from exc
     return rows
 
 
