@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import platform
 import subprocess
 import sys
@@ -144,6 +145,11 @@ def main(argv: list[str] | None = None) -> int:
             }
         )
         print(f"[{status}] {check_id} ({req_id}) ({dur:.2f}s) -> {artifact_rel}")
+        if code != 0:
+            tail_flat = " | ".join(line.strip() for line in output.strip().splitlines()[-8:] if line.strip())
+            print(f"  detail ({check_id}): {tail_flat[-600:]}")
+            if os.environ.get("GITHUB_ACTIONS") == "true":
+                print(f"::error title={check_id} ({req_id}) {status}::{tail_flat[-500:]}")
 
     total_dur = round(time.monotonic() - suite_start, 3)
     _write_rubric_matrix_csv(results)

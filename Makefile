@@ -65,7 +65,7 @@ report: ## Synthesize report_index.json + offline self-contained report.html
 	@$(PYTHON) judge/report.py
 
 docker-check: ## Offline Docker verification (--network=none --cpus=2 --memory=4g)
-	@docker build -t twinledger:eval . && docker run --rm --network=none --cpus=2 --memory=4g --security-opt no-new-privileges:true --cap-drop ALL --read-only --tmpfs /tmp:rw,noexec,nosuid,size=256m --tmpfs /app/artifacts/reports/latest:rw,noexec,nosuid,size=64m --tmpfs /app/artifacts/trajectories:rw,noexec,nosuid,size=64m twinledger:eval make verify
+	@docker build -t twinledger:eval . && docker run --rm --network=none --cpus=2 --memory=4g -e GITHUB_ACTIONS="$${GITHUB_ACTIONS:-}" --security-opt no-new-privileges:true --cap-drop ALL --read-only --tmpfs /tmp:rw,noexec,nosuid,mode=1777,size=256m --tmpfs /app/artifacts/reports/latest:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m --tmpfs /app/artifacts/trajectories:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m twinledger:eval make verify
 
 clean: ## Remove generated temp artifacts only (never sealed source inputs)
 	rm -rf artifacts/reports/latest/*.json artifacts/reports/latest/*.txt artifacts/reports/latest/*.csv artifacts/reports/latest/*.html artifacts/reports/latest/*.md

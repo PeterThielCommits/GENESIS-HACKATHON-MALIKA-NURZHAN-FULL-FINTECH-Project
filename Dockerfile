@@ -17,7 +17,8 @@ COPY . /app
 RUN python3 -m compileall -q judge_adapter.py core contracts adapter gen invariants verifier nlp env harness scoring seal arena metamorphic judge tools tests \
     && useradd --create-home --uid 10001 twinledger \
     && mkdir -p /app/artifacts/reports/latest /app/artifacts/trajectories \
-    && chown -R twinledger:twinledger /app
+    && chown -R twinledger:twinledger /app \
+    && chmod 1777 /app/artifacts/reports/latest /app/artifacts/trajectories
 
 USER 10001:10001
 

@@ -17,9 +17,9 @@ services:
     security_opt:
       - no-new-privileges:true
     tmpfs:
-      - /tmp:rw,noexec,nosuid,size=256m
-      - /app/artifacts/reports/latest:rw,noexec,nosuid,size=64m
-      - /app/artifacts/trajectories:rw,noexec,nosuid,size=64m
+      - /tmp:rw,noexec,nosuid,mode=1777,size=256m
+      - /app/artifacts/reports/latest:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m
+      - /app/artifacts/trajectories:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m
     cpus: 2.0
     mem_limit: 4g
     command: ["make", "verify"]
