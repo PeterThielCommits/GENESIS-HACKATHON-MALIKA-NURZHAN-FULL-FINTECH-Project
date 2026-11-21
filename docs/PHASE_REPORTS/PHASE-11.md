@@ -63,3 +63,9 @@ D-11-01. Frozen release manifest drift existed at HEAD (same loader digest),
 not introduced here. Do not silently re-freeze; maintainer must review D-10-03
 and authorize a manifest update. Docker/clean-clone verification NOT RUN.
 Next: owner QA reviews Phase 11 evidence and resolves release-freeze discrepancy.
+
+## Publication
+Implementation commit `599d66c`; PR #14:
+https://github.com/PeterThielCommits/GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project/pull/14
+REMOTE GITHUB UPDATE DONE; CI/human review pending. Dedicated final six-test
+rerun and lint/diff checks PASS after report metadata/type-validation tightening.
