@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import json
 import platform
-import random
 import sys
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -109,15 +108,15 @@ def _verification_battery() -> None:
     f_exact = _sample_finding(amount=10000)
     f_bound = _sample_finding(amount=10010)
     f_over = _sample_finding(amount=10050)
-    assert matcher_mod.optimal_matching([f_exact], [t1]).tp == 1
-    assert matcher_mod.optimal_matching([f_bound], [t1]).tp == 1
-    assert matcher_mod.optimal_matching([f_over], [t1]).tp == 0
+    assert matcher_mod.optimal_matching([f_exact], [t1]).tp == 1, "exact amount must match"
+    assert matcher_mod.optimal_matching([f_bound], [t1]).tp == 1, "boundary tolerance must match"
+    assert matcher_mod.optimal_matching([f_over], [t1]).tp == 0, "over-tolerance must not match"
 
     # 2. Type, currency, affected_ids, and evidence checks
-    assert matcher_mod.optimal_matching([_sample_finding(atype="PERIOD_CUTOFF")], [t1]).tp == 0
-    assert matcher_mod.optimal_matching([_sample_finding(currency="USD")], [t1]).tp == 0
-    assert matcher_mod.optimal_matching([_sample_finding(affected=("INV:101",))], [t1]).tp == 0
-    assert matcher_mod.optimal_matching([_sample_finding(evidence=("INV:101",))], [t1]).tp == 0
+    assert matcher_mod.optimal_matching([_sample_finding(atype="PERIOD_CUTOFF")], [t1]).tp == 0, "type must be checked"
+    assert matcher_mod.optimal_matching([_sample_finding(currency="USD")], [t1]).tp == 0, "currency must be checked"
+    assert matcher_mod.optimal_matching([_sample_finding(affected=("INV:101",))], [t1]).tp == 0, "affected_ids must be checked"
+    assert matcher_mod.optimal_matching([_sample_finding(evidence=("INV:101",))], [t1]).tp == 0, "evidence must be checked"
 
     # 3. Multi-element minimal evidence set (catches truncation before check)
     f_fx = _sample_finding(
@@ -127,55 +126,55 @@ def _verification_battery() -> None:
         currency="JPY",
         evidence=("FX:401", "INV:102", "JE:301"),
     )
-    assert matcher_mod.optimal_matching([f_fx], [t2]).tp == 1
+    assert matcher_mod.optimal_matching([f_fx], [t2]).tp == 1, "full evidence set must match"
 
     # 4. Duplicate & split findings never inflate TP; FP and FN both affect F1
     mr_dup = matcher_mod.optimal_matching([f_exact, f_exact], [t1])
-    assert mr_dup.tp == 1 and mr_dup.fp == 1
+    assert mr_dup.tp == 1 and mr_dup.fp == 1, "duplicate finding must not inflate TP"
     rb_dup = reward_mod.compute_reward([f_exact, f_exact], [t1], 10)
     rb_single = reward_mod.compute_reward([f_exact], [t1], 10)
-    assert rb_dup.reward < rb_single.reward
+    assert rb_dup.reward < rb_single.reward, "duplicate must lower reward via FP"
 
     # One finding cannot match two distinct truths simultaneously
     t1_clone = _sample_truth("T-001B", amount=10000, tolerance=10)
     mr_one_to_two = matcher_mod.optimal_matching([f_exact], [t1, t1_clone])
-    assert mr_one_to_two.tp == 1 and mr_one_to_two.fn == 1
+    assert mr_one_to_two.tp == 1 and mr_one_to_two.fn == 1, "one finding must not match two truths"
     rb_fn = reward_mod.compute_reward([f_exact], [t1, t1_clone], 0)
-    assert rb_fn.f1 == Fraction(2, 3)
+    assert rb_fn.f1 == Fraction(2, 3), "FN must affect F1"
 
     # Split finding rejected
     f_half1 = _sample_finding(amount=5000)
     f_half2 = _sample_finding(amount=5000)
-    assert reward_mod.compute_reward([f_half1, f_half2], [t1], 0).tp == 0
+    assert reward_mod.compute_reward([f_half1, f_half2], [t1], 0).tp == 0, "split finding must not match"
 
     # 5. Clean silence == F1=1, step penalty monotonically decreases reward, exact Fraction math
     rb_clean_0 = reward_mod.compute_reward([], [], 0)
     rb_clean_20 = reward_mod.compute_reward([], [], 20)
-    assert rb_clean_0.f1 == Fraction(1)
-    assert rb_clean_20.reward < rb_clean_0.reward
-    assert rb_clean_20.reward == Fraction(1) - reward_mod.load_scoring_config().eta * Fraction(20, 100)
+    assert rb_clean_0.f1 == Fraction(1), "clean silence must give F1=1"
+    assert rb_clean_20.reward < rb_clean_0.reward, "step penalty must decrease reward"
+    assert rb_clean_20.reward == Fraction(1) - reward_mod.load_scoring_config().eta * Fraction(20, 100), "step penalty magnitude wrong"
 
     # Exact rational precision check (catches binary float drift on 2/3 - 0.05 * 30 / 100)
     rb_third = reward_mod.compute_reward([f_exact], [t1, t1_clone], 30)
     expected_exact = Fraction(2, 3) - reward_mod.load_scoring_config().eta * Fraction(30, 100)
-    assert rb_third.reward == expected_exact
+    assert rb_third.reward == expected_exact, "reward must use exact Fraction arithmetic"
 
     # 6. Explanation invariance
     f_eloquent = _sample_finding(explanation="Detailed audit narrative " * 8)
-    assert reward_mod.compute_reward([f_exact], [t1], 5).reward == reward_mod.compute_reward([f_eloquent], [t1], 5).reward
+    assert reward_mod.compute_reward([f_exact], [t1], 5).reward == reward_mod.compute_reward([f_eloquent], [t1], 5).reward, "explanation must not change reward"
 
     # 7. Optimal bipartite matching beats naive greedy input-order matching + deterministic tie-break
     # Left 0 can match Right 0 or Right 1; Left 1 can ONLY match Right 0 -> max cardinality is 2!
     cost_augment = [[0, 0], [0, None]]
     pairs_aug = matcher_mod.optimal_pairs(cost_augment)
-    assert len(pairs_aug) == 2
+    assert len(pairs_aug) == 2, "matcher must find augmenting path (max cardinality)"
 
     # Tie-break determinism across 10 repeats
     cost_tie = [[0, 0], [None, None]]
     first_tb = matcher_mod.optimal_pairs(cost_tie)
-    assert first_tb == [(0, 0)]
+    assert first_tb == [(0, 0)], "tie-break must be lexicographically smallest"
     for _ in range(8):
-        assert matcher_mod.optimal_pairs(cost_tie) == [(0, 0)]
+        assert matcher_mod.optimal_pairs(cost_tie) == [(0, 0)], "tie-break must be deterministic"
 
     # 8. Diagnostics truncated flag
     diag_trunc = diag_mod.build_diagnostics(
@@ -185,7 +184,7 @@ def _verification_battery() -> None:
         rb_clean_0,
         run_info={"truncated": True, "no_submit": True},
     )
-    assert diag_trunc["audit_status"] != "OK"
+    assert diag_trunc["audit_status"] != "OK", "truncated run must not be OK"
 
     # 9. Bounds & schema validation checks (unknown type, empty affected_ids, steps > max_steps)
     try:
@@ -232,8 +231,8 @@ def _verification_battery() -> None:
     env = env_mod.TwinLedgerEnv(env_mod.EnvConfig(mode="CLOSED_EVAL", submit_counts_as_step=False))
     env.reset(first_ep / "public", cursor_seed=1)
     r_sub1 = env.step({"protocol_version": PROTOCOL_VERSION, "request_id": "s1", "action": {"tool": "submit", "args": {"findings": []}}})
-    assert r_sub1["ok"] is True
-    assert env.steps_used == 0
+    assert r_sub1["ok"] is True, "first submit must succeed"
+    assert env.steps_used == 0, "submit must not count as inspection step"
     r_sub2 = env.step(
         {
             "protocol_version": PROTOCOL_VERSION,
@@ -255,8 +254,8 @@ def _verification_battery() -> None:
             },
         }
     )
-    assert r_sub2["ok"] is False
-    assert env.submitted_findings == []
+    assert r_sub2["ok"] is False, "second submit must be rejected"
+    assert env.submitted_findings == [], "second submit must not override findings"
 
 
 @dataclass(frozen=True)
@@ -444,11 +443,19 @@ def _build_mutants() -> tuple[MutantSpec, ...]:
 
     @contextmanager
     def m21():
-        rng = random.Random(99)
+        # Deterministic non-deterministic tie-break: first call correct,
+        # second call wrong. Guarantees kill via repeat-determinism check
+        # without relying on RNG luck (D-13-01).
+        call_count = [0]
+
         def rand_tb(cost: list[list[int | None]]) -> list[tuple[int, int]]:
-            if len(cost) >= 1 and len(cost[0]) >= 2 and cost[0][0] == 0 and cost[0][1] == 0:
-                return [(0, rng.choice([0, 1]))]
+            if cost == [[0, 0], [None, None]]:
+                call_count[0] += 1
+                if call_count[0] >= 2:
+                    return [(0, 1)]
+                return [(0, 0)]
             return orig_opt_pairs(cost)
+
         with patch.object(matcher_mod, "optimal_pairs", rand_tb):
             yield
 

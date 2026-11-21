@@ -30,3 +30,6 @@ See `docs/PHASE_REPORTS/PHASE-11.md`; do not interpret earlier DONE rows as rele
 Arena 7 baselines + oracle separated, 22/22 attacks AT-01..AT-22 defended, seed-grouped AutoHacker delta +0.2502, shortcut 0.5389 ≤0.55, 0 canary hits (10 channels) — 12/12 verify PASS, 360 tests, lint CLEAN; env/loader D-10-03 bounded-read restoration applied (RC-001 fix).
 Freeze re-synced under D-12-02: `contracts/loader.py` 610f07…→4dbb8b… (1717→4244 B), aggregate caf9405e…→0747baf0…; `freeze --verify` now PASS (30 files). Docker structurally validated; clean-clone verified via file:// clone.
 See `docs/PHASE_REPORTS/PHASE-12.md` and `docs/AGENT_REPORTS/2026-11-21/arena-phase-12-re-audit.md`.
+
+## Phase 13 re-audit (2026-11-21)
+EXIT GATE 13 PASS: 26/26 instrumented mutants killed, 7/7 metamorphic transforms over 28 pairs; 372 tests (one optional Hypothesis skip), 12/12 verify gates. Optional Hypothesis path independently passed. See `docs/PHASE_REPORTS/PHASE-13.md` and issue #16; QA/CI review remains pending.

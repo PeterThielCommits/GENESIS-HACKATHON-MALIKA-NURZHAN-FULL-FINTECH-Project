@@ -307,3 +307,6 @@ On this branch (`arena/3f693c20`, base `2dc365a`), `env/loader.py` was restored 
 - No other frozen file changed; 30 files still tracked.
 
 Clean-clone verification (`git clone --branch arena/3f693c20 … && make verify && make lint && python3 tools/freeze_release.py --verify`) and offline Docker (`make docker-check`) are then run. This is the final unblock for Phases 16–17 tagging.
+
+## D-13-01 (2026-11-21) — Phase 13 finite test evidence
+Expand the metamorphic sample from three to four scenarios and require changed public bytes, while checking verifier equivariance and policy reward equality. Capture pipeline clean twins for multiple operator plans; extend deterministic property loops and exercise optional Hypothesis separately. Use a reproducible repeat-sensitive tie-break mutant rather than a probabilistic kill. These tests are representative, not universal proofs; serialization difference alone does not prove a causal accounting change. No production behavior or release freeze is changed.
