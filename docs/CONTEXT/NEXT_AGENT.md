@@ -10,7 +10,8 @@
   ```
 - **Expected baseline:**
   - `make lint` → `CLEAN (REQ-ARC-001..007)`
-  - `python3 -m unittest discover -s tests -t .` → **343 tests OK**
+  - `python3 -m unittest discover -s tests -t .` → **354 tests OK**
+  - `make test-official` → 55/55 (incl. `P01..P20` paired invariance), `make replay` → byte-identical
   - `make verify` → `12/12` rubricator gates (`RC-001..RC-012`) `PASS`, `26/26` mutants killed, `7/7` metamorphic transforms, `macro_ROC_AUC <= 0.55`, `0` canary leaks.
   - `python3 tools/explanation_report.py --demo --output artifacts/reports/latest/explanation_consistency_report.json` → Phase 10 deliverable artifact (diagnostic-only).
 
@@ -25,6 +26,7 @@
 3. **Gitignore discipline:** Never stage `episodes/*/*/sealed/` or `artifacts/reports/latest/*.json`. Tests regenerate episodes deterministically in temporary workspaces.
 4. **Preserve Official 2026-11-20 compatibility:** Keep `harness/isolated_runner.py`, `judge_adapter.py`, `adapter/official_env.py`, and `scoring/official_scorer.py` green.
 5. **Diagnostics never feed reward (TZ §15.9):** `explanation_consistency` and `evidence_hierarchy` blocks are diagnostic-only (`D-06-05`, `D-10-02`).
+6. **Loader contracts (`D-10-03`):** `env/loader.py` and `adapter/official_env.py` preserve file row order **verbatim** (README "Canonical Tables") — never re-sort rows on load. All episode-supplied reads go through `contracts.loader.read_text_bounded` / `check_row_cap` (16 MiB / 100 000 rows, limitation `L7`); do not reintroduce bare `read_text` on episode files.
 
 ## 3. What to Read First
 
