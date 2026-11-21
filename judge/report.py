@@ -96,7 +96,12 @@ def _collect_public_proof_samples() -> list[dict[str, Any]]:
         vp = ep / "verifier_report.json"
         if not vp.is_file():
             continue
-        v = json.loads(vp.read_text(encoding="utf-8"))
+        try:
+            v = json.loads(vp.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue  # malformed verifier report: skip, never crash the report
+        if not isinstance(v, dict):
+            continue
         findings = v.get("findings") or []
         if findings:
             f0 = findings[0]
@@ -155,6 +160,15 @@ def _build_html_report(summary: dict[str, Any], present_files: list[str]) -> str
             f"</div></details>"
         )
 
+    # NOTE: never write `x or {{}}` inside an f-string replacement field — the
+    # `{{`/`}}` escape only applies to literal text, so inside an expression it
+    # parses as the set literal `{ {} }` and raises TypeError: unhashable type
+    # 'dict' whenever the left operand is falsy (i.e. on a clean checkout with
+    # no prior artifacts). Bind defaults to real dicts here instead.
+    req_checks = summary.get("required_checks") or {}
+    rob_sum = rob.get("summary") or {}
+    attacks = arena.get("attacks_heldout") or {}
+
     sec_prof = (deps.get("active_security_profile") or {})
     mc = (shortcut.get("metadata_classifier") or {})
     ms = (mutation.get("summary") or {})
@@ -207,14 +221,14 @@ def _build_html_report(summary: dict[str, Any], present_files: list[str]) -> str
   </header>
 
   <div class="grid">
-    <div class="kpi"><div class="lbl">Rubricator Gates</div><div class="val">{_esc((summary.get('required_checks') or {{}}).get('passed', 0))}/{_esc((summary.get('required_checks') or {{}}).get('total', 0))} PASS</div></div>
+    <div class="kpi"><div class="lbl">Rubricator Gates</div><div class="val">{_esc(req_checks.get('passed', 0))}/{_esc(req_checks.get('total', 0))} PASS</div></div>
     <div class="kpi"><div class="lbl">Shortcut Macro ROC AUC</div><div class="val">{_esc(mc.get('macro_roc_auc', 'n/a'))} &le; 0.55</div></div>
     <div class="kpi"><div class="lbl">Canary Hits (10 Channels)</div><div class="val">{_esc(cs.get('total_canary_hits', 'n/a'))}</div></div>
     <div class="kpi"><div class="lbl">Mutants Killed</div><div class="val">{_esc(ms.get('mutation_score_exact', 'n/a'))} (100%)</div></div>
     <div class="kpi"><div class="lbl">Metamorphic M-01..M-07</div><div class="val">{_esc(mets.get('transforms_passed', 'n/a'))}/{_esc(mets.get('transforms_total', 'n/a'))}</div></div>
     <div class="kpi"><div class="lbl">Env Step p99 Latency</div><div class="val">{_esc(pm.get('env_step_p99_ms', 'n/a'))} ms</div></div>
     <div class="kpi"><div class="lbl">CLOSED_EVAL Sandbox</div><div class="val">{_esc(sec_prof.get('profile_id', 'n/a'))}</div></div>
-    <div class="kpi"><div class="lbl">Prompt-Injection Honest &Delta;</div><div class="val">{_esc((rob.get('summary') or {{}}).get('honest_policy_max_abs_reward_delta', 'n/a'))}</div></div>
+    <div class="kpi"><div class="lbl">Prompt-Injection Honest &Delta;</div><div class="val">{_esc(rob_sum.get('honest_policy_max_abs_reward_delta', 'n/a'))}</div></div>
   </div>
 
   <section>
@@ -229,7 +243,7 @@ def _build_html_report(summary: dict[str, Any], present_files: list[str]) -> str
     <h2>2. Arena Baselines, 22 Red-Team Attacks &amp; AutoHacker Heldout Probe</h2>
     {_render_svg_bar_chart(chart_items, title="Heldout Mean Official Reward (*oracle_test_only is privileged upper bound, excluded from public package)")}
     <p style="font-size:13px;color:#cbd5e1;margin-top:12px;">
-      <strong>22-Attack Red-Team Defense:</strong> <code>{_esc((arena.get('attacks_heldout') or {{}}).get('total_attacks', 0))}</code> attacks evaluated; all defended = <code>{_esc((arena.get('attacks_heldout') or {{}}).get('all_defended', False))}</code>.<br>
+      <strong>22-Attack Red-Team Defense:</strong> <code>{_esc(attacks.get('total_attacks', 0))}</code> attacks evaluated; all defended = <code>{_esc(attacks.get('all_defended', False))}</code>.<br>
       <strong>Learnability Observational Statement:</strong> {_esc(ah.get('observational_statement', 'n/a'))}
     </p>
   </section>
@@ -253,6 +267,27 @@ def _build_html_report(summary: dict[str, Any], present_files: list[str]) -> str
 """
 
 
+def audit_html_offline(html_doc: str) -> list[str]:
+    """Return offline-guarantee violations in generated HTML (empty = clean).
+
+    Checks for absolute external URLs and external resource references
+    (TZ §21.9 / REQ-JUDGE-004: zero network requests). Pure function so the
+    guarantee is unit-testable without writing files.
+    """
+    import re
+
+    violations: list[str] = []
+    if "http://" in html_doc:
+        violations.append("http:// URL present")
+    if "https://" in html_doc:
+        violations.append("https:// URL present")
+    for m in re.finditer(r"(?:src|href)\s*=\s*[\"']https?://", html_doc):
+        violations.append(f"external resource reference: {m.group(0)[:80]}")
+    for m in re.finditer(r"url\(\s*https?://", html_doc):
+        violations.append(f"external CSS url(): {m.group(0)[:80]}")
+    return violations
+
+
 def main() -> int:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     summary_path = REPORT_DIR / "verify_summary.json"
@@ -260,13 +295,22 @@ def main() -> int:
         print("report: no verify_summary.json found — run `make verify` first.")
         return 5
 
-    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        print(f"report: configuration error: malformed verify_summary.json: {exc}")
+        return 2
+    if not isinstance(summary, dict) or "status" not in summary or "checks" not in summary:
+        print("report: configuration error: verify_summary.json missing required fields (status/checks)")
+        return 2
     present = sorted(p.name for p in REPORT_DIR.iterdir() if p.is_file() and p.name not in ("report.html", "report_index.json"))
 
     html_doc = _build_html_report(summary, present + ["report.html", "report_index.json"])
-    # Self-audit: zero external URLs in generated HTML!
-    if "http://" in html_doc or "https://" in html_doc:
-        raise RuntimeError("offline HTML guarantee violated: external URL detected in report.html")
+    # Self-audit: zero external URLs in generated HTML (release blocker if violated).
+    violations = audit_html_offline(html_doc)
+    if violations:
+        print(f"report: release blocker: offline HTML guarantee violated: {violations}")
+        return 4
     (REPORT_DIR / "report.html").write_text(html_doc, encoding="utf-8")
 
     all_present = sorted(p.name for p in REPORT_DIR.iterdir() if p.is_file() and p.name != "report_index.json")

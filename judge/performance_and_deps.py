@@ -69,10 +69,31 @@ OPTIONAL_EXTRAS = (
     "matplotlib",
 )
 
+# TZ §12.1 invariant catalog INV-01..INV-17 (mirrors invariants/checks.py).
+INVARIANT_IDS: tuple[str, ...] = tuple(f"INV-{i:02d}" for i in range(1, 18))
+
 
 def _measure_performance() -> dict[str, Any]:
     dev_root = REPO_ROOT / "episodes" / "dev"
-    ep_dirs = [p for p in sorted(dev_root.iterdir()) if (p / "public").is_dir()]
+    ep_dirs = (
+        [p for p in sorted(dev_root.iterdir()) if (p / "public").is_dir()]
+        if dev_root.is_dir()
+        else []
+    )
+    if not ep_dirs:
+        return {
+            "schema_version": "1.0.0",
+            "report_type": "performance_report",
+            "code_version": "twinledger@1.0.0",
+            "config_hash": sha256_hex({"error": "no_dev_episodes"}),
+            "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "platform": platform.platform(),
+            "python_version": sys.version.split()[0],
+            "command": "python3 judge/performance_and_deps.py",
+            "status": "FAIL",
+            "error": "no dev episodes with public/ found under episodes/dev; cannot measure env.step latency",
+            "metrics": {},
+        }
     sample_ep = ep_dirs[0]
 
     env = TwinLedgerEnv(EnvConfig(mode="CLOSED_EVAL", max_steps=100))
@@ -84,14 +105,15 @@ def _measure_performance() -> dict[str, Any]:
             "action": {"tool": "list_records", "args": {"table": "invoices", "page_size": 5}},
         }
     )
-    first_inv = f"INV:{r0['result']['records'][0]['doc_id']}"
+    records = (r0.get("result") or {}).get("records") or []
+    first_inv = f"INV:{records[0]['doc_id']}" if records else None
 
     latencies_ms: list[float] = []
     # Measure 180 indexed & paginated queries across fresh resets
     for batch in range(3):
         env.reset(sample_ep / "public", cursor_seed=100 + batch)
         for i in range(60):
-            if i % 3 == 0:
+            if i % 3 == 0 and first_inv is not None:
                 act = {"tool": "get_document", "args": {"id": first_inv}}
             elif i % 3 == 1:
                 act = {"tool": "list_records", "args": {"table": "invoices", "page_size": 10}}
@@ -110,7 +132,8 @@ def _measure_performance() -> dict[str, Any]:
 
     # Episode disk sizes across checked-in episodes
     ep_sizes: list[int] = []
-    for split_dir in sorted((REPO_ROOT / "episodes").iterdir()):
+    episodes_root = REPO_ROOT / "episodes"
+    for split_dir in sorted(episodes_root.iterdir()) if episodes_root.is_dir() else []:
         if not split_dir.is_dir():
             continue
         for ep in sorted(split_dir.iterdir()):
@@ -210,7 +233,7 @@ def _build_dataset_and_verifier_artifacts() -> None:
     matrix_rows: list[dict[str, Any]] = []
     verifier_index: list[dict[str, Any]] = []
 
-    for split_dir in sorted(episodes_root.iterdir()):
+    for split_dir in sorted(episodes_root.iterdir()) if episodes_root.is_dir() else []:
         if not split_dir.is_dir():
             continue
         split_name = split_dir.name
@@ -302,9 +325,10 @@ def _build_dataset_and_verifier_artifacts() -> None:
     inv_rep = {
         **meta_hdr,
         "report_type": "invariants_report",
-        "config_hash": sha256_hex({"invariants": [f"INV-{i:02d}" for i in range(1, 16)]}),
+        "config_hash": sha256_hex({"invariants": list(INVARIANT_IDS)}),
         "status": "PASS" if len(inv_errs) == 0 else "FAIL",
-        "invariants_catalog_count": 15,
+        "invariants_catalog_count": len(INVARIANT_IDS),
+        "invariants_catalog": list(INVARIANT_IDS),
         "clean_twin_probe_violations": inv_errs,
     }
     (REPORT_DIR / "invariants_report.json").write_text(canonical_json(inv_rep) + "\n", encoding="utf-8")
@@ -342,9 +366,15 @@ def run_all_aux_reports() -> tuple[dict[str, Any], dict[str, Any]]:
 def main() -> int:
     perf, deps = run_all_aux_reports()
     ok = perf["status"] == "PASS" and deps["status"] == "PASS"
+    metrics = perf.get("metrics") or {}
+    detail = (
+        f"step_p99={metrics.get('env_step_p99_ms')}ms, peak_rss={metrics.get('peak_rss_mb')}MB"
+        if metrics
+        else f"error={perf.get('error', 'unknown')}"
+    )
     print(
-        f"[{'PASS' if ok else 'FAIL'}] perf & deps: step_p99={perf['metrics']['env_step_p99_ms']}ms, "
-        f"peak_rss={perf['metrics']['peak_rss_mb']}MB, stdlib_only={deps['core_stdlib_only']} -> {REPORT_DIR}"
+        f"[{'PASS' if ok else 'FAIL'}] perf & deps: {detail}, "
+        f"stdlib_only={deps['core_stdlib_only']} -> {REPORT_DIR}"
     )
     return 0 if ok else 3
 
