@@ -38,7 +38,11 @@
     "judge/performance_and_deps.py: invariant count 15 -> 17; unguarded index/key access removed",
     "judge/schemas.py: per-check schema_version no longer required on frozen rubric_map (D-14-02)"
   ],
-  "decisions": ["D-14-01", "D-14-02", "D-14-03"],
+  "decisions": [
+    "D-14-01",
+    "D-14-02",
+    "D-14-03"
+  ],
   "files_changed": [
     "judge/verify.py",
     "judge/report.py",
@@ -127,5 +131,21 @@
     "Rubric weights and RC gates remain provisional; never presented as organiser score.",
     "Offline guarantee enforced by static HTML audit, not OS network namespace, in this phase."
   ],
-  "next_phase": "Phase 15 — documentation & 3-minute demo; correct README claim of 317 tests to measured 410."
+  "next_phase": "Phase 15 — documentation & 3-minute demo; correct README claim of 317 tests to measured 410.",
+  "merge": {
+    "pull_request": 18,
+    "state": "MERGED",
+    "head_commit": "baa5b67",
+    "merge_commit": "99df1169f2eb0364df8762b355b03fd7ff1b5c39",
+    "merged_at_utc": "2026-11-21T23:43:03Z",
+    "base": "main",
+    "ci": {
+      "core": "PASS",
+      "docker-offline": "PASS"
+    },
+    "merged_tree_sha": "1a451cb805fff6c4b9c9080a9674e3245d87a0de",
+    "tree_identical_to_verified_head": true,
+    "post_merge_verify": "PASS 12/12 in 50.1s, 21 artifacts",
+    "post_merge_freeze_verify": "PASS 30 files, 0747baf087b9509a..."
+  }
 }
