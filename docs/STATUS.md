@@ -41,7 +41,7 @@ New: `judge/schemas.py` (stdlib validators incl. §23.5 envelope, exit 2 on viol
 Merged as PR **#18** (`baa5b67` → merge commit `99df116`, 2026-11-21T23:43:03Z); CI `core` + `docker-offline` PASS; post-merge `make verify` on `main` PASS 12/12 (50.1 s, 21 artifacts), freeze intact. Merged tree byte-identical to the verified head. See `docs/PHASE_REPORTS/PHASE-14.md` / `.json`. This row is not release authorization.
 
 ## Phase 15 re-audit (2026-11-21)
-EXIT GATE 15 PASS. The phase's own sentence — "the jury can deploy from the README and verify the key claims" — is now machine-enforced: `make verify` (12/12, 479 tests, 20 artifacts, on a clean tree too) → `make docs-verify` (22 measured facts, 11 checks) → `make demo-backup` (verify + docs + replay 5/5 + freeze), all exit 0.
+EXIT GATE 15 PASS. The phase's own sentence — "the jury can deploy from the README and verify the key claims" — is now machine-enforced: `make verify` (12/12, 481 tests, 20 artifacts, on a clean tree too) → `make docs-verify` (22 measured facts, 11 checks) → `make demo-backup` (verify + docs + replay 5/5 + freeze), all exit 0.
 Task 15.3 had **no deliverable** before this pass; added `docs/API_USAGE.md` and `docs/POLICY_PROTOCOL.md`. Corrected a factually wrong encoding-transform list in `docs/THREAT_MODEL.md` (claimed 9, listed 8, four bogus names), the stale 317-test README claim, non-matching baseline durations, and a phantom `D-03-01` citation now blocked by a referential-integrity check. `docs/DESIGN.md` rewritten as-built.
 New: generated README facts block + stale-literal denylist + decision-ID integrity, proven to fire against four injected faults. Decisions `D-15-01`, `D-15-02`. No frozen file changed; freeze `0747baf0…` intact. This row is not release authorization.
 

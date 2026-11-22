@@ -96,7 +96,13 @@ REQUIRED_FULL_ARTIFACTS: tuple[str, ...] = (
 # documentation gate AFTER all artifacts are written (/ _run_doc_claims), so this
 # positional skip does not weaken the gate — it moves it to the only correct place.
 _OPTIONAL_SKIP_RE = re.compile(
-    r"hypothesis|extra not installed|optional|evidence artifacts not generated yet",
+    # "trajectories not generated yet" comes from tests/judge/test_replay_all.py:
+    # the committed trajectory log is not part of the Docker image or the offline
+    # container (the trajectories tmpfs is deliberately empty so a run proves it
+    # produces its own outputs). The authoritative TZ 16.4 check is
+    # `make replay-all`, which reads the log where it exists.
+    r"hypothesis|extra not installed|optional|"
+    r"evidence artifacts not generated yet|trajectories not generated yet",
     re.IGNORECASE,
 )
 _SKIP_LINE_RE = re.compile(r"\.\.\.\s*skipped\s+'([^']*)'")

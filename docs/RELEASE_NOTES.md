@@ -16,7 +16,7 @@ results**, never a jury score (Master TZ §23.6).
 ## Verify it yourself (two commands, no network)
 
 ```bash
-make verify        # lint + 12-gate Judge Kit + 479 tests  -> artifacts/reports/latest/
+make verify        # lint + 12-gate Judge Kit + 481 tests  -> artifacts/reports/latest/
 make rc-check      # verify + docs-verify + replay-all + release-audit
 ```
 
@@ -31,7 +31,7 @@ make docker-check  # --network=none --read-only --cap-drop ALL, non-root
 
 | Claim | Command | Result |
 |---|---|---|
-| Verification suite | `make verify` | **12/12 gates PASS**, 479 tests, 20 evidence artefacts |
+| Verification suite | `make verify` | **12/12 gates PASS**, 481 tests, 20 evidence artefacts |
 | Clean machine | fresh `git clone`, empty evidence dir | **12/12 PASS** |
 | Determinism, all runs | `make replay-all` | **80/80 runs, 567 steps byte-identical** |
 | Determinism, sealed replay | `make replay` | 5/5 byte-identical, Merkle root `d949fae3…` |

@@ -35,6 +35,24 @@ class TestParseSkippedCounts(unittest.TestCase):
     def test_no_skips(self):
         self.assertEqual(verify_mod.parse_skipped_counts("Ran 5 tests\nOK\n"), (0, 0))
 
+    def test_trajectory_skip_is_optional(self):
+        """The offline image has no published trajectory log (D-16-01).
+
+        Without this, six replay-all tests were classified as critical skips and
+        RC-001 became SKIPPED inside docker-offline, blocking the release on a
+        condition that is correct by design.
+        """
+        out = (
+            "test_every_run_replays_byte_identically (tests.judge.test_replay_all."
+            "TestPublishedTrajectories.test_every_run_replays_byte_identically) "
+            "... skipped 'trajectories not generated yet'\nOK (skipped=1)\n"
+        )
+        self.assertEqual(verify_mod.parse_skipped_counts(out), (1, 0))
+
+    def test_bootstrap_evidence_skip_is_optional(self):
+        out = "... skipped 'evidence artifacts not generated yet (run `make verify`)'\nOK (skipped=1)\n"
+        self.assertEqual(verify_mod.parse_skipped_counts(out), (1, 0))
+
     def test_unattributed_skipped_count_is_critical(self):
         # Non-verbose runner: skipped=N with no per-test lines must not hide.
         self.assertEqual(verify_mod.parse_skipped_counts("Ran 5 tests\nOK (skipped=2)\n"), (0, 2))

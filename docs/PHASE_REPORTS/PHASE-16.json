@@ -76,7 +76,7 @@
     {
       "command": "make verify",
       "exit_code": 0,
-      "result": "12/12 PASS in 71.6s, 20 artifacts, 479 tests"
+      "result": "12/12 PASS in 71.6s, 20 artifacts, 481 tests"
     },
     {
       "command": "make docs-verify",
@@ -116,7 +116,7 @@
     {
       "command": "LC_ALL=C LANG=C python3 -m unittest discover -s tests -t .",
       "exit_code": 0,
-      "result": "479 tests OK (1 optional Hypothesis skip)"
+      "result": "481 tests OK (1 optional Hypothesis skip)"
     },
     {
       "command": "python3 tools/freeze_release.py --verify",
@@ -135,7 +135,7 @@
     "package_budget_bytes": 52428800,
     "runtime_modules": 109,
     "undeclared_dependencies": 0,
-    "tests_total": 479,
+    "tests_total": 481,
     "evidence_artifacts": 20,
     "doc_facts": 22,
     "doc_checks": 11,
