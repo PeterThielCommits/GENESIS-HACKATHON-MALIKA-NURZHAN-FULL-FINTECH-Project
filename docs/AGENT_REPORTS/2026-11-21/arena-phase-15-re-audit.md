@@ -29,7 +29,7 @@
 | Command | Exit | Result |
 |---|---:|---|
 | `make lint` | 0 | CLEAN (REQ-ARC-001..007) |
-| `make verify` | 0 | 12/12 PASS, 61.9 s, 21 artifacts, 432 tests |
+| `make verify` | 0 | 12/12 PASS, 61.9 s, 21 artifacts, 435 tests |
 | `make verify` (clean `git ls-files` tree) | 0 | 12/12 PASS, 61.1 s |
 | `make docs-verify` | 0 | 22 measured facts, 11 checks PASS |
 | `make demo` | 0 | 5 segments, seed 2025, full_os_sandbox=True |

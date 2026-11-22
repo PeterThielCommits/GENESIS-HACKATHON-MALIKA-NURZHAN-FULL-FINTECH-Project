@@ -52,7 +52,7 @@ def setUpModule() -> None:
     documentation gate runs later in judge/verify.py, once artifacts exist.
     """
     if ARTIFACTS_READY:
-        print("doc-claims: artifacts present — full claim checks are active in this run")
+        print("doc-claims: artifacts present - full claim checks are active in this run")
     else:
         print(
             "doc-claims: SKIPPED (bootstrap: no artifacts yet; "
@@ -152,6 +152,60 @@ class TestOfflineContainerTolerance(unittest.TestCase):
         self.assertIn("baselines omitted", block)
         self.assertIn("tmpfs", block)
         self.assertTrue(block.endswith(vdc.END_MARK))
+
+
+class TestLocaleSafety(unittest.TestCase):
+    """All console output must survive a C/POSIX (ASCII) locale.
+
+    The hardened offline container runs with LC_ALL=C, where sys.stdout is ASCII.
+    Printing an em dash there raised UnicodeEncodeError and failed the
+    docker-offline job while the normal-locale core job passed. `_say()` is the
+    single output path and must transliterate.
+    """
+
+    def test_say_handles_non_ascii_without_raising(self):
+        import contextlib
+        import io
+
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            vdc._say("report: verify_summary.json \u2192 RC-001 \u2014 done \u00a7 23.5")
+        output = buffer.getvalue()
+        self.assertIn("->", output)
+        self.assertNotIn("\u2192", output)
+        output.encode("ascii")  # must not raise
+
+    def test_no_print_calls_bypass_say_in_main_paths(self):
+        source = (REPO_ROOT / "tools" / "verify_doc_claims.py").read_text(encoding="utf-8")
+        body = source[source.index("def main("):]
+        # The only permitted raw prints are the ASCII-safe fallbacks inside _say
+        # and the --json dump (ensure_ascii=True).
+        raw_prints = [
+            line.strip()
+            for line in body.splitlines()
+            if line.strip().startswith("print(")
+        ]
+        self.assertTrue(raw_prints, "expected the --json dump to remain a raw print")
+        for line in raw_prints:
+            self.assertIn("ensure_ascii=True", line, f"non-ASCII-safe print: {line}")
+
+    @unittest.skipUnless(ARTIFACTS_READY, NOT_READY_REASON)
+    def test_checker_runs_under_ascii_stdout(self):
+        """End-to-end with an ASCII-only stdout, as in the container."""
+        import contextlib
+        import io
+
+        buffer = io.StringIO()
+        saved = vdc.OUTPUT_PATH
+        with tempfile.TemporaryDirectory() as td:
+            vdc.OUTPUT_PATH = Path(td) / "doc_claims_report.json"
+            try:
+                with contextlib.redirect_stdout(buffer):
+                    rc = vdc.main([])
+            finally:
+                vdc.OUTPUT_PATH = saved
+        self.assertEqual(rc, 0)
+        buffer.getvalue().encode("ascii")  # would raise if any non-ASCII leaked
 
 
 class TestProseMechanism(unittest.TestCase):

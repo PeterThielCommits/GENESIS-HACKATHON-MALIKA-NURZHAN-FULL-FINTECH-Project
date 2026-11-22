@@ -75,6 +75,30 @@ DOC_SCAN: tuple[str, ...] = (
 # --------------------------------------------------------------------------- #
 # measurement helpers — every value originates in an artifact or frozen contract
 # --------------------------------------------------------------------------- #
+def _say(message: str) -> None:
+    """Print without ever depending on the host locale's encoding.
+
+    The hardened offline container runs with a C/POSIX locale, where
+    ``sys.stdout.encoding`` is ASCII and any non-ASCII character (em dash,
+    arrow, section sign) raises UnicodeEncodeError -- which is exactly how the
+    docker-offline job failed while ``core`` passed. Console text is therefore
+    transliterated; the *files* we write are always explicit UTF-8.
+    """
+    transliterated = (
+        message.replace("\u2014", "-")
+        .replace("\u2013", "-")
+        .replace("\u2192", "->")
+        .replace("\u00a7", "S")
+        .replace("\u2264", "<=")
+        .replace("\u2265", ">=")
+    )
+    try:
+        print(transliterated)
+    except UnicodeEncodeError:  # pragma: no cover - last-resort guard
+        encoded = transliterated.encode("ascii", "replace").decode("ascii")
+        print(encoded)
+
+
 def _load(name: str) -> dict[str, Any]:
     path = REPORT_DIR / name
     if not path.is_file():
@@ -517,8 +541,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.list:
         for fact in collect_facts():
-            print(f"{fact['id']:22s} {fact['value']:24s} {fact['source']}")
-        print(f"\n{len(collect_facts())} measured facts")
+            _say(f"{fact['id']:22s} {fact['value']:24s} {fact['source']}")
+        _say(f"\n{len(collect_facts())} measured facts")
         return 0
 
     failures: list[dict[str, str]] = []
@@ -652,22 +676,22 @@ def main(argv: list[str] | None = None) -> int:
         OUTPUT_PATH.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     except OSError as exc:
         report_written = False
-        print(f"doc-claims: note: report not written ({exc.__class__.__name__}: {exc}); verdict still authoritative")
+        _say(f"doc-claims: note: report not written ({exc.__class__.__name__}: {exc}); verdict still authoritative")
 
     if args.json:
-        print(json.dumps(report, indent=2, ensure_ascii=False))
+        print(json.dumps(report, indent=2, ensure_ascii=True))
     else:
-        print(f"doc-claims: {status} ({report['facts_total']} measured facts, {report['checks_passed']} checks passed)")
+        _say(f"doc-claims: {status} ({report['facts_total']} measured facts, {report['checks_passed']} checks passed)")
         if args.write:
-            print(f"  generated block refreshed in {README}")
+            _say(f"  generated block refreshed in {README}")
         for failure in failures:
-            print(f"  [{failure['status']}] {failure['id']}: {failure.get('detail', '')}")
+            _say(f"  [{failure['status']}] {failure['id']}: {failure.get('detail', '')}")
         if report_written:
             try:
                 shown = OUTPUT_PATH.relative_to(REPO_ROOT)
             except ValueError:  # caller redirected the output outside the repo
                 shown = OUTPUT_PATH
-            print(f"report: {shown}")
+            _say(f"report: {shown}")
     return 0 if not failures else 1
 
 
