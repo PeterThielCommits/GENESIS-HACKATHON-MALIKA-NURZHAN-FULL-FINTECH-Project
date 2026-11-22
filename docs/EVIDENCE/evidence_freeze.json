@@ -1,12 +1,12 @@
 {
-  "aggregate_sha256": "2d96a23b6b4fa55ae3ee7910b667e9270405f726d41a07524c6cfcc2d2aff20f",
+  "aggregate_sha256": "92bd81a6e52498e6707b747644db46f35f471a6d3e7ceb184bfc13166337fd6d",
   "anchor_note": "aggregate_sha256 identifies the archived tree and is commit-independent; source_commit is the HEAD the working tree was based on when the archive was generated (the archive is written before the commit that carries it).",
   "code_version": "twinledger@1.0.0",
   "files": [
     {
-      "bytes": 833,
+      "bytes": 1724,
       "path": ".dockerignore",
-      "sha256": "c96d444abfcfa4fa5d64fa02c0eaed3fa3c8b87d6ea097866375d6ab00cd059d"
+      "sha256": "9a1a5c31a31865f624b3d156414cad9f7b095094891f1738134b17d76bcb5385"
     },
     {
       "bytes": 224,
@@ -29,9 +29,9 @@
       "sha256": "d5ca8a1a9e879030d4a840ed0ff245116bd26b52f43d9e711d0fb3f0c6c23a5c"
     },
     {
-      "bytes": 2505,
+      "bytes": 3263,
       "path": ".github/workflows/ci.yml",
-      "sha256": "e045e109a1fe378d0a07f37dcd8c0dfd04c2730bcabbea71b9b39a5087bc1624"
+      "sha256": "53d5cb3e82f0538e2a96cf80ffdda5149eb3cb4a1a3df220e676545124944c2e"
     },
     {
       "bytes": 954,
@@ -49,9 +49,9 @@
       "sha256": "5df454ec7e38a7e6592a92b085808cfc05c21b87d3abd2ab914ac0f937bb4bbb"
     },
     {
-      "bytes": 1105,
+      "bytes": 2947,
       "path": "Dockerfile",
-      "sha256": "2dd06858bcf10e714cda9db22b354b03c1cda3e45649d8796e4a09f9102b7550"
+      "sha256": "1b978fc84c6b44bb2a596fa2dbe05afe7206dac6137355bc72008af40050c697"
     },
     {
       "bytes": 1082,
@@ -59,14 +59,14 @@
       "sha256": "c7c1f2ecaf9e45f1882601030ce946f40803e5f30ca13c160ee198f260f0ba79"
     },
     {
-      "bytes": 8244,
+      "bytes": 9274,
       "path": "Makefile",
-      "sha256": "8bd15d687931ea9a6348194bf7bd7322c11ea3a0452aaddc66bfbe1859012df0"
+      "sha256": "e0fc6b100e4e82afb775e906eb088dbb4f8f555235fe830ae97a91fe22d11af3"
     },
     {
       "bytes": 16491,
       "path": "README.md",
-      "sha256": "9a244950365d435d93fd3023d61c3beff5edef41ad85d2793ba04027f6eae730"
+      "sha256": "ad14debbae5bee67ecd5d9747cace967852aa6ea9796c60c64544b4fc48c1875"
     },
     {
       "bytes": 274,
@@ -314,9 +314,9 @@
       "sha256": "2fd3fb70b508157b7ca5f7d326bce063a32679088a55908809df57484098aa26"
     },
     {
-      "bytes": 1620,
+      "bytes": 2368,
       "path": "docker-compose.yml",
-      "sha256": "d762b1add324dcea9ab331930d6b5f18266d5e8ecf584a92794adfd771f4d591"
+      "sha256": "7353e359d674986bef2e9b4a5ae66ffeffacada575391d54589873d265c022b0"
     },
     {
       "bytes": 3456,
@@ -451,12 +451,17 @@
     {
       "bytes": 7783,
       "path": "docs/DEMO.md",
-      "sha256": "e2ca04c3731e5649bec8d416e795bfa6675be1c61f559cb635f3a513ac63c114"
+      "sha256": "d6138af96a9e4ee805b93076f1a9a03f05bc133ec9b965412a79d0c4b7ab4ec7"
     },
     {
       "bytes": 6509,
       "path": "docs/DESIGN.md",
       "sha256": "b7d7a83a19934f6fe93d9976fb170f8d86c575891da0ed3b40cc338ff603521e"
+    },
+    {
+      "bytes": 1050,
+      "path": "docs/EVIDENCE/docker-build-info.json",
+      "sha256": "50de65740a38a12ce86b27a6a3c55ceb4f0c6a8118ec2d94f2c7e5af7746de3b"
     },
     {
       "bytes": 15006,
@@ -471,7 +476,7 @@
     {
       "bytes": 12334,
       "path": "docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json",
-      "sha256": "137c8a3f158cf2518e97b590ad82e3035c289a9af9a72e02459de7c646384570"
+      "sha256": "0b72a76dc8c84b5f612e2ad1dced868076a929e8bfbde0c5cd19fe0110380f76"
     },
     {
       "bytes": 5530,
@@ -1914,9 +1919,9 @@
       "sha256": "839cdeef3a670abf0c3c47d5c10082e8270572edc74ad1f31c13442dabbba6d4"
     },
     {
-      "bytes": 15217,
+      "bytes": 16944,
       "path": "judge/performance_and_deps.py",
-      "sha256": "c69fcc3d90c4517de1956c381153b4fb57fa804b194fc93310b47f258c66411a"
+      "sha256": "3f9bec7c799af96c376b275f1d98bb07b71f0fd0dea31105e921592986a6ffee"
     },
     {
       "bytes": 17968,
@@ -2334,6 +2339,11 @@
       "sha256": "4298545788f174c76ea4db317ed86cd86f75074c5dceecd53c9868c5c145e0fc"
     },
     {
+      "bytes": 11999,
+      "path": "tests/judge/test_docker_hardening.py",
+      "sha256": "c0e8dc8988d2458af3f8b8656b5099da9e37f8da083a89aaa971c6a1a8ad3675"
+    },
+    {
       "bytes": 11743,
       "path": "tests/judge/test_evidence_freeze.py",
       "sha256": "c90f7eab69a86c2690aed1b61e643abd536fab7828213304a5b21d28ceadcdb1"
@@ -2599,6 +2609,11 @@
       "sha256": "f02c55432f52f21df0eb423557b46a30488c8bd61fc4195062d77c860817e95c"
     },
     {
+      "bytes": 12318,
+      "path": "tools/check_compose_profile.py",
+      "sha256": "988e7a789437372eb3e6248d39a1e619ba825049b3051324b49354ac304da8f6"
+    },
+    {
       "bytes": 7366,
       "path": "tools/check_import_boundaries.py",
       "sha256": "52debaed70f428781e4dbc565426dd6227406d45066d12490e7a5d7dbc4d0e9f"
@@ -2609,6 +2624,11 @@
       "sha256": "5a0e6b7ee5e06156a39e89b41dff426d35a72ac04f0b6d04a670dfcfd0b0d2dc"
     },
     {
+      "bytes": 17038,
+      "path": "tools/container_local_check.py",
+      "sha256": "e649f3f63c880bb78f003df23c6d1ade2afc774922667343d833f002500507ec"
+    },
+    {
       "bytes": 46917,
       "path": "tools/demo_server.py",
       "sha256": "9f303d1ecbb5d1f1ea124515010f9ca69c908036c7c28aa108b0443264ac86e3"
@@ -2617,6 +2637,16 @@
       "bytes": 7434,
       "path": "tools/demo_walkthrough.py",
       "sha256": "5429eb7ca03c71e27f7e1ea923e74309f526267a311441d169f8540dbbe04152"
+    },
+    {
+      "bytes": 20780,
+      "path": "tools/docker_build_info.py",
+      "sha256": "f50b09ae629559b1f1803b858c8015d6ce5b5626dcf332bb22ce88cc7676dd8c"
+    },
+    {
+      "bytes": 4838,
+      "path": "tools/docker_context.py",
+      "sha256": "aaaeab2f7c0ac940f698726d846ece648f0b1c7c1c64703cdb13080945f28d28"
     },
     {
       "bytes": 20018,
@@ -2649,9 +2679,9 @@
       "sha256": "b8cd9abb1892a1686915ef8a4593abd59f137c3a6c2beefe54cbd414a9acd907"
     },
     {
-      "bytes": 25004,
+      "bytes": 27291,
       "path": "tools/release_audit.py",
-      "sha256": "d5e43425622e9d0da2f61f0af90585e541dcad30d41736078058e87180cd0e5b"
+      "sha256": "0d050b1a2ec3459346c94c8103a448a7568bfab041bf5e432300db15bf1fb5e4"
     },
     {
       "bytes": 19557,
@@ -2754,8 +2784,8 @@
       "sha256": "6db78d6ecca3fbc53cdaca71d28916fec587caae833fbf8dee05bf19dcaa584c"
     }
   ],
-  "frozen_file_count": 550,
-  "generated_at_utc": "2026-11-22T15:35:22Z",
+  "frozen_file_count": 556,
+  "generated_at_utc": "2026-11-22T16:34:42Z",
   "official_score_claimed": false,
   "phase": 17,
   "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
@@ -2765,7 +2795,7 @@
       "path": "artifacts/reports/doc_claims/doc_claims_report.json",
       "present": true,
       "required": false,
-      "sha256": "7c79a765e08d822548c3645eecc2962feaae442e3c89e222a4ca1deea9dc5f2a",
+      "sha256": "f7bfae0472af3578d68917bcb3ae2b1107b827bebcc9bcc42559f7f448a65040",
       "verdict": {
         "checks": [
           {
@@ -2868,7 +2898,7 @@
       "path": "artifacts/reports/release/release_audit.json",
       "present": true,
       "required": false,
-      "sha256": "23794c34df89e5b3de384ebb4b7f538b6bb5ef3c57b6fcc74a5d32bd034ee3db",
+      "sha256": "2e651f4783d83cacc991c94f0ad4422d9ace558047eb4e4cad68b972751747c4",
       "verdict": {
         "checks": [
           {
@@ -2905,7 +2935,7 @@
       "path": "artifacts/reports/latest/replay_report.json",
       "present": true,
       "required": true,
-      "sha256": "5255442fc2bbc90f842d43ffaacd0ccc937db8eef687f4fd87f6492ab187b3f6",
+      "sha256": "f6aac0283ba844c3430790efa26e94af6f09e4026075255dbc4d8a5796ec0dee",
       "verdict": {
         "all_byte_identical": true,
         "all_hashes_identical": true,
@@ -2922,7 +2952,7 @@
       "path": "artifacts/reports/latest/report_index.json",
       "present": true,
       "required": true,
-      "sha256": "998e7c8e72115b1fded7578a216d6126068191a7aca6f67fafa2467067c9bfb2",
+      "sha256": "e15ee60d50ee17dda3ee4e19bfef8a1331e54627415c118cab482f8e811c45ab",
       "verdict": {
         "artifact_count": 20,
         "missing_optional_or_full_mode_artifacts": [],
@@ -2934,7 +2964,7 @@
       "path": "artifacts/reports/release/trajectory_replay.json",
       "present": true,
       "required": false,
-      "sha256": "ed44460ee4d1eabb749886b3d76bee7b4ba26b7102e6ce7ebf313de07259152a",
+      "sha256": "ffa27f0d12ce00b0dd74f745b901f7e82fd128b5bdb7f302f8a37bc6d7921444",
       "verdict": {
         "failure_count": 0,
         "runs_matched": 80,
@@ -2947,7 +2977,7 @@
       "path": "artifacts/reports/latest/verify_summary.json",
       "present": true,
       "required": true,
-      "sha256": "56d4428d86ec0507e6c3b9304c3d19f87097799fee731f37fa82d10ba332da29",
+      "sha256": "4c5a994c5d35744bdc8992575f8809471ac1bf4dd788f777a8114873c57b0cec",
       "verdict": {
         "gates": [
           {
@@ -3041,5 +3071,5 @@
     }
   },
   "schema_version": "1.0.0",
-  "source_commit": "b6e7438ce3a46ac33d6cc803060f6c368bd46350"
+  "source_commit": "f3af3145383080f50b8faaadfd8a456e326d0aec"
 }

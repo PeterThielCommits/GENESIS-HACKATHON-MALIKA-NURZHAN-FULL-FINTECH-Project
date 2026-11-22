@@ -35,6 +35,16 @@ jobs:
           path: artifacts/reports/latest/
           if-no-files-found: warn
 
+  base-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve the pinned base image digest and report upstream drift
+        run: python3 tools/docker_build_info.py resolve --report-status
+
   docker-offline:
     runs-on: ubuntu-latest
     needs: core
@@ -48,6 +58,9 @@ jobs:
         run: |
           set -o pipefail
           make docker-check-container 2>&1 | tee docker-check.log
+      - name: Publish the image build provenance (base digest, Python patch version, package versions)
+        if: always()
+        run: python3 tools/docker_build_info.py publish || true
       - name: Surface offline container failure in annotations
         if: failure()
         run: |
@@ -63,6 +76,10 @@ jobs:
           for line in tail:
               print("::error::" + line[:900])
           PY
+      - name: Container-equivalent local run (informational, needs unprivileged user namespaces)
+        if: always()
+        continue-on-error: true
+        run: python3 tools/container_local_check.py --out container-local-check.json
       - name: Upload offline container log
         if: always()
         uses: actions/upload-artifact@v4
@@ -71,4 +88,5 @@ jobs:
           path: |
             docker-build.log
             docker-check.log
+            container-local-check.json
           if-no-files-found: warn

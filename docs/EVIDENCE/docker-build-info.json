@@ -1,0 +1,17 @@
+{
+  "schema": "twinledger-build-info/v1",
+  "base_image": "python:3.11-slim-bookworm",
+  "base_image_digest": "sha256:a36c24f9cbdf4fd0f52d67f0823eeac19c2028c637cecc392d97f980d4fec56b",
+  "python_version": "3.11.16",
+  "debian_release": "bookworm",
+  "apt_packages_required": [
+    "make",
+    "util-linux"
+  ],
+  "package_version_policy": "The two Debian packages are resolved by apt at build time from the pinned base image's configured Debian mirrors. Vendoring them is not permitted (TZ 22.3), and pinning an exact version would break the build as soon as the mirror drops that version. The versions actually installed are therefore recorded inside the image (/usr/local/share/twinledger/build_info.json) and published by the CI job docker-offline.",
+  "verified_by": [
+    "CI job base-image (resolves the upstream tag digest and reports drift)",
+    "CI job docker-offline (builds the pinned image and publishes its own build record)"
+  ],
+  "multi_arch": "The pinned digest is the multi-platform manifest list (linux/amd64 and linux/arm64)."
+}
