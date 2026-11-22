@@ -198,7 +198,13 @@
     ],
     "release": {
       "tag": "v1.0.1",
-      "commit": "merge commit of the v1.0.1 PR (tagged after rc-check PASS from clean-clone conditions)",
+      "commit": "640c585a672fc91328d53c15d457eca690bf414f",
+        "tag_object": "3601493b64ff983946bb6188c2a06bdfed5a5e1a",
+        "ci_merge_run": "45020669250 (core + docker-offline, success)",
+        "ci_pr_run": "45020405354 (core + docker-offline, success)",
+        "verified_on_merge_commit": "make rc-check PASS from a clean GitHub clone with emptied evidence dir (verify 12/12, 113.1s; docs 22/18; replay-all 80/80; release-audit 6/6); freeze 30 files intact 0747baf0...",
+        "tag_tree_audit": "524 tracked files, 5790897 bytes, 0 credentials, 0 undeclared external imports",
+        "published_at": "2026-11-22T12:11:27Z",
       "release_url": "https://github.com/PeterThielCommits/GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project/releases/tag/v1.0.1",
       "official_score_claimed": false
     }

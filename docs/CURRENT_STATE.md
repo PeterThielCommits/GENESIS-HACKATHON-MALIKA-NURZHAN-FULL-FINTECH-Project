@@ -3,8 +3,9 @@
 - Active branch: `arena/3af502e1-genesis-hackathon-malika-nurzh`, base `9737961`
   (`main`, merge of PR #25). This branch carries the v1.0.1 release docs; the
   merge commit of its PR is the `v1.0.1` tag target.
-- **Phase 16 re-executed in full; EXIT GATE 16 PASS on this tree** —
-  release `v1.0.1` cut (`D-16-03`). `v1.0.0` retained for history; it ships the
+- **Phase 16 re-executed in full; EXIT GATE 16 PASS** — release **`v1.0.1`**
+  (annotated tag object `3601493…`, target merge commit `640c585`, PR #26) is cut
+  and published (`D-16-03`). `v1.0.0` retained for history; it ships the
   `.dockerignore` sealed-truth defect (`D-16-02`) and is superseded for submission.
 - **Phase 15 structural audit DONE** on the stricter reading of its gate
   (`docs/PHASE_REPORTS/PHASE-15-STRUCTURAL-AUDIT.md`; decisions `D-15-04..D-15-07`).

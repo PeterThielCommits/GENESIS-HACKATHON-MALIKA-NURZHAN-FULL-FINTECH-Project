@@ -150,8 +150,11 @@ artifact (`D-16-03`). **EXIT GATE 16 re-confirmed PASS on this tree.**
 - **Freeze:** 30 frozen files intact, `aggregate_sha256 = 0747baf0…` (no frozen change).
 - **Fixes in this session:** `pyproject.toml` `version` 0.1.0 → 1.0.1 (unreferenced package
   metadata, stale); release notes retitled to v1.0.1 with `v1.0.0` kept as history.
-- **Released:** annotated tag **`v1.0.1`** on the merge commit of PR #26; GitHub release
-  `v1.0.1` published with report and limitations from `docs/RELEASE_NOTES.md`.
+- **Released:** annotated tag **`v1.0.1`** (object `3601493…`) on merge commit
+  `640c585` (PR #26); CI green on the merge commit (run `45020669250`) and on the PR
+  (run `45020405354`); `make rc-check` PASS from a clean GitHub clone before tagging.
+  GitHub release `v1.0.1` published 2026-11-22T12:11:27Z with report and limitations
+  from `docs/RELEASE_NOTES.md` and the measured tag-tree figures.
   `official_score_claimed: false` (TZ §23.6). Tag `v1.0.0` retained, unchanged.
 - **Open, carried:** `Q-ORG-01` / `Q-ORG-02` (organisational independence unevidenced — human
   owner decision), `Q-DOC-01` (partial), `Q-REL-01` **RESOLVED**.

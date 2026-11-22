@@ -13,7 +13,7 @@ published. Phases 0–17 are all `DONE` (see `docs/STATUS.md`). The repository i
 feature-frozen; nothing in this handoff authorises new features.
 
 ```
-v1.0.1   -> annotated tag on the merge commit of the v1.0.1 PR (D-16-03)
+v1.0.1   -> annotated tag (object 3601493...) on 640c585, merge commit of PR #26; release published 2026-11-22 (D-16-03)
 v1.0.0   -> retained for history; superseded for submission (sealed-truth image defect, D-16-02)
 make rc-check (clean clone, emptied evidence dir) -> verify 12/12, docs 22/18, replay-all 80/80 (567 steps), release-audit 6/6
 CI (9737961, run 45009197767)                  -> core PASS, docker-offline PASS

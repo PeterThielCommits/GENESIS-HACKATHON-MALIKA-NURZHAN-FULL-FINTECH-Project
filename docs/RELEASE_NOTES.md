@@ -171,7 +171,8 @@ and 20 evidence artefacts. Any deviation is a bug worth reporting.
 
 | Item | Value |
 |---|---|
-| Tag | `v1.0.1` (annotated), cut on the merge commit of the v1.0.1 PR after `make rc-check` PASS from clean-clone conditions |
+| Tag | `v1.0.1` (annotated, object `3601493…`) on commit `640c585` (merge of PR #26), cut **after** `make rc-check` PASS from clean-clone conditions and CI green on the merge commit (`core` + `docker-offline`, run `45020669250`) |
+| Release audit (tag tree) | 524 tracked files, 5 790 897 bytes (budget 52 428 800), 0 credentials, 0 forbidden paths, 0 undeclared external imports (109 runtime modules) |
 | Parent release | `v1.0.0` (`8da0af2`), retained for history |
 | Frozen contract surface | 30 files, `0747baf0…` (unchanged; this release touches no frozen file) |
 | `official_score_claimed` | `false` (TZ §23.6) |
