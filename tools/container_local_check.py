@@ -234,6 +234,16 @@ def classify_namespace_error(output: str) -> str | None:
     return None
 
 
+def _run_command(command: list[str], timeout: int) -> "subprocess.CompletedProcess[str]":
+    """Run ``command`` and capture its output.
+
+    A seam for the tests: they replace this function instead of writing an
+    executable into a temporary directory, which does not work inside the
+    hardened offline container (its ``/tmp`` is mounted ``noexec``).
+    """
+    return subprocess.run(command, text=True, capture_output=True, timeout=timeout)
+
+
 def probe_namespace_support(timeout: int = 120) -> dict[str, Any]:
     """Check whether this host can provide the container-equivalent isolation.
 
@@ -257,17 +267,15 @@ def probe_namespace_support(timeout: int = 120) -> dict[str, Any]:
     )
     command = ["unshare", "--map-root-user", "--mount", "--net", "sh", "-c", probe]
     try:
-        proc = subprocess.run(
-            command,
-            text=True,
-            capture_output=True,
-            timeout=timeout,
-        )
-    except FileNotFoundError:
+        proc = _run_command(command, timeout)
+    except OSError as exc:
+        # FileNotFoundError: unshare(1) is not installed. PermissionError: it
+        # is installed but cannot be executed (a `noexec` mount, a restrictive
+        # policy). Both are the environment saying "no isolation here".
         return {
             "supported": False,
-            "reason": "unshare(1) is not available on this host",
-            "detail": "",
+            "reason": f"unshare(1) cannot be executed on this host ({exc.__class__.__name__})",
+            "detail": str(exc),
             "probe_command": command,
             "environmental": True,
         }
@@ -399,16 +407,14 @@ def run_container_equivalent(
         }
     script = _run_script(app_dir, CONTAINER_CMD, capture)
     try:
-        proc = subprocess.run(
+        proc = _run_command(
             ["unshare", "--map-root-user", "--mount", "--net", "sh", "-c", script],
-            text=True,
-            capture_output=True,
-            timeout=timeout,
+            timeout,
         )
-    except FileNotFoundError:
+    except OSError as exc:
         return {
             "status": STATUS_UNSUPPORTED,
-            "reason": "unshare(1) is not available on this host",
+            "reason": f"unshare(1) cannot be executed on this host ({exc.__class__.__name__})",
             "skipped": True,
         }
     except subprocess.TimeoutExpired:

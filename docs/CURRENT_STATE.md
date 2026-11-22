@@ -13,6 +13,17 @@
 > | The `publish` subcommand was unreachable dead code and crashed with an `AttributeError`; the CI step named "Publish the image build provenance" never published anything | the branch is reachable, the mask is gone, and a genuine base-image drift fails the authoritative job (`BUG-TL-0016`) |
 > | The static guard had no rule against masking | `tools/check_workflows.py` gained a masking policy that `make lint` enforces over the repository's own workflows (`BUG-TL-0017`) |
 >
+> With the masking removed, the first CI run of the fix went **red** — which
+> is the point: the failure became visible. It was the new regression suite,
+> not the image: it executed a fake `unshare` from a temporary directory,
+> which the container's `noexec` `/tmp` forbids (`BUG-TL-0018`). The tests
+> now replace the tool's command *seam* instead of the *binary*, and a guard
+> keeps any test from making a temporary file executable. The same run also
+> confirmed the positive half: with the AppArmor restriction lifted on the
+> runner, the container-equivalent step executed the **real 70-second
+> namespace run and passed** — the validation that used to be impossible in
+> CI now runs there.
+>
 > **Earlier in the same phase (2026-11-22):** the submission container was
 > hardened against TZ §22.4 / §16.2 and the local host finally produced real
 > evidence about it.
@@ -22,7 +33,7 @@
 > | `python3 tools/freeze_release.py --verify` | **PASS** — 30 frozen contract files intact, `0747baf0…` (unchanged) |
 > | `python3 tools/evidence_freeze.py --verify` | **PASS** — every tracked release file matches `docs/EVIDENCE/evidence_freeze.json` |
 > | `python3 tools/release_evidence.py --verify` | **PASS** — the release archive is honest, self-consistent and current |
-> | `make verify` (full Judge Kit) | **PASS 12/12** gates, 653 tests, 20 evidence artifacts |
+> | `make verify` (full Judge Kit) | **PASS 12/12** gates, 655 tests, 20 evidence artifacts |
 > | `make docs-verify` | **PASS** — 22 measured facts, 22 checks |
 > | `make replay-all` | **PASS** — 80/80 runs, 567 steps byte-identical |
 > | `make release-audit` | **PASS 6/6** — secrets, file list, size, deps, entrypoint, submission (now also the base image pin) |
@@ -61,7 +72,7 @@
 | Local container evidence | `tools/container_local_check.py` (`make container-local-check`): the image is materialised and `make verify` runs as uid 10001 with no capabilities, `no_new_privs`, a read-only tree and no network — **PASS**, 12/12 gates inside the sandbox |
 | Defects | BUG-TL-0010 (root-anchored `.dockerignore`), BUG-TL-0011 (floating base image), BUG-TL-0012 (Compose limits), BUG-TL-0013 (substring audit) — each with a failing-on-old-code regression test |
 | Docs | `docs/LIMITATIONS.md` (L9, L11), `docs/DECISIONS.md` (`D-18-02`, `D-18-03`), `docs/FAILURE_ANALYSIS.md` (Failure Case 4), `docs/PHASE_REPORTS/PHASE-18.md`, `docs/CHANGELOG.md`, `docs/RELEASE_NOTES.md`, `docs/CONTEXT/NEXT_AGENT.md` |
-| CI masking close-out | BUG-TL-0015 (an unusable namespace was a FAIL and the step hid it), BUG-TL-0016 (the `publish` subcommand was unreachable dead code), BUG-TL-0017 (no masking policy in the static guard); `tools/container_local_check.py` probes the host, `.github/workflows/ci.yml` masks nothing, `tools/check_workflows.py` gained `scan_masking()`, `tests/judge/test_ci_masking.py` (28 tests) |
+| CI masking close-out | BUG-TL-0015 (an unusable namespace was a FAIL and the step hid it), BUG-TL-0016 (the `publish` subcommand was unreachable dead code), BUG-TL-0017 (no masking policy in the static guard), BUG-TL-0018 (the new test could not run in the `noexec` container); `tools/container_local_check.py` probes the host, `.github/workflows/ci.yml` masks nothing, `tools/check_workflows.py` gained `scan_masking()`, `tests/judge/test_ci_masking.py` (28 tests) |
 | Phase 17 archive | `tools/evidence_freeze.py` (release-surface digest + report verdicts) and `tools/release_evidence.py` (reconstructable release archive), `docs/EVIDENCE/` |
 | Gates | `make evidence-write` / `make evidence-verify`, wired into `make rc-check` and the CI `core` job; `C-ARCHIVE` in `tools/verify_doc_claims.py`; `tests/judge/test_release_freeze.py` turns the contract freeze into a test |
 | Defects | BUG-TL-0005 (published formula), BUG-TL-0006 (published score contract), BUG-TL-0007 (stale "provisional" wording), BUG-TL-0008 (documentation gate's artifact contract), BUG-TL-0009 (malformed CI workflow disabled the CI gate) — all non-frozen, each with a failing-on-old-code regression test |
@@ -71,7 +82,7 @@
 
 | Command / condition | Result |
 |---|---|
-| `make verify` (working tree) | **exit 0** — 12/12 gates, 653 tests (19 optional skips), 20 artifacts |
+| `make verify` (working tree) | **exit 0** — 12/12 gates, 655 tests (19 optional skips), 20 artifacts |
 | `make replay-all` | **80/80** runs, **567** steps byte-identical |
 | `make release-audit` | **6/6** PASS |
 | `python3 tools/verify_doc_claims.py` | **22** measured facts, **22/22** checks PASS |

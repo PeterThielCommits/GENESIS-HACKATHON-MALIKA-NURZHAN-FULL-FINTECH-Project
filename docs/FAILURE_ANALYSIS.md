@@ -202,3 +202,49 @@ The trigger is Ubuntu 24.04's AppArmor policy
 Re-verified locally: a refused namespace now yields `UNSUPPORTED` with exit
 code **2** (was `FAIL` with exit code 1); the repository's own workflows pass
 the masking policy; `publish` runs the publisher instead of crashing.
+
+## Failure Case 6 — The Regression Suite Could Not Run Inside the Hardened Container (Phase 18 close-out, Fixed & Re-Verified)
+
+### Measured failure (before the fix)
+
+The first CI run of the masking fix made the `docker-offline` job **red** —
+which is the fix working: the failure is now visible instead of hidden. The
+job log carried the real stderr:
+
+```
+Ran 653 tests in 64.948s | FAILED (failures=2, errors=4, skipped=25)
+```
+
+The cause was in the new regression suite itself, not in the image.
+
+### Root cause
+
+The test that simulates "a host that refuses unprivileged user namespaces"
+wrote a fake `unshare(1)` script into a temporary directory and executed it.
+The offline container mounts its temporary directory **`noexec`**
+(`--tmpfs /tmp:rw,noexec,nosuid,mode=1777,size=256m`), so the execution
+raised `PermissionError` instead of running the script:
+
+```
+PermissionError: [Errno 13] Permission denied: '/tmp/.../unshare'
+```
+
+Reproduced locally against a `noexec` tmpfs with the identical exception.
+
+### Fix & re-verification (after the fix)
+
+* the tool exposes `_run_command()` as a seam, and the tests replace the
+  *call* instead of the *binary* — no test writes or executes anything;
+* a non-executable `unshare` is now classified like a missing one: an
+  environmental refusal, i.e. an explicit skip;
+* `test_no_test_makes_a_temporary_file_executable` keeps the trap closed.
+
+Re-verified locally against the same condition: the full suite passes with
+`TMPDIR` on a `noexec` tmpfs, both directly and inside the
+container-equivalent sandbox (read-only tree, uid 10001, `CapEff 0`,
+`no_new_privs`, no network) — 12/12 gates.
+
+The same CI run also confirmed the positive half of the masking fix: with
+`kernel.apparmor_restrict_unprivileged_userns=0` applied to the runner, the
+container-equivalent step executed the **real 70-second namespace run and
+passed** — the validation that was impossible in CI now runs there.

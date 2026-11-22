@@ -143,7 +143,7 @@ an environment fact, not a defect.
 
 | Gate | Result |
 |---|---|
-| `make verify` | **PASS 12/12**, 653 tests, 20 artifacts |
+| `make verify` | **PASS 12/12**, 655 tests, 20 artifacts |
 | `make docs-verify` | **PASS**, 22 measured facts, 22/22 checks |
 | `make replay-all` | **PASS**, 80/80 runs, 567 steps byte-identical |
 | `make release-audit` | **PASS 6/6** (the SUBMISSION check now also verifies the base image pin) |
@@ -212,9 +212,31 @@ refusal reproduces the failure in 1.2 s — the CI step's duration.
   fails the authoritative `docker-offline` job instead of passing silently;
 * `tools/check_workflows.py` gained a masking policy that `make lint`
   enforces over the repository's own workflows;
-* `tests/judge/test_ci_masking.py` (28 tests) locks all of it, each with a
+* `tests/judge/test_ci_masking.py` (30 tests) locks all of it, each with a
   failing-on-old-code counterpart.
 
 The evidence artifact `docs/EVIDENCE/container-local-2026-11-22.json` now
 records the probe result and the reason, so a skipped check can never be
 read as a passed one (`REQ-JUDGE-003`).
+
+### What the first CI run of the fix found
+
+With the masking removed, the CI job `docker-offline` went **red** — which is
+the fix working: the failure is now visible instead of hidden. It was not the
+image: the new regression suite wrote a fake `unshare` script into a
+temporary directory and executed it, and the container's `/tmp` is mounted
+`noexec`, so the execution raised `PermissionError`
+(`Ran 653 tests | FAILED (failures=2, errors=4)`).
+
+Fixed by replacing the *binary* with a seam on the tool's command runner
+(`tools/container_local_check.py::_run_command`), by treating a
+non-executable `unshare` as an environmental refusal, and by adding a guard
+(`test_no_test_makes_a_temporary_file_executable`) that keeps any test from
+making a temporary file executable (`BUG-TL-0018`). Verified locally against
+the same condition: the full suite passes with `TMPDIR` on a `noexec` tmpfs,
+directly and inside the container-equivalent sandbox.
+
+The same run also confirmed the positive half of the fix: with
+`kernel.apparmor_restrict_unprivileged_userns=0` applied to the runner, the
+container-equivalent step **executed the real 70-second namespace run and
+passed** — the validation that used to be impossible in CI now runs there.

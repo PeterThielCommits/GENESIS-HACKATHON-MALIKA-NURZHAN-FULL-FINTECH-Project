@@ -151,7 +151,7 @@ python3 tools/verify_doc_claims.py   # re-measures and diffs this documentation
 ```
 
 Current measured state of this release (see the generated block for the full set):
-**12/12 PASS** verification gates, the full **653-test** suite, **5/5 byte-identical replays**,
+**12/12 PASS** verification gates, the full **655-test** suite, **5/5 byte-identical replays**,
 **0 canary hits**, `official_score_claimed: false`.
 
 ### Verify the release archive itself (Phase 17, TZ §24)
@@ -199,7 +199,7 @@ python3 tools/release_evidence.py --verify --strict
 |---|---|---|
 | Verification gates defined (RC-001..RC-012) | **12** | `judge/rubric_map.json (frozen contract)` |
 | Official organiser score claimed | **false** | `verify_summary.json` |
-| Total tests in the verification suite | **653** | `unittest discovery over tests/ (state-independent)` |
+| Total tests in the verification suite | **655** | `unittest discovery over tests/ (state-independent)` |
 | Official mirror tests (Blocks 1–5) | **55** | `unittest discovery over tests/official/ (state-independent)` |
 | Evidence artifacts indexed | **20** | `report_index.json` |
 | Required artifacts missing | **0** | `report_index.json` |

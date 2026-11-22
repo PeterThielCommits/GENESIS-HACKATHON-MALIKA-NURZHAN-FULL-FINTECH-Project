@@ -41,9 +41,9 @@ from __future__ import annotations
 
 import contextlib
 import io
-import json
 import os
-import stat
+import re
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -64,18 +64,26 @@ CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 # --------------------------------------------------------------------------- #
 # helpers
 # --------------------------------------------------------------------------- #
-def write_fake_unshare(directory: Path, body: str) -> Path:
-    """Write a fake ``unshare(1)`` and return its directory."""
-    directory.mkdir(parents=True, exist_ok=True)
-    script = directory / "unshare"
-    script.write_text("#!/bin/sh\n" + body, encoding="utf-8")
-    script.chmod(script.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-    return directory
+def fake_run(returncode: int = 0, stdout: str = "", stderr: str = "", raises=None):
+    """A stand-in for ``subprocess.run`` that never executes anything.
+
+    The tests must pass inside the hardened offline container, whose ``/tmp``
+    is mounted ``noexec`` -- a fake ``unshare`` script written there cannot be
+    executed. The tool exposes ``_run_command`` as a seam precisely so the
+    tests can replace the *call* instead of the *binary*.
+    """
+
+    def run(command, timeout=0, **kwargs):
+        if raises is not None:
+            raise raises
+        return subprocess.CompletedProcess(command, returncode, stdout, stderr)
+
+    return run
 
 
-def with_path(directory: Path):
-    """Point ``PATH`` at a directory of fakes for the duration of the block."""
-    return mock.patch.dict(os.environ, {"PATH": str(directory)})
+def with_command(result):
+    """Replace the tool's command seam for the duration of the block."""
+    return mock.patch.object(clc, "_run_command", side_effect=result)
 
 
 # --------------------------------------------------------------------------- #
@@ -85,54 +93,49 @@ class TestNamespaceProbe(unittest.TestCase):
     """The probe must tell 'the host forbids this' from 'our recipe is broken'."""
 
     def test_eperm_is_an_environmental_refusal(self) -> None:
-        with tempfile.TemporaryDirectory() as td:
-            fake = write_fake_unshare(
-                Path(td),
-                'echo "unshare failed: Operation not permitted" >&2\nexit 1\n',
-            )
-            with with_path(fake):
-                support = clc.probe_namespace_support()
+        with with_command(
+            fake_run(1, stderr="unshare failed: Operation not permitted\n")
+        ):
+            support = clc.probe_namespace_support()
         self.assertFalse(support["supported"])
         self.assertTrue(support["environmental"])
         self.assertIn("EPERM", support["reason"])
 
     def test_apparmor_refusal_is_an_environmental_refusal(self) -> None:
-        with tempfile.TemporaryDirectory() as td:
-            fake = write_fake_unshare(
-                Path(td),
-                'echo "unshare: apparmor denies unprivileged user namespaces" >&2\nexit 1\n',
-            )
-            with with_path(fake):
-                support = clc.probe_namespace_support()
+        with with_command(
+            fake_run(1, stderr="unshare: apparmor denies unprivileged user namespaces\n")
+        ):
+            support = clc.probe_namespace_support()
         self.assertFalse(support["supported"])
         self.assertTrue(support["environmental"])
 
     def test_a_generic_probe_failure_is_not_blamed_on_the_environment(self) -> None:
         """A failure we cannot explain must stay a failure, not a skip."""
-        with tempfile.TemporaryDirectory() as td:
-            fake = write_fake_unshare(Path(td), 'echo "something else went wrong" >&2\nexit 1\n')
-            with with_path(fake):
-                support = clc.probe_namespace_support()
+        with with_command(fake_run(1, stderr="something else went wrong\n")):
+            support = clc.probe_namespace_support()
         self.assertFalse(support["supported"])
         self.assertFalse(support.get("environmental", False))
 
     def test_a_successful_probe_reports_support(self) -> None:
-        with tempfile.TemporaryDirectory() as td:
-            fake = write_fake_unshare(Path(td), "exit 0\n")
-            with with_path(fake):
-                support = clc.probe_namespace_support()
+        with with_command(fake_run(0)):
+            support = clc.probe_namespace_support()
         self.assertTrue(support["supported"])
         self.assertEqual(support["reason"], "")
 
     def test_a_missing_unshare_is_an_environmental_refusal(self) -> None:
-        with tempfile.TemporaryDirectory() as td:
-            empty = Path(td) / "empty"
-            empty.mkdir()
-            with with_path(empty):
-                support = clc.probe_namespace_support()
+        with with_command(fake_run(raises=FileNotFoundError("unshare"))):
+            support = clc.probe_namespace_support()
         self.assertFalse(support["supported"])
         self.assertTrue(support["environmental"])
         self.assertIn("unshare", support["reason"])
+
+    def test_a_non_executable_unshare_is_an_environmental_refusal(self) -> None:
+        """A `noexec` mount (the hardened container's ``/tmp``) is the same."""
+        with with_command(fake_run(raises=PermissionError(13, "Permission denied"))):
+            support = clc.probe_namespace_support()
+        self.assertFalse(support["supported"])
+        self.assertTrue(support["environmental"])
+        self.assertIn("PermissionError", support["reason"])
 
     def test_the_probe_mirrors_the_real_namespace_recipe(self) -> None:
         """The probe must exercise the same primitives the run needs."""
@@ -155,46 +158,41 @@ class TestNamespaceProbe(unittest.TestCase):
 class TestRunClassification(unittest.TestCase):
     """An unsupported host is a skip; a broken workload is a failure."""
 
-    def _run(self, fake_body: str, tmp: Path) -> dict:
-        fake = write_fake_unshare(tmp / "bin", fake_body)
-        with mock.patch.dict(os.environ, {"PATH": f"{fake}:{os.environ['PATH']}"}):
-            return clc.run_container_equivalent(tmp / "app", timeout=60)
+    def _run(self, result) -> dict:
+        with with_command(result):
+            return clc.run_container_equivalent(Path("/nonexistent-app"), timeout=60)
 
     def test_a_refused_namespace_is_a_skip_not_a_failure(self) -> None:
-        with tempfile.TemporaryDirectory() as td:
-            result = self._run('echo "unshare failed: Operation not permitted" >&2\nexit 1\n', Path(td))
+        result = self._run(fake_run(1, stderr="unshare failed: Operation not permitted\n"))
         self.assertEqual(result["status"], clc.STATUS_UNSUPPORTED)
         self.assertTrue(result["skipped"])
         self.assertNotEqual(result["status"], clc.STATUS_FAIL)
 
     def test_a_workload_failure_is_a_real_failure(self) -> None:
         """The workload failing inside a working namespace must stay a FAIL."""
-        body = (
-            'case "$*" in\n'
-            "  *setpriv*) echo 'make: *** [verify] Error 1' >&2; exit 1 ;;\n"
-            "  *) exit 0 ;;\n"
-            "esac\n"
-        )
-        with tempfile.TemporaryDirectory() as td:
-            result = self._run(body, Path(td))
+        support = {"supported": True, "reason": "", "detail": "", "environmental": False}
+        with with_command(fake_run(1, stderr="make: *** [verify] Error 1\n")):
+            result = clc.run_container_equivalent(
+                Path("/nonexistent-app"), timeout=60, support=support
+            )
         self.assertEqual(result["status"], clc.STATUS_FAIL)
         self.assertFalse(result.get("skipped", False))
 
     def test_a_successful_run_passes(self) -> None:
-        with tempfile.TemporaryDirectory() as td:
-            result = self._run("exit 0\n", Path(td))
+        support = {"supported": True, "reason": "", "detail": "", "environmental": False}
+        with with_command(fake_run(0)):
+            result = clc.run_container_equivalent(
+                Path("/nonexistent-app"), timeout=60, support=support
+            )
         self.assertEqual(result["status"], clc.STATUS_PASS)
 
     def test_a_namespace_refused_during_the_run_is_a_skip(self) -> None:
         """The probe passed, but the run's own namespace creation was refused."""
-        body = (
-            'case "$*" in\n'
-            "  *setpriv*) echo 'unshare failed: Operation not permitted' >&2; exit 1 ;;\n"
-            "  *) exit 0 ;;\n"
-            "esac\n"
-        )
-        with tempfile.TemporaryDirectory() as td:
-            result = self._run(body, Path(td))
+        support = {"supported": True, "reason": "", "detail": "", "environmental": False}
+        with with_command(fake_run(1, stderr="unshare failed: Operation not permitted\n")):
+            result = clc.run_container_equivalent(
+                Path("/nonexistent-app"), timeout=60, support=support
+            )
         self.assertEqual(result["status"], clc.STATUS_UNSUPPORTED)
         self.assertTrue(result["skipped"])
 
@@ -378,6 +376,37 @@ class TestPublishSubcommand(unittest.TestCase):
         result = dbi.publish()
         self.assertIn(result["status"], {"PASS", "UNAVAILABLE"})
         self.assertIsInstance(result["problems"], list)
+
+
+class TestSuiteIsPortableToTheContainer(unittest.TestCase):
+    """The suite also runs inside the hardened image, whose ``/tmp`` is ``noexec``.
+
+    This is not hypothetical: the first version of this module wrote a fake
+    ``unshare`` script into a temporary directory and executed it. Inside the
+    offline container ``/tmp`` is mounted ``noexec``, so the execution raised
+    ``PermissionError`` and the module failed the authoritative
+    ``docker-offline`` gate. The test was then replaced by a seam on the
+    tool's command runner.
+
+    The guard below keeps that trap closed: no test may make a file in a
+    temporary directory executable.
+    """
+
+    _MAKES_EXECUTABLE = re.compile(r"S_IX(?:USR|GRP|OTH)")
+
+    def test_no_test_makes_a_temporary_file_executable(self) -> None:
+        offenders: list[str] = []
+        for path in sorted((REPO_ROOT / "tests").rglob("*.py")):
+            text = path.read_text(encoding="utf-8", errors="replace")
+            if self._MAKES_EXECUTABLE.search(text):
+                offenders.append(str(path.relative_to(REPO_ROOT)))
+        self.assertEqual(
+            offenders,
+            [],
+            "these tests make a file executable, which fails inside the "
+            "hardened container (its /tmp is mounted noexec): "
+            + ", ".join(offenders),
+        )
 
 
 if __name__ == "__main__":

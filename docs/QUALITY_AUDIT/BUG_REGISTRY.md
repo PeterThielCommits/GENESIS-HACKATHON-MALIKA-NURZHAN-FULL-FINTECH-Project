@@ -1049,6 +1049,54 @@ cycle.
 
 ---
 
+## BUG-TL-0018 — The new regression test could not run inside the hardened container
+
+| Field | Value |
+|---|---|
+| Severity | P1 |
+| Component | `tests/judge/test_ci_masking.py` |
+| Status | VERIFIED FIXED |
+| Discovered by | The CI job `docker-offline` itself, once the masking was removed |
+
+### Symptom
+
+The first version of the regression suite for BUG-TL-0015 wrote a fake
+`unshare(1)` script into a temporary directory and executed it, to simulate a
+host that refuses unprivileged user namespaces. Inside the offline container
+`/tmp` is mounted **`noexec`** (`--tmpfs /tmp:rw,noexec,nosuid,...`), so the
+execution raised `PermissionError` instead of running the script.
+
+### Impact
+
+The authoritative container gate failed: `Ran 653 tests | FAILED
+(failures=2, errors=4)`. The CI job went red — **which is the masking fix
+working as designed**: before the fix this failure would have been hidden
+behind a green job. Nothing was wrong with the image or the benchmark; the
+test itself was not portable to the environment it runs in.
+
+### Fix
+
+* The tool exposes `_run_command()` as a seam, and the tests replace the
+  *call* instead of the *binary*. No test writes or executes anything.
+* The tool now treats a non-executable `unshare` (`PermissionError`) the same
+  way as a missing one: an environmental refusal, i.e. an explicit skip.
+* A guard (`test_no_test_makes_a_temporary_file_executable`) keeps the trap
+  closed: no test in `tests/` may make a file executable.
+
+Reproduced and verified locally against the same condition: the full suite
+passes with `TMPDIR` on a `noexec` tmpfs, both directly and inside the
+container-equivalent sandbox (read-only tree, uid 10001, `no_new_privs`).
+
+### Regression evidence
+
+| Test | Fails on old code | Passes on new code |
+|---|---|---|
+| `tests/judge/test_ci_masking.py::test_a_non_executable_unshare_is_an_environmental_refusal` | yes (the `PermissionError` was unhandled) | yes |
+| `tests/judge/test_ci_masking.py::test_no_test_makes_a_temporary_file_executable` | yes (the old test module did) | yes |
+| the suite with `TMPDIR` on a `noexec` tmpfs | `FAILED (failures=2, errors=4)` | **PASS** |
+
+---
+
 ## Summary
 
 | ID | Severity | Component | Status |
@@ -1070,6 +1118,7 @@ cycle.
 | BUG-TL-0015 | P1 | `tools/container_local_check.py` + `.github/workflows/ci.yml` (masked CI failure) | VERIFIED FIXED |
 | BUG-TL-0016 | P1 | `tools/docker_build_info.py` (unreachable `publish` branch) | VERIFIED FIXED |
 | BUG-TL-0017 | P1 | `.github/workflows/ci.yml` + `tools/check_workflows.py` (no masking policy) | VERIFIED FIXED |
+| BUG-TL-0018 | P1 | `tests/judge/test_ci_masking.py` (not portable to the `noexec` container) | VERIFIED FIXED |
 
 No claim is made that no bugs remain. Checks that were executed without
 finding a defect are listed in `FIX_VERIFICATION_MATRIX.md`, and residual

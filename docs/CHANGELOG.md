@@ -36,10 +36,20 @@
   with the committed `docs/EVIDENCE/docker-build-info.json`. The branch is
   reachable now, the mask is gone, and a genuine base-image/digest drift
   fails the authoritative `docker-offline` job instead of passing silently.
-- **Regression coverage:** `tests/judge/test_ci_masking.py` (28 tests) locks
+- **Regression coverage:** `tests/judge/test_ci_masking.py` (30 tests) locks
   the probe's classification, the three exit codes, the evidence's honesty
   about a skip, the workflow's masking policy and the publisher's
   reachability.
+- **The suite is portable to the hardened container (`BUG-TL-0018`).** The
+  first version of that suite wrote a fake `unshare` script into a temporary
+  directory and executed it — impossible inside the offline container, whose
+  `/tmp` is mounted `noexec`. The CI job went red, which is the masking fix
+  working as intended: before it, that failure would have been hidden behind
+  a green job. The tests now replace the tool's command *seam* instead of the
+  *binary*, the tool treats a non-executable `unshare` as an environmental
+  refusal, and a guard keeps any test from making a temporary file
+  executable. Verified locally with `TMPDIR` on a `noexec` tmpfs, both
+  directly and inside the container-equivalent sandbox.
 
 ## 1.0.3 — Phase 18: container hardening, pinned base image, real local container-equivalent run (2026-11-22)
 

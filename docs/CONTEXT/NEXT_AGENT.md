@@ -24,7 +24,7 @@ v1.0.3   -> annotated tag on the merge commit of the Phase 18 PR; the recommende
 v1.0.2   -> retained for history (adds the Phase 17 evidence archive); tag unmoved
 v1.0.1   -> retained for history (image no longer ships sealed truth, D-16-02); tag unmoved
 v1.0.0   -> retained for history; superseded for submission; tag unmoved
-make verify                                          -> 12/12 gates, 653 tests, 20 artifacts
+make verify                                          -> 12/12 gates, 655 tests, 20 artifacts
 make docs-verify                                     -> 22 measured facts, 22 checks
 make replay-all                                      -> 80/80 runs, 567 steps byte-identical
 make release-audit                                   -> 6/6 PASS
@@ -58,6 +58,13 @@ All three are fixed: a failing step now fails the job, an environment that
 cannot provide the isolation is an explicit **skip** (exit code 2, with a
 reason), and the static guard enforces both. If you add a workflow step,
 **do not** hide a failure — handle it explicitly and report it.
+
+One more trap, found by that very CI run: the suite also runs inside the
+hardened image, whose `/tmp` is mounted **`noexec`**. A test that writes a
+fake executable into a temporary directory and runs it fails there
+(`BUG-TL-0018`). Replace the *call* (the tools expose `_run_command()` as a
+seam) rather than the *binary*; `test_no_test_makes_a_temporary_file_executable`
+guards this.
 
 ### What is still not provable here (read this before claiming anything)
 
