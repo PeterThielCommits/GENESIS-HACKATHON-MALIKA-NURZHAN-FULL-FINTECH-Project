@@ -251,19 +251,19 @@ All three under `LC_ALL=C`, matching the container locale.
 - None from the TZ. No frozen file was modified; the `.gitkeep` question was
   resolved in code (`judge/report.py`) rather than by weakening a contract.
 
-## 8. Remaining authority steps (16.7, 16.8)
+## 8. Release record (16.7, 16.8)
 
-Tagging and publishing a GitHub release are release-authority actions and are
-performed only after this PR merges, against the merge commit:
+| Item | Value |
+|---|---|
+| Tag | `v1.0.0` (annotated, object `3b1e6be…`) |
+| Commit | `8da0af2` — merge of PR #21 into `main` |
+| Release | https://github.com/PeterThielCommits/GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project/releases/tag/v1.0.0 |
+| Release notes | `docs/RELEASE_NOTES.md` |
+| Verified on the release commit | `make rc-check` PASS from clean-clone conditions — verify 12/12 (70.1 s), replay-all 80/80, release-audit 6/6 |
 
-```
-git tag -a v1.0.0 -m "TwinLedger v1.0.0 — Genesis FinTech 2026 release candidate"
-git push origin v1.0.0
-gh release create v1.0.0 --notes-file docs/RELEASE_NOTES.md
-```
-
-Commit hash and tag are recorded in `docs/STATUS.md` and
-`docs/PHASE_REPORTS/PHASE-16.json` once created.
+The tag was placed **after** verifying the merged tree, not before: `rc-check`
+was run against `8da0af2` with an emptied evidence directory, so the
+published tag names a commit that is known to verify itself.
 
 ## 9. Owner sign-off
 
