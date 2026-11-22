@@ -51,6 +51,12 @@ Structural mechanisms
 11. **Suite totals (``C-COUNTS``).** Recognised suite-total phrases in the
     jury-facing scan set must match unittest discovery. Explicit official totals
     are measured separately; small unqualified subset counts are not inferred.
+12. **Evidence artifacts (``C-EVIDENCE``).** The 2026-11-22 evidence artifacts
+    in ``docs/EVIDENCE/`` must exist, carry a full git SHA, and record PASS.
+13. **Score honesty (``C-SCORE-HONEST``).** Every ``official_score_claimed``
+    occurrence in the scan set asserts ``false``.
+14. **Organisation-open pin (``C-QORG-OPEN``).** ``Q-ORG-01`` / ``Q-ORG-02``
+    are not presented as RESOLVED in ``docs/QUESTIONS.md``.
 
 Stdlib only, offline, deterministic (no timings or wall-clock values are
 asserted; durations are rendered with an explicit "sample" caveat).
@@ -1463,6 +1469,210 @@ def stale_count_check(autofix: bool = False) -> list[dict[str, str]]:
     ]
 
 
+def evidence_artifact_check() -> list[dict[str, str]]:
+    """``C-EVIDENCE``: published evidence artifacts exist and say PASS.
+
+    The jury-facing docs claim two pieces of supporting evidence landed on
+    2026-11-22 (independent re-derivation and the local offline check). A
+    claim of that kind must be machine-checkable, so the artifacts themselves
+    are pinned here: they exist, they carry a full git SHA, and their own
+    verdict fields are positive. Editing an artifact to make this pass is
+    editing the evidence; the report hashes are recorded in the agent report.
+    """
+    failures: list[dict[str, str]] = []
+    evidence_dir = REPO_ROOT / "docs" / "EVIDENCE"
+
+    rederive = evidence_dir / "independent-rederivation-2026-11-22.json"
+    if not rederive.is_file():
+        failures.append(
+            {
+                "id": "C-EVIDENCE",
+                "status": "MISSING",
+                "detail": "docs/EVIDENCE/independent-rederivation-2026-11-22.json not found",
+            }
+        )
+    else:
+        try:
+            d = json.loads(rederive.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            d = None
+        if d is None:
+            failures.append(
+                {"id": "C-EVIDENCE", "status": "UNPARSEABLE", "detail": str(rederive.relative_to(REPO_ROOT))}
+            )
+        else:
+            summary = d.get("summary", {})
+            expectations = [
+                (summary.get("pass") is True, "summary.pass must be true"),
+                (summary.get("official_scenarios") == 20, "summary.official_scenarios must be 20"),
+                (summary.get("official_total_fp") == 0, "summary.official_total_fp must be 0"),
+                (summary.get("official_total_fn") == 0, "summary.official_total_fn must be 0"),
+                (summary.get("official_all_f1_exact_1") is True, "summary.official_all_f1_exact_1 must be true"),
+                (summary.get("on_disk_all_signatures_match") is True, "summary.on_disk_all_signatures_match must be true"),
+                (summary.get("on_disk_public_hashes_match") is True, "summary.on_disk_public_hashes_match must be true"),
+                (summary.get("proof_graph_invariant_errors_total") == 0, "summary.proof_graph_invariant_errors_total must be 0"),
+            ]
+            for ok, detail in expectations:
+                if not ok:
+                    failures.append(
+                        {
+                            "id": "C-EVIDENCE",
+                            "status": "EVIDENCE_NOT_PASS",
+                            "detail": f"{rederive.relative_to(REPO_ROOT)}: {detail}",
+                        }
+                    )
+            if not re.fullmatch(r"[0-9a-f]{40}", str(d.get("git_sha", ""))):
+                failures.append(
+                    {
+                        "id": "C-EVIDENCE",
+                        "status": "GIT_SHA_MISSING",
+                        "detail": f"{rederive.relative_to(REPO_ROOT)}: git_sha must be a full 40-hex commit id",
+                    }
+                )
+
+    offline = evidence_dir / "offline-local-2026-11-22.json"
+    if not offline.is_file():
+        failures.append(
+            {
+                "id": "C-EVIDENCE",
+                "status": "MISSING",
+                "detail": "docs/EVIDENCE/offline-local-2026-11-22.json not found",
+            }
+        )
+    else:
+        try:
+            d = json.loads(offline.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            d = None
+        if d is None:
+            failures.append(
+                {"id": "C-EVIDENCE", "status": "UNPARSEABLE", "detail": str(offline.relative_to(REPO_ROOT))}
+            )
+        else:
+            local = d.get("local_result", {})
+            if local.get("exit_code") != 0 or local.get("failures") != 0:
+                failures.append(
+                    {
+                        "id": "C-EVIDENCE",
+                        "status": "EVIDENCE_NOT_PASS",
+                        "detail": f"{offline.relative_to(REPO_ROOT)}: local_result must record exit_code 0 and 0 failures",
+                    }
+                )
+            if d.get("static_audit_pass") is not True:
+                failures.append(
+                    {
+                        "id": "C-EVIDENCE",
+                        "status": "EVIDENCE_NOT_PASS",
+                        "detail": f"{offline.relative_to(REPO_ROOT)}: static_audit_pass must be true",
+                    }
+                )
+            if not re.fullmatch(r"[0-9a-f]{40}", str(d.get("git_sha", ""))):
+                failures.append(
+                    {
+                        "id": "C-EVIDENCE",
+                        "status": "GIT_SHA_MISSING",
+                        "detail": f"{offline.relative_to(REPO_ROOT)}: git_sha must be a full 40-hex commit id",
+                    }
+                )
+    if not failures:
+        return [
+            {
+                "id": "C-EVIDENCE",
+                "status": "PASS",
+                "detail": "independent-rederivation and offline-local evidence artifacts exist and record PASS",
+            }
+        ]
+    return failures
+
+
+def score_honesty_check() -> list[dict[str, str]]:
+    """``C-SCORE-HONEST``: no scanned doc may claim an official jury score.
+
+    Every occurrence of the flag in the jury-facing scan set must assert the
+    negative (``false``), and at least one doc must carry the flag so the
+    pin cannot silently rot away.
+    """
+    failures: list[dict[str, str]] = []
+    flag_seen = 0
+    for rel in DOC_SCAN:
+        doc_path = REPO_ROOT / rel
+        if not doc_path.is_file():
+            continue
+        text = doc_path.read_text(encoding="utf-8")
+        for match in re.finditer(r"official_score_claimed[^\n]{0,60}", text, re.IGNORECASE):
+            flag_seen += 1
+            window = match.group(0).lower()
+            if not re.search(r"official_score_claimed[^a-z0-9]{0,10}false", window):
+                failures.append(
+                    {
+                        "id": "C-SCORE-HONEST",
+                        "status": "SCORE_CLAIM",
+                        "doc": rel,
+                        "detail": f"{rel}: official_score_claimed not followed by 'false': {match.group(0)!r}",
+                    }
+                )
+    if flag_seen == 0:
+        failures.append(
+            {
+                "id": "C-SCORE-HONEST",
+                "status": "FLAG_MISSING",
+                "detail": "no scanned doc states official_score_claimed; the honesty pin must not rot away",
+            }
+        )
+    if not failures:
+        return [
+            {
+                "id": "C-SCORE-HONEST",
+                "status": "PASS",
+                "detail": f"{flag_seen} occurrence(s) of official_score_claimed, all asserting false",
+            }
+        ]
+    return failures
+
+
+def org_questions_open_check() -> list[dict[str, str]]:
+    """``C-QORG-OPEN``: the organisational-independence questions stay OPEN.
+
+    Q-ORG-01 / Q-ORG-02 are honest disclosures, not defects to be narrated
+    away. Any row presenting them as RESOLVED fails the documentation gate.
+    """
+    failures: list[dict[str, str]] = []
+    questions_path = REPO_ROOT / "docs" / "QUESTIONS.md"
+    if not questions_path.is_file():
+        return [
+            {
+                "id": "C-QORG-OPEN",
+                "status": "DOC_MISSING",
+                "detail": "docs/QUESTIONS.md not found",
+            }
+        ]
+    for line_number, line in enumerate(
+        questions_path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        for qid in ("Q-ORG-01", "Q-ORG-02"):
+            if qid in line and re.search(r"RESOLVED", line, re.IGNORECASE):
+                failures.append(
+                    {
+                        "id": "C-QORG-OPEN",
+                        "status": "ORG_QUESTION_RESOLVED",
+                        "doc": "docs/QUESTIONS.md",
+                        "detail": (
+                            f"docs/QUESTIONS.md:{line_number} presents {qid} as RESOLVED; "
+                            "organisational-independence evidence does not exist and the question stays OPEN"
+                        ),
+                    }
+                )
+    if not failures:
+        return [
+            {
+                "id": "C-QORG-OPEN",
+                "status": "PASS",
+                "detail": "Q-ORG-01 and Q-ORG-02 are not marked RESOLVED in docs/QUESTIONS.md",
+            }
+        ]
+    return failures
+
+
 def reward_provenance_check() -> list[dict[str, str]]:
     """``C-REWARD``: the quoted reward formula is the one the code computes.
 
@@ -1702,6 +1912,9 @@ def main(argv: list[str] | None = None) -> int:
         ("C-COMMANDS", command_executability_check),
         ("C-REWARD", reward_provenance_check),
         ("C-COUNTS", functools.partial(stale_count_check, autofix=bool(args.write))),
+        ("C-EVIDENCE", evidence_artifact_check),
+        ("C-SCORE-HONEST", score_honesty_check),
+        ("C-QORG-OPEN", org_questions_open_check),
     )
     structural_skipped: list[str] = []
     for _check_id, probe in structural:

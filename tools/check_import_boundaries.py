@@ -39,6 +39,7 @@ RULES: list[tuple[str, tuple[str, ...], str]] = [
     ("seal", ("gen", "verifier", "env", "scoring", "harness", "nlp"), "seal may import only contracts + stdlib (TZ 6)"),
     ("gen", ("verifier", "scoring", "seal", "nlp"), "gen must not import verifier/scoring/seal/nlp (TZ 6, Phase 10)"),
     ("harness", ("gen", "verifier", "scoring", "seal", "nlp"), "harness must not import gen/verifier/scoring/seal/nlp (TZ 6, Phase 10)"),
+    ("independent_verifier", ("gen", "verifier", "scoring", "seal", "nlp", "harness", "env"), "independent re-derivation verifier must stay zero-common-mode: contracts + stdlib only"),
 ]
 
 # Granular module rules: (directory prefix, exact-or-prefix module matcher, allowed modules, description).
@@ -59,6 +60,7 @@ FORBIDDEN_PATH_TOKENS: list[tuple[str, tuple[str, ...], str]] = [
     ("verifier", ("sealed/", "sealed\\", "truth.json", "provenance.json"), "verifier discovery must not reference sealed paths (REQ-VER-001)"),
     ("arena/policies", ("sealed/", "truth.json", "provenance.json"), "policies must not reference sealed paths (REQ-ARC-003)"),
     ("arena/attacks", ("sealed/", "truth.json", "provenance.json"), "attacks must not reference sealed paths (REQ-ARC-003)"),
+    ("independent_verifier", ("sealed/", "sealed\\", "truth.json", "provenance.json"), "independent verifier must not reference sealed paths"),
 ]
 
 

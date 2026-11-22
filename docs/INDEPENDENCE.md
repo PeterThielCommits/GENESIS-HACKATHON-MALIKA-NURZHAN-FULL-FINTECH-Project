@@ -93,3 +93,38 @@ requirement recorded in `docs/QUESTIONS.md`.
   - fresh Python subprocess importing `verifier` loads none of those packages;
   - runtime `io.open`/`Path.open` spy on an episode directory containing sibling `sealed/` (`truth.json`, `provenance.json`) and `manifest.json` proves every single file open stays strictly inside `public/`;
   - negative tests prove dotfiles, `index_hints.json`, extra non-allowlisted files, and escaping symlinks are rejected with `PublicEpisodeError`.
+
+## Re-derivation evidence (2026-11-22, second from-scratch implementation)
+
+The handoff in `docs/CONTEXT/NEXT_AGENT.md` scoped a fresh verifier authored from
+`spec/` and `contracts/` alone as the technical remedy short of organisational
+separation. That re-derivation now exists and is continuously tested:
+
+- **`independent_verifier/`** — a second, from-scratch Stage-1 implementation
+  (own money/FX primitives via `Fraction` + `zoneinfo`, own discovery algorithms
+  written from `spec/verifier_algorithm.md`, own ProofGraph DAG with acyclicity
+  and finding-path checks, own evidence minimality/ablation). It imports **only**
+  the standard library and the frozen `contracts/` package — never `verifier/`,
+  `gen/`, `scoring/`, `env/`, `harness/`, `seal/`, `nlp/`, `arena/` or `judge/`
+  (enforced by `tools/check_import_boundaries.py` and by
+  `tests/independent_verifier/test_independent_rederivation.py`).
+- **Agreement on every committed episode:** all 6 `episodes/dev/*` and 4
+  `episodes/train/*` on-disk episodes re-derive to the exact same findings
+  (type, affected_ids, claimed_amount_minor, currency) with identical
+  `episode_public_hash` values.
+- **Agreement on the official matrix:** the 20 official `D01..D20` scenarios,
+  rebuilt from the public recipe matrix (`master_seed=2026`), are re-derived and
+  cross-checked against sealed truth: **F1 = 1 (exact), FP = 0, FN = 0
+  everywhere**, evidence enumeration complete, no ProofGraph invariant errors.
+- **Machine-readable evidence:** `docs/EVIDENCE/independent-rederivation-2026-11-22.json`
+  (produced by `tools/verify_independent_rederivation.py`); regression-locked by
+  `tests/independent_verifier/test_independent_rederivation.py` (8 tests,
+  including a runtime file-open spy proving discovery never leaves `public/`,
+  a fresh-subprocess import test, and zero-common-mode AST scans).
+- **What this does NOT prove:** organisational separation. Both implementations
+  were authored in a single AI-agent-assisted session by the same operator.
+  Agreement between them is strong *technical* evidence against common-mode
+  detection defects (a shared wrong assumption would almost never survive two
+  independent codebases written from the same spec); it is **not** evidence
+  that a different human or agent context built the verifier.
+  `Q-ORG-01` therefore remains **OPEN** on purpose.

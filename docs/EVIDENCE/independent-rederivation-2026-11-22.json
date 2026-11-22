@@ -1,0 +1,459 @@
+{
+  "artifact": "independent-rederivation",
+  "generated_at": "2026-11-22T12:35:44Z",
+  "git_sha": "3b83864ef7ade7dcddfe40a84c3b7b688ff992e1",
+  "honesty_note": "Both implementations were authored in a single AI-agent-assisted session (Q-ORG-01). Agreement is technical zero-common-mode re-derivation evidence; it does NOT constitute organisational independence and does not close Q-ORG-01, which stays OPEN.",
+  "independent_verifier_version": "independent-1.0.0",
+  "method": "Second, from-scratch specification-only implementation in independent_verifier/ (money/time via Fraction+zoneinfo, discovery algorithms written from spec/verifier_algorithm.md, no imports of gen/verifier/scoring/seal/nlp/harness). On-disk committed episodes are compared signature-wise against their committed verifier_report.json; official D01..D20 are rebuilt via the public recipe matrix and cross-checked against sealed truth with scoring.crosscheck.",
+  "official_d01_d20": [
+    {
+      "episode": "D01_clean_standard",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 0,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 0,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D02_clean_split_payment",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 0,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 0,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D03_clean_refund_credit_note",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 0,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 0,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D04_clean_recurring_amounts",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 0,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 0,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D05_clean_fx_cutoff_boundary",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 0,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 0,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D06_duplicate_kzt_recurring",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [
+        "DUPLICATE_PAYMENT"
+      ],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 1,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 1,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D07_duplicate_usd_refund",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [
+        "DUPLICATE_PAYMENT"
+      ],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 1,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 1,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D08_duplicate_eur_cn",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [
+        "DUPLICATE_PAYMENT"
+      ],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 1,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 1,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D09_missing_allocation",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [
+        "PARTIAL_PAYMENT_ALLOCATION"
+      ],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 1,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 1,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D10_partial_premature_paid",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [
+        "PARTIAL_PAYMENT_ALLOCATION"
+      ],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 1,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 1,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D11_partial_over_allocated",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [
+        "PARTIAL_PAYMENT_ALLOCATION"
+      ],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 1,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 1,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D12_fx_direct_document_date",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [
+        "FX_RATE_MISMATCH"
+      ],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 1,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 1,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D13_fx_inverse_operation_date",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [
+        "FX_RATE_MISMATCH"
+      ],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 1,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 1,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D14_cutoff_almaty_monthly",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [
+        "PERIOD_CUTOFF"
+      ],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 1,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 1,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D15_cutoff_utc_quarterly",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [
+        "PERIOD_CUTOFF"
+      ],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 1,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 1,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D16_interaction1_fx_cutoff_kzt",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [
+        "FX_RATE_MISMATCH",
+        "PERIOD_CUTOFF"
+      ],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 2,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 2,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D17_interaction1_fx_cutoff_kwd_qtr",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [
+        "FX_RATE_MISMATCH",
+        "PERIOD_CUTOFF"
+      ],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 2,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 2,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D18_interaction1_fx_cutoff_eur",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [
+        "FX_RATE_MISMATCH",
+        "PERIOD_CUTOFF"
+      ],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 2,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 2,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D19_interaction2_dup_missing_alloc",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [
+        "DUPLICATE_PAYMENT",
+        "PARTIAL_PAYMENT_ALLOCATION"
+      ],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 2,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 2,
+      "unresolved_ambiguities": []
+    },
+    {
+      "episode": "D20_interaction2_dup_premature_paid",
+      "evidence_enumeration_complete": true,
+      "expected_anomalies": [
+        "DUPLICATE_PAYMENT",
+        "PARTIAL_PAYMENT_ALLOCATION"
+      ],
+      "f1": "1",
+      "fn": 0,
+      "fp": 0,
+      "full_deletion_breaks_proof": true,
+      "independent_findings": 2,
+      "proof_graph_invariant_errors": [],
+      "truth_findings": 2,
+      "unresolved_ambiguities": []
+    }
+  ],
+  "on_disk_episodes": [
+    {
+      "committed_findings": 0,
+      "episode": "episodes/dev/ep_dev_001_clean_distractors",
+      "evidence_enumeration_complete": true,
+      "independent_findings": 0,
+      "matching": 0,
+      "only_committed": [],
+      "only_independent": [],
+      "proof_graph_invariant_errors": [],
+      "public_hash_committed": "53dd219ff801c83d3b509e89f31e526e69b38f44ad5fac45916c6aa91482dbda",
+      "public_hash_independent": "53dd219ff801c83d3b509e89f31e526e69b38f44ad5fac45916c6aa91482dbda",
+      "public_hash_match": true,
+      "unresolved_ambiguities": []
+    },
+    {
+      "committed_findings": 1,
+      "episode": "episodes/dev/ep_dev_002_duplicate",
+      "evidence_enumeration_complete": true,
+      "independent_findings": 1,
+      "matching": 1,
+      "only_committed": [],
+      "only_independent": [],
+      "proof_graph_invariant_errors": [],
+      "public_hash_committed": "b486530ddcd9d62bd31262cd669bbf8f6f41911b088240d3108293f9de23b131",
+      "public_hash_independent": "b486530ddcd9d62bd31262cd669bbf8f6f41911b088240d3108293f9de23b131",
+      "public_hash_match": true,
+      "unresolved_ambiguities": []
+    },
+    {
+      "committed_findings": 1,
+      "episode": "episodes/dev/ep_dev_003_partial",
+      "evidence_enumeration_complete": true,
+      "independent_findings": 1,
+      "matching": 1,
+      "only_committed": [],
+      "only_independent": [],
+      "proof_graph_invariant_errors": [],
+      "public_hash_committed": "ab1b8393b16631e554271fcc645d57b55221eee95e9c75343ee9cb039abe6a29",
+      "public_hash_independent": "ab1b8393b16631e554271fcc645d57b55221eee95e9c75343ee9cb039abe6a29",
+      "public_hash_match": true,
+      "unresolved_ambiguities": []
+    },
+    {
+      "committed_findings": 1,
+      "episode": "episodes/dev/ep_dev_004_fx_inverse",
+      "evidence_enumeration_complete": true,
+      "independent_findings": 1,
+      "matching": 1,
+      "only_committed": [],
+      "only_independent": [],
+      "proof_graph_invariant_errors": [],
+      "public_hash_committed": "04bfbac2c4fc9810b5476f0514b0873412a8eed31f5894e40c71077d456c90dc",
+      "public_hash_independent": "04bfbac2c4fc9810b5476f0514b0873412a8eed31f5894e40c71077d456c90dc",
+      "public_hash_match": true,
+      "unresolved_ambiguities": []
+    },
+    {
+      "committed_findings": 1,
+      "episode": "episodes/dev/ep_dev_005_cutoff_quarterly",
+      "evidence_enumeration_complete": true,
+      "independent_findings": 1,
+      "matching": 1,
+      "only_committed": [],
+      "only_independent": [],
+      "proof_graph_invariant_errors": [],
+      "public_hash_committed": "72dc79d9d6169f6c7f240d7f6dae3732847e77263bd9ce183a3a817486b66a73",
+      "public_hash_independent": "72dc79d9d6169f6c7f240d7f6dae3732847e77263bd9ce183a3a817486b66a73",
+      "public_hash_match": true,
+      "unresolved_ambiguities": []
+    },
+    {
+      "committed_findings": 4,
+      "episode": "episodes/dev/ep_dev_006_compound_all4",
+      "evidence_enumeration_complete": true,
+      "independent_findings": 4,
+      "matching": 4,
+      "only_committed": [],
+      "only_independent": [],
+      "proof_graph_invariant_errors": [],
+      "public_hash_committed": "84055f1cf699c94d41d467415bbc4ac91a17067641f17dbcc9057c40969f6ea5",
+      "public_hash_independent": "84055f1cf699c94d41d467415bbc4ac91a17067641f17dbcc9057c40969f6ea5",
+      "public_hash_match": true,
+      "unresolved_ambiguities": []
+    },
+    {
+      "committed_findings": 0,
+      "episode": "episodes/train/ep_train_001_clean",
+      "evidence_enumeration_complete": true,
+      "independent_findings": 0,
+      "matching": 0,
+      "only_committed": [],
+      "only_independent": [],
+      "proof_graph_invariant_errors": [],
+      "public_hash_committed": "7178962325064f02b4171c44cab6a0f78789b3531e29cb3381427baae8f6e33c",
+      "public_hash_independent": "7178962325064f02b4171c44cab6a0f78789b3531e29cb3381427baae8f6e33c",
+      "public_hash_match": true,
+      "unresolved_ambiguities": []
+    },
+    {
+      "committed_findings": 2,
+      "episode": "episodes/train/ep_train_002_dup_fx",
+      "evidence_enumeration_complete": true,
+      "independent_findings": 2,
+      "matching": 2,
+      "only_committed": [],
+      "only_independent": [],
+      "proof_graph_invariant_errors": [],
+      "public_hash_committed": "aa27abb5c987ce9b53a19bca2a2930389d54c70af3bbcedbcd1a066833a60e74",
+      "public_hash_independent": "aa27abb5c987ce9b53a19bca2a2930389d54c70af3bbcedbcd1a066833a60e74",
+      "public_hash_match": true,
+      "unresolved_ambiguities": []
+    },
+    {
+      "committed_findings": 2,
+      "episode": "episodes/train/ep_train_003_part_cutoff",
+      "evidence_enumeration_complete": true,
+      "independent_findings": 2,
+      "matching": 2,
+      "only_committed": [],
+      "only_independent": [],
+      "proof_graph_invariant_errors": [],
+      "public_hash_committed": "e407a88e8ec4bbf24ca01321593842afac494ab257a61fe1286f42d777af9ebb",
+      "public_hash_independent": "e407a88e8ec4bbf24ca01321593842afac494ab257a61fe1286f42d777af9ebb",
+      "public_hash_match": true,
+      "unresolved_ambiguities": []
+    },
+    {
+      "committed_findings": 4,
+      "episode": "episodes/train/ep_train_004_compound_all4",
+      "evidence_enumeration_complete": true,
+      "independent_findings": 4,
+      "matching": 4,
+      "only_committed": [],
+      "only_independent": [],
+      "proof_graph_invariant_errors": [],
+      "public_hash_committed": "8a704aa230be9e556571e7c25aad8ce8db1193a68ece148dea8969f4696a68de",
+      "public_hash_independent": "8a704aa230be9e556571e7c25aad8ce8db1193a68ece148dea8969f4696a68de",
+      "public_hash_match": true,
+      "unresolved_ambiguities": []
+    }
+  ],
+  "summary": {
+    "evidence_enumeration_complete_all": true,
+    "official_all_f1_exact_1": true,
+    "official_scenarios": 20,
+    "official_total_fn": 0,
+    "official_total_fp": 0,
+    "on_disk_all_signatures_match": true,
+    "on_disk_episodes": 10,
+    "on_disk_public_hashes_match": true,
+    "pass": true,
+    "proof_graph_invariant_errors_total": 0
+  }
+}

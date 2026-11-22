@@ -339,3 +339,60 @@ prose (`C-DATADICT`/`C-DEMO`/`C-WORKBENCH-API` pin three shapes only).
 **EXIT GATE 16 (re-confirmed): PASS** — no release blockers; all required tests
 pass (12/12 gates, 540-test suite, 55 official mirror tests); submission format
 verified by execution on three trees plus CI.
+
+## 11. Post-release risk-closure addendum (2026-11-22, follow-up round)
+
+The user directed: *"Исправь вот эти все ошибки и баги и риски чтобы у жюри не
+было вопросов и чтобы было все идеально"* — fix every error/bug/risk from this
+report so the jury has nothing to ask. Branch `arena/d0407793-genesis-hackathon-malika-nurzh`
+(from `main` @ `3b83864`, the docs-only merge of PR #27).
+
+### 11.1 §7 risk register → disposition
+
+| # | Risk | Disposition | Evidence |
+|---|---|---|---|
+| 1 | Organisational independence unevidenced (AI-agents-one-session origin) | **Mitigated, not closed** — second from-scratch re-derivation shipped; human decision still required. | `independent_verifier/`, `tools/verify_independent_rederivation.py`, `tests/independent_verifier/` (8 tests), `docs/EVIDENCE/independent-rederivation-2026-11-22.json` (`pass: true`: 10/10 committed episodes signature-identical + identical public hashes; official `D01..D20` F1 = 1 exact, FP = FN = 0; enumeration complete; 0 ProofGraph invariant errors). `Q-ORG-01`/`Q-ORG-02` stay **OPEN**; `docs/INDEPENDENCE.md` and `docs/QUESTIONS.md` say so. |
+| 2 | Docker offline verification CI-only | **Reduced + honestly scoped** — local namespace-isolated offline check added; image build remains CI-authoritative; CI green on `main` @ `3b83864` (run `45021422570`: `core` + `docker-offline`). | `tools/offline_local_check.py` (userns+netns, read-only bind, no network route; suite PASS, skipped=26), static Dockerfile/`.dockerignore` audit 10/10, `docs/EVIDENCE/offline-local-2026-11-22.json` (incl. explicit `scope_statement`), CI logs. |
+| 3 | Prose only partly machine-checkable | **Closed as far as honestly possible** — three new pins in the documentation gate. | `C-EVIDENCE` (evidence artifacts exist, 40-hex git SHA, verdict fields positive), `C-SCORE-HONEST` (every `official_score_claimed` asserts `false`, ≥1 occurrence required), `C-QORG-OPEN` (`Q-ORG-01`/`Q-ORG-02` not presented as RESOLVED). 18 → **21 checks, all PASS**. Remaining unpinned prose is explicitly documented as needing human review (`docs/CURRENT_STATE.md`). |
+| 4 | v1.0.0 release/tag note lacks supersession pointer | **Closed** (release notes body is editable; tags are not touched). | GitHub release `v1.0.0` body now opens with a SUPERSEDED banner → `v1.0.1` (`D-16-02`, `D-16-03`); repo docs already carried the pointer; `v1.0.0` tag unmoved (`8da0af2`→`3b1e6be` object). |
+
+### 11.2 §6 deliberate items reassessed (unchanged, by design)
+
+- `code_version = "twinledger@1.0.0"` — names the frozen contract line, not the
+  release tag (`D-16-03`); kept.
+- `Q-ORG-01` / `Q-ORG-02` / `Q-DOC-01` — remain **OPEN**; no faked closure.
+- `official_score_claimed: false` — everywhere; pinned by new `C-SCORE-HONEST`.
+- Phase 17 not restarted; `make official-eval` not run; committed
+  `artifacts/trajectories/trajectories.jsonl` untouched.
+
+### 11.3 Defects introduced and fixed inside this round
+
+1. `independent_verifier` was not in `LOCAL_PACKAGES` → the release-audit DEPS
+   gate failed (`tests/judge/test_release_audit.py` went red on a clean tree).
+   Fixed; audit DEPS back to 0 undeclared external imports.
+2. Greedy evidence minimisation in the independent implementation pruned the
+   invoice from an over-allocation proof (`{PAY}`), which is valid for my
+   discovery but fails the Stage-2 superset-of-truth predicate on `D11`
+   (`fp=1/fn=1`). Fixed principledly: an allocation referencing a document
+   absent from the (sub)episode is unverifiable and derives nothing
+   (REQ-VER-005/014-aligned) — `{INV, PAY}` survives as minimal, matching truth.
+   Not a truth-informed special case: full episodes are unaffected.
+3. `ProofGraph` data-flow edges produced a `rule → calc → rule` cycle via
+   `governed_by`. Edge direction made consistent (evidence flows toward the
+   finding); invariant check now reports zero errors.
+
+### 11.4 Measurements on this round's tree
+
+| Command / condition | Result |
+|---|---|
+| `make verify` | **12/12 PASS** (~86 s); docs-claims inside verify PASS |
+| `python3 tools/verify_doc_claims.py` | **21/21 checks PASS**, 22 facts |
+| `python3 -m unittest discover -s tests -t .` (in `make test`) | **548 tests OK** (26 skipped) |
+| `python3 tools/offline_local_check.py` | exit 0 (read-only tree, no route) |
+| `python3 tools/check_import_boundaries.py` | CLEAN (now covers `independent_verifier/`) |
+| `freeze_release --verify` | **30 files intact**, `0747baf0…` |
+| GitHub CI on `main` @ `3b83864` (run `45021422570`) | `core` + `docker-offline` **success** |
+
+`code_version` unchanged; no release cut from this round yet — landing on
+`arena/d0407793-genesis-hackathon-malika-nurzh` for PR review; a `v1.0.2` tag is
+a separate, explicit decision.

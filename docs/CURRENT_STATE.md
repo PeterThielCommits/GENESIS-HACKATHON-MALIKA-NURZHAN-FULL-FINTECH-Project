@@ -1,4 +1,22 @@
-# Current State — 2026-11-22 (Phase 16 release v1.0.1)
+# Current State — 2026-11-22 (Phase 16 release v1.0.1 + post-release risk-closure round)
+
+> **Latest session (2026-11-22, branch `arena/d0407793-genesis-hackathon-malika-nurzh`,
+> based on `main` @ `3b83864`): Phase 16 §7 risks closed with evidence.**
+>
+> | Command / condition | Result |
+> |---|---|
+> | Independent re-derivation, on-disk episodes | **10/10 signature-identical** to committed `verifier_report.json`, identical `episode_public_hash` |
+> | Independent re-derivation, official `D01..D20` (`master_seed=2026`) | **F1 = 1 exact, FP = 0, FN = 0** on all 20; evidence enumeration complete |
+> | `docs/EVIDENCE/independent-rederivation-2026-11-22.json` | written, verdict `pass: true` |
+> | `tools/offline_local_check.py` (userns+netns, read-only bind of the tree) | **540→548 tests OK (skipped=26)**, no network route, read-only source tree |
+> | `docs/EVIDENCE/offline-local-2026-11-22.json` | written, `static_audit_pass: true`; CI `docker-offline` on `main` success (run `45021422570`) |
+> | `python3 tools/verify_doc_claims.py` | **21/21 checks PASS** (new: `C-EVIDENCE`, `C-SCORE-HONEST`, `C-QORG-OPEN`) |
+> | GitHub release `v1.0.0` notes | supersession banner added; tag `v1.0.0` **not** moved; repo docs already pointed to v1.0.1 |
+> | `official_score_claimed: false` | everywhere; `Q-ORG-01` / `Q-ORG-02` remain **OPEN** (organisational separation is a human decision) |
+>
+> Docker-offline verification remains **CI-authoritative**: no container runtime
+> exists on the execution host; the local namespace check is supporting evidence
+> (exact scope in `docs/EVIDENCE/offline-local-2026-11-22.json`).
 
 - Active branch: `arena/3af502e1-genesis-hackathon-malika-nurzh`, base `9737961`
   (`main`, merge of PR #25). This branch carries the v1.0.1 release docs; the
@@ -36,8 +54,12 @@ skip. `official_score_claimed: false` everywhere.
    separate context, or accept and keep the disclosure. See `docs/INDEPENDENCE.md`.
 2. **`Q-DOC-01`** — whether the 16-family distractor catalogue should appear in
    narration at all. Currently derived per-episode; not published. OPEN (judgement).
-3. **Narrative behavioural claims** remain only partly mechanical (`C-DATADICT`,
-   `C-DEMO`, `C-WORKBENCH-API` pin three shapes); prose still needs review.
+3. **Narrative behavioural claims** are now partly mechanical beyond the
+   original three shapes: `C-EVIDENCE` (evidence artifacts exist and record
+   PASS), `C-SCORE-HONEST` (every `official_score_claimed` asserts false) and
+   `C-QORG-OPEN` (`Q-ORG-01`/`Q-ORG-02` not presented as RESOLVED) join
+   `C-DATADICT`, `C-DEMO`, `C-WORKBENCH-API`. Prose beyond these pins still
+   needs review.
 
 ## Next actions
 

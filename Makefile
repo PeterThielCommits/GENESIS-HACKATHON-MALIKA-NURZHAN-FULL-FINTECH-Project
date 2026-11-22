@@ -29,7 +29,7 @@ setup: ## Check Python version and optional extras; nothing is downloaded
 	@$(PYTHON) -c "import importlib.util as u; print('pytest:', 'present' if u.find_spec('pytest') else 'ABSENT (optional)'); print('hypothesis:', 'present' if u.find_spec('hypothesis') else 'ABSENT (optional)'); print('jsonschema:', 'present' if u.find_spec('jsonschema') else 'ABSENT (optional)')"
 
 lint: ## Compile check (read-only rootfs safe) + import-boundary scan (REQ-ARC-001)
-	@$(PYTHON) -c 'import pathlib; roots = "judge_adapter.py core contracts adapter gen invariants verifier nlp env harness scoring seal arena metamorphic judge tools tests".split(); [compile(p.read_bytes(), str(p), "exec") for r in roots for p in ([pathlib.Path(r)] if pathlib.Path(r).is_file() else sorted(pathlib.Path(r).rglob("*.py")))]'
+	@$(PYTHON) -c 'import pathlib; roots = "judge_adapter.py core contracts adapter gen invariants verifier nlp env harness scoring seal arena metamorphic judge tools tests independent_verifier".split(); [compile(p.read_bytes(), str(p), "exec") for r in roots for p in ([pathlib.Path(r)] if pathlib.Path(r).is_file() else sorted(pathlib.Path(r).rglob("*.py")))]'
 	@$(PYTHON) tools/check_import_boundaries.py
 
 test: ## All unit, contract, and official mirror tests (stdlib unittest)
