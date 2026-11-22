@@ -41,7 +41,7 @@ New: `judge/schemas.py` (stdlib validators incl. §23.5 envelope, exit 2 on viol
 Merged as PR **#18** (`baa5b67` → merge commit `99df116`, 2026-11-21T23:43:03Z); CI `core` + `docker-offline` PASS; post-merge `make verify` on `main` PASS 12/12 (50.1 s, 21 artifacts), freeze intact. Merged tree byte-identical to the verified head. See `docs/PHASE_REPORTS/PHASE-14.md` / `.json`. This row is not release authorization.
 
 ## Phase 15 re-audit (2026-11-21)
-EXIT GATE 15 PASS. The phase's own sentence — "the jury can deploy from the README and verify the key claims" — is now machine-enforced: `make verify` (12/12, 481 tests, 20 artifacts, on a clean tree too) → `make docs-verify` (22 measured facts, 11 checks) → `make demo-backup` (verify + docs + replay 5/5 + freeze), all exit 0.
+EXIT GATE 15 PASS. The phase's own sentence — "the jury can deploy from the README and verify the key claims" — is now machine-enforced: `make verify` (12/12, 490 tests, 20 artifacts, on a clean tree too) → `make docs-verify` (22 measured facts, 11 checks) → `make demo-backup` (verify + docs + replay 5/5 + freeze), all exit 0.
 Task 15.3 had **no deliverable** before this pass; added `docs/API_USAGE.md` and `docs/POLICY_PROTOCOL.md`. Corrected a factually wrong encoding-transform list in `docs/THREAT_MODEL.md` (claimed 9, listed 8, four bogus names), the stale 317-test README claim, non-matching baseline durations, and a phantom `D-03-01` citation now blocked by a referential-integrity check. `docs/DESIGN.md` rewritten as-built.
 New: generated README facts block + stale-literal denylist + decision-ID integrity, proven to fire against four injected faults. Decisions `D-15-01`, `D-15-02`. No frozen file changed; freeze `0747baf0…` intact. This row is not release authorization.
 
@@ -56,3 +56,14 @@ Five real defects fixed (all non-frozen): `.gitkeep` counted as evidence made th
 **Released:** tag **`v1.0.0`** (annotated) on commit **`8da0af2`** (merge of PR #21); GitHub release https://github.com/PeterThielCommits/GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project/releases/tag/v1.0.0 from `docs/RELEASE_NOTES.md`.
 The tag was placed only after `make rc-check` PASS **on that commit** from clean-clone conditions (verify 12/12, replay-all 80/80, release-audit 6/6).
 See `docs/PHASE_REPORTS/PHASE-16.md` / `.json` and `docs/RELEASE_NOTES.md`. This row is not a jury score.
+
+## Mandatory-target audit (2026-11-22, post-release)
+Audited against the Universal Phase Execution Prompt and TZ §23.2. Honest finding: nine required `make` targets had **never been executed** by earlier phases — only assumed — and running them exposed four real defects, one a release blocker.
+- **All 19 targets now executed in one sequence, on a dirty tree, `LC_ALL=C`: 19/19 exit 0, 0 failures** — `help, setup, lint, test-property, build-episodes, verify-core, replay, audit-shortcuts, mutation-test, test-official, report, official-eval, test, docs-verify, demo, demo-backup, replay-all, release-audit, rc-check`.
+- **Defect 1 (release blocker):** `.dockerignore` had `episodes/*/sealed/`, which does **not** match the real depth-2 layout `episodes/dev/ep_x/sealed/` (Docker matches per path element). The submission image would have carried `truth.json` — a `REQ-ARENA-005` violation. Fixed; `TestDockerIgnore` fails on the old pattern.
+- **Defect 2:** `make verify-core` FAILED after `make build-episodes`, because the no-git filesystem walk scanned untracked sealed truth (20 false `FILELIST` hits). The walk now honours ignore rules.
+- **Defect 3:** `make official-eval` wrote `official_eval_summary.json` into the frozen evidence dir, making the documented "20 artifacts" false. Relocated to `artifacts/reports/evaluation/`.
+- **Defect 4:** the published gate count came from the *last run's* summary, so `verify-core` (6 gates) made the next full run report `DRIFT`. It now comes from the frozen rubric map (12 gates).
+- Determinism across the sweep: `trajectories.jsonl` rewritten by `official-eval` differs in **`duration_s` only** across all 80 rows; `replay-all` still PASS 80/80.
+- `CONTRIBUTING.md` created (was missing). Decision `D-16-02`. Report: `docs/AGENT_REPORTS/2026-11-22/arena-universal-prompt-audit.md`.
+- These fixes are **post-release hardening** and are not in tag `v1.0.0`; cutting `v1.0.1` is a release-authority decision.

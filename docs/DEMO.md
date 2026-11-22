@@ -122,7 +122,7 @@ Every statement made in either demo resolves to one of these files:
 | Claim | File |
 |---|---|
 | 12/12 gates PASS, exit code 0 | `artifacts/reports/latest/verify_summary.json` |
-| 481 tests, 55 official mirror tests | `verify_summary.json` → `checks[RC-001/RC-004]` |
+| 490 tests, 55 official mirror tests | `verify_summary.json` → `checks[RC-001/RC-004]` |
 | 5/5 byte-identical replays | `artifacts/reports/latest/replay_report.json` |
 | 26/26 mutants killed | `artifacts/reports/latest/mutation_test_report.json` |
 | 7/7 metamorphic transforms | `artifacts/reports/latest/metamorphic_report.json` |

@@ -214,6 +214,111 @@ class TestNoGitBinary(unittest.TestCase):
         self.assertEqual(report["failed"], [])
 
 
+class TestGeneratedFilesAreNotShipped(unittest.TestCase):
+    """Running a build target must not make the audit fail.
+
+    Found for real: `make verify-core` failed after `make build-episodes`, because
+    the filesystem walk scanned *untracked* sealed truth (20 false FILELIST
+    violations). Every TZ 23.2 target has to be runnable in any order.
+    """
+
+    def test_sealed_truth_is_ignored_at_both_depths(self):
+        for rel in (
+            "episodes/dev/ep_dev_001_clean_distractors/sealed/truth.json",
+            "episodes/dev/sealed/truth.json",
+            "episodes/train/ep_train_001_clean/sealed/provenance.json",
+        ):
+            with self.subTest(rel=rel):
+                self.assertTrue(ra._is_ignored(rel), f"{rel} should be treated as generated")
+
+    def test_generated_reports_and_trajectories_are_ignored(self):
+        for rel in (
+            "artifacts/reports/latest/verify_summary.json",
+            "artifacts/reports/doc_claims/doc_claims_report.json",
+            "artifacts/reports/release/release_audit.json",
+            "artifacts/trajectories/trajectories.jsonl",
+            "core/__pycache__/ids.cpython-311.pyc",
+        ):
+            with self.subTest(rel=rel):
+                self.assertTrue(ra._is_ignored(rel))
+
+    def test_shipped_files_are_not_ignored(self):
+        for rel in (
+            "README.md",
+            "judge_adapter.py",
+            "contracts/tool_request.schema.json",
+            "episodes/dev/ep_dev_001_clean_distractors/public/accounts.json",
+            "docs/DESIGN.md",
+        ):
+            with self.subTest(rel=rel):
+                self.assertFalse(ra._is_ignored(rel), f"{rel} is shippable evidence")
+
+    def test_audit_passes_with_untracked_sealed_truth_on_disk(self):
+        """The exact regression: sealed truth present on disk, no git available."""
+        import unittest.mock as mock
+
+        real_run = ra.subprocess.run
+
+        def only_git_is_missing(*args, **kwargs):
+            if args and args[0] and args[0][0] == "git":
+                raise FileNotFoundError("git")
+            return real_run(*args, **kwargs)
+
+        with mock.patch.object(ra.subprocess, "run", side_effect=only_git_is_missing):
+            report = ra.run_audit()
+        self.assertEqual(report["status"], "PASS", report["failed"])
+
+
+class TestDockerIgnore(unittest.TestCase):
+    """The image must not carry sealed truth, at any directory depth.
+
+    Docker matches .dockerignore patterns per path element, so the original
+    `episodes/*/sealed/` did not exclude the real depth-2 layout, and the build
+    context would have shipped truth.json -- a REQ-ARENA-005 release blocker.
+    """
+
+    @staticmethod
+    def _handles(pattern: str, path: str) -> bool:
+        """Emulate Docker's per-element matching for the pattern shapes used here."""
+        import fnmatch
+
+        pat_parts = [p for p in pattern.strip("/").split("/") if p]
+        path_parts = path.strip("/").split("/")
+        for start in range(len(path_parts)):
+            seg = path_parts[start : start + len(pat_parts)]
+            if len(seg) < len(pat_parts):
+                continue
+            if all(fnmatch.fnmatch(a, b) for a, b in zip(seg, pat_parts)):
+                return True
+        return False
+
+    def test_real_sealed_layout_is_excluded(self):
+        patterns = [
+            line.strip()
+            for line in (REPO_ROOT / ".dockerignore").read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        ]
+        for path in (
+            "episodes/dev/ep_dev_001_clean_distractors/sealed/truth.json",
+            "episodes/dev/ep_dev_001_clean_distractors/sealed/provenance.json",
+            "episodes/train/ep_train_004_compound_all4/sealed/truth.json",
+        ):
+            with self.subTest(path=path):
+                self.assertTrue(
+                    any(self._handles(p, path) for p in patterns),
+                    f"{path} would be copied into the offline image",
+                )
+
+    def test_public_episode_data_is_still_included(self):
+        patterns = [
+            line.strip()
+            for line in (REPO_ROOT / ".dockerignore").read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        ]
+        path = "episodes/dev/ep_dev_001_clean_distractors/public/accounts.json"
+        self.assertFalse(any(self._handles(p, path) for p in patterns))
+
+
 class TestSizeBudget(unittest.TestCase):
     def test_budget_constants_are_sane(self):
         self.assertLessEqual(ra.MAX_SINGLE_FILE_BYTES, ra.MAX_PACKAGE_BYTES)

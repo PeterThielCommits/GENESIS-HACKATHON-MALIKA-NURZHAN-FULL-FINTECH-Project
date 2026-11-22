@@ -7,7 +7,7 @@ Generates all 20 closed scenarios D01..D20 in an ephemeral working directory
 subprocesses + ``oracle`` on the judge side), verifies zero truth leakage in
 observations, and writes:
   - ``artifacts/trajectories/trajectories.jsonl``
-  - ``artifacts/reports/latest/official_eval_summary.json``
+  - ``artifacts/reports/evaluation/official_eval_summary.json``
 """
 
 from __future__ import annotations
@@ -60,7 +60,11 @@ def run_evaluation(
     summary_path: Path | None = None,
 ) -> dict[str, Any]:
     traj_out = trajectories_path or (REPO_ROOT / "artifacts" / "trajectories" / "trajectories.jsonl")
-    sum_out = summary_path or (REPO_ROOT / "artifacts" / "reports" / "latest" / "official_eval_summary.json")
+    # Deliberately NOT inside artifacts/reports/latest/: that directory is the
+    # frozen Judge Kit evidence set (TZ §23.5, 20 files). Writing a 21st file
+    # there made the documented artifact count false after a legitimate
+    # `make official-eval` (found during the mandatory-target sweep, D-16-02).
+    sum_out = summary_path or (REPO_ROOT / "artifacts" / "reports" / "evaluation" / "official_eval_summary.json")
     traj_out.parent.mkdir(parents=True, exist_ok=True)
     sum_out.parent.mkdir(parents=True, exist_ok=True)
 

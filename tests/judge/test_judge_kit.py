@@ -239,6 +239,45 @@ class TestArtifactPlaceholders(unittest.TestCase):
         self.assertEqual(sorted(indexed), on_disk, "index disagrees with the evidence files on disk")
 
 
+class TestEvidenceDirStaysFrozen(unittest.TestCase):
+    """The evidence set is exactly 20 files; no target may add a 21st.
+
+    Found during the mandatory-target sweep: `make official-eval` wrote
+    official_eval_summary.json into artifacts/reports/latest/, so the documented
+    "20 evidence artifacts" became 21 after a legitimate command, and the docs
+    gate started reporting DRIFT on the artifact count (D-16-02).
+    """
+
+    GENERATED_OUTSIDE = (
+        "official_eval_summary.json",
+        "doc_claims_report.json",
+        "release_audit.json",
+        "trajectory_replay.json",
+    )
+
+    def test_no_generated_report_is_written_into_the_evidence_dir(self):
+        report_dir = verify_mod.REPORT_DIR
+        if not report_dir.is_dir():
+            self.skipTest("evidence artifacts not generated yet")
+        present = {p.name for p in report_dir.iterdir()}
+        for name in self.GENERATED_OUTSIDE:
+            with self.subTest(name=name):
+                self.assertNotIn(name, present, f"{name} belongs outside artifacts/reports/latest/")
+
+    def test_eval_summary_is_written_elsewhere(self):
+        source = (REPO_ROOT / "tools" / "run_official_eval.py").read_text(encoding="utf-8")
+        self.assertIn('reports" / "evaluation', source)
+        self.assertNotIn('"latest" / "official_eval_summary.json"', source)
+
+    def test_evidence_count_is_twenty(self):
+        report_dir = verify_mod.REPORT_DIR
+        index = report_dir / "report_index.json"
+        if not index.is_file():
+            self.skipTest("evidence artifacts not generated yet")
+        artifacts = json.loads(index.read_text(encoding="utf-8"))["artifacts"]
+        self.assertEqual(len(artifacts), 20, f"evidence set changed size: {sorted(artifacts)}")
+
+
 class TestOfflineHtmlGuarantee(unittest.TestCase):
     def test_clean_html_has_no_violations(self):
         self.assertEqual(report_mod.audit_html_offline("<html><body>ok</body></html>"), [])
