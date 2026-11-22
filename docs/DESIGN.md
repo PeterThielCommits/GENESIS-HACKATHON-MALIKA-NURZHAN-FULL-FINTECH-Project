@@ -1,6 +1,6 @@
 # TwinLedger — Design
 
-As-built design of the released system (v1.0.0). The original Phase 1 skeleton
+As-built design of the released system (v1.0.1). The original Phase 1 skeleton
 notes are superseded by this document; the per-phase reports in
 `docs/PHASE_REPORTS/` record how each layer arrived.
 

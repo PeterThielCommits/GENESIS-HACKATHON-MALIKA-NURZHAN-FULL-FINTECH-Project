@@ -270,3 +270,71 @@ published tag names a commit that is known to verify itself.
 Phase 16 is complete: feature-frozen, verified on a clean machine, replayed end
 to end, audited for secrets/size/dependencies, and its official entrypoint and
 submission format proven by execution. EXIT GATE 16: **PASS**.
+
+---
+
+## 10. v1.0.1 addendum (2026-11-22) — re-execution before cutting the superseding release
+
+**Why this addendum exists.** `v1.0.0` was cut from `8da0af2` before PRs #23
+(mandatory-target audit), #24 (forensic audit vs the official 2026-11-20 checks) and
+#25 (Phase 15 structural hardening) landed. The tag therefore ships the
+`.dockerignore` defect from `D-16-02`: the default `make docker-check` image would
+have contained `episodes/dev/*/sealed/truth.json` (a `REQ-ARENA-005` violation).
+`docs/QUESTIONS.md#Q-REL-01` recorded the recommendation to cut `v1.0.1`; the
+repository owner directed that Phase 16 be executed fully (including 16.7/16.8).
+Decision: `D-16-03`. `v1.0.0` is retained for history; it is superseded for submission.
+
+### 10.1 Re-verified on this tree (base `9737961` = merge of PR #25)
+
+| Task | Check | Result |
+|---|---|---|
+| 16.1 | Feature freeze | Only audit/docs/metadata alignment; no runtime behaviour changed; **no frozen file changed** (`freeze_release --verify` → 30 files, `0747baf0…`) |
+| 16.2 | `make rc-check` on a clean clone, emptied evidence dir | **exit 0** — verify **12/12** (82.2 s), docs **22 facts / 18 checks**, replay-all **80/80 runs, 567 steps**, release-audit **6/6** |
+| 16.2 | `make rc-check` on the working tree | **exit 0** — verify **12/12** (87.8 s), same downstream gates |
+| 16.2 | Third tree: `git archive` extract with **no `.git`** (the submission-image case) | release-audit **6/6** PASS |
+| 16.3 | `docker-offline` | No Docker daemon in the execution sandbox → recorded **UNVERIFIED** there, never PASS. CI run `45009197767` (`9737961`): `core` **success**, `docker-offline` **success** (`--network=none --read-only --cap-drop ALL --cpus=2 --memory=4g`, `PIP_NO_INDEX=1`, non-root `USER 10001`) |
+| 16.4 | `make replay-all` | **PASS 80/80 runs, 567 steps byte-identical** (rerun on this tree) |
+| 16.5 | `make release-audit` | SECRETS 0 matches (523 text files); FILELIST 0 forbidden; SIZE within the 50 MB budget; DEPS **0** undeclared external (109 runtime modules) |
+| 16.6 | Entrypoint & submission format | `judge_adapter` imported from cwd=`/`: 3 exports, `reset` 2-tuple, `step` 5-tuple, **5/5 tool names accepted**; offline image, single documented command; literal re-read of `judge_adapter.py` (3 exports, envelope, closed-mode reward=0) |
+| 16.7 | Tag `v1.0.1` (annotated) on the merge commit, pushed after `rc-check` PASS | see §10.3 |
+| 16.8 | GitHub release `v1.0.1` with report and limitations | published from `docs/RELEASE_NOTES.md` |
+
+### 10.2 Defects found and fixed in this pass
+
+1. `pyproject.toml` carried `version = "0.1.0"` — stale package metadata from
+   Phase 1. Nothing in the tree reads it (verified by grep), it is not frozen, and
+   the frozen contract line stays `schema_version = 1.0.0`. Aligned to `1.0.1`.
+2. `docs/RELEASE_NOTES.md` described itself as the v1.0.0 notes while quoting
+   figures from an intermediate "v1.0.1 tree" that no longer matched the tree
+   (521 files vs 523 tracked). Rewritten as the `v1.0.1` notes; volatile
+   aggregates are no longer transcribed into the document — the release notes
+   point at `make release-audit`, which prints them per tree (the class of
+   error fixed by `D-15-06`/`D-15-07`).
+3. Documentation headers still named `v1.0.0` as the current release
+   (`STATUS`, `LIMITATIONS`, `THREAT_MODEL`, `DESIGN`, `ARCHITECTURE_SNAPSHOT`)
+   → aligned to `v1.0.1`; historical and contract-version references to `1.0.0`
+   were deliberately left intact.
+
+No other defect was found: every gate re-ran green, and the forensic and
+structural audits merged in #24/#25 had already closed the substantive issues.
+
+### 10.3 Release record (16.7, 16.8)
+
+| Item | Value |
+|---|---|
+| Tag | `v1.0.1` (annotated), on the merge commit of the v1.0.1 PR |
+| Tagged after | `make rc-check` PASS from clean-clone conditions (§10.1) |
+| Parent release | `v1.0.0` (`8da0af2`), unchanged |
+| Release notes | `docs/RELEASE_NOTES.md` (v1.0.1) |
+| Frozen surface | 30 files, `0747baf0…` (unchanged) |
+| `official_score_claimed` | `false` (TZ §23.6) |
+
+### 10.4 Still open (not fixed here, by design)
+
+`Q-ORG-01`/`Q-ORG-02` (organisational independence unevidenced — human owner),
+`Q-DOC-01` (catalogue narration), partial mechanical coverage of behavioural
+prose (`C-DATADICT`/`C-DEMO`/`C-WORKBENCH-API` pin three shapes only).
+
+**EXIT GATE 16 (re-confirmed): PASS** — no release blockers; all required tests
+pass (12/12 gates, 540-test suite, 55 official mirror tests); submission format
+verified by execution on three trees plus CI.

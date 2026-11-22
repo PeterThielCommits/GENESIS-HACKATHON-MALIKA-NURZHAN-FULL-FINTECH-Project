@@ -1,4 +1,4 @@
-# Threat Model (Release v1.0.0 — Kernel-Sandboxed Sealed Evaluation & Anti-Leakage)
+# Threat Model (Release v1.0.1 — Kernel-Sandboxed Sealed Evaluation & Anti-Leakage)
 
 ## 1. Assets Protected
 - **Sealed Ground Truth & Salts:** `episodes/*/*/sealed/truth.json`, `provenance.json`, and 256-bit `PRODUCTION_SECRET` commitment salts (`seal/rekey.py`).

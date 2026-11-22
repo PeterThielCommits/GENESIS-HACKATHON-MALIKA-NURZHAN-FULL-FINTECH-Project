@@ -1,15 +1,61 @@
-# TwinLedger v1.0.0 — Genesis FinTech 2026 release candidate
+# TwinLedger v1.0.1 — Genesis FinTech 2026 release candidate (corrected)
 
 **A self-auditing synthetic-finance benchmark: the ledger, the injected errors and
 the proof that the score is real.**
 
-TwinLedger generates a clean synthetic book, mutates it with accounting-meaningful
-errors, exposes it through a read-only tool API, and scores a policy's findings
-with an independent verifier. Everything — episodes, rewards, replays, reports —
-is reproducible offline with nothing but Python.
+v1.0.1 supersedes v1.0.0 (`8da0af2`). Tag `v1.0.0` remains published for history,
+but it ships a submission image that would have contained `sealed/truth.json`
+(`.dockerignore` matched only depth-1 `episodes/*/sealed/`, not the real depth-2
+layout — `D-16-02`). **v1.0.1 is the recommended submission artifact.**
 
 `official_score_claimed: false`. This release reports **internal verification
 results**, never a jury score (Master TZ §23.6).
+
+---
+
+## What changed since v1.0.0
+
+All changes are correctness fixes on non-frozen files; the frozen contract
+surface is untouched (`freeze_release --verify` → 30 files, `0747baf0…`).
+
+1. **Submission image no longer ships sealed truth (`D-16-02`, release blocker).**
+   `.dockerignore` listed `episodes/*/sealed/`, but Docker matches patterns per
+   path element, so the real depth-2 layout `episodes/dev/ep_x/sealed/` was
+   included in the build context. Both depths are now listed, locked by
+   `TestDockerIgnore`.
+2. **Forensic audit against the official check definitions (PR #24).** Two P0 and
+   two P1 defects, each fixed with a regression test that fails on the old code:
+   - **BUG-TL-0001 (P0):** two competing reward implementations existed;
+     `scoring/reward.py` used the superseded provisional reward while the jury
+     reaches the official `clip([-1,1], 2·F1 − 1 − 0.2·steps/100)`. Ten of eleven
+     published reward vectors were wrong; negative rewards were impossible.
+   - **BUG-TL-0002 (P0):** pagination-cursor `rsplit(b".")` broke verification for
+     ~6.5% of offsets (16-byte HMAC containing `0x2E`); the official L-fixture
+     stalled at 150 of 214 rows with `BAD_CURSOR`.
+   - **BUG-TL-0003 (P1):** trailing base64 garbage was accepted by cursor
+     verification. The old test passed by luck.
+   - **BUG-TL-0004 (P1):** the official C05 test only walked `invoices`, never the
+     broken `ledger` offset 200. Now exercised on both.
+   - Three mutation mutants (MUT-07/08/13) silently disarmed by the reward refactor
+     were re-armed; the suite is 26/26 again.
+3. **Post-release mandatory-target audit (PR #23).** All 19 required TZ §23.2 make
+   targets had never actually been executed. Running them exposed four defects;
+   fixes: `verify-core` after `build-episodes` (the no-git filesystem walk now
+   honours ignore rules — 20 false `FILELIST` hits gone), the official-eval summary
+   relocated out of the frozen evidence directory (`artifacts/reports/evaluation/`),
+   and the published gate count now comes from the frozen rubric map instead of the
+   last run's summary. Decision `D-16-02`.
+4. **Documentation gate hardened (PR #25, `D-15-04..D-15-07`).** Structural detectors
+   `C-PATHS`, `C-DATADICT`, `C-DEMO`, `C-WORKBENCH-API`, `C-COMMANDS`, `C-REWARD`,
+   `C-COUNTS` added to `tools/verify_doc_claims.py`, each proven able to fail by an
+   injected fault; a phantom documented workbench route
+   (`GET /api/episode/<split>/<id>/overview`) was implemented instead of erased; two
+   order-dependency bugs fixed (`D-15-06`); ASCII-only console crash fixed (`D-15-07`);
+   the 19-defect structural audit is recorded in
+   `docs/PHASE_REPORTS/PHASE-15-STRUCTURAL-AUDIT.md`.
+5. **Package metadata aligned.** `pyproject.toml` declared `version = "0.1.0"`;
+   it now declares `1.0.1`. Nothing frozen changed; `schema_version` remains
+   `1.0.0` (the frozen contract line, `D-01-01`).
 
 ---
 
@@ -32,20 +78,19 @@ make docker-check  # --network=none --read-only --cap-drop ALL, non-root
 | Claim | Command | Result |
 |---|---|---|
 | Verification suite | `make verify` | **12/12 gates PASS**, full suite, 20 evidence artefacts |
-| Clean machine | fresh `git clone`, empty evidence dir | **12/12 PASS** |
+| Clean machine | fresh `git clone`, empty evidence dir | **12/12 PASS** (re-measured on this tree) |
+| No-Git submission tree | `git archive` extraction, no `.git` | audit **6/6 PASS** |
 | Determinism, all runs | `make replay-all` | **80/80 runs, 567 steps byte-identical** |
-| Determinism, sealed replay | `make replay` | 5/5 byte-identical, Merkle root `d949fae3…` |
-| No published claim drifts | `make docs-verify` | 22 facts, 11 checks PASS |
-| Release audit | `make release-audit` | 6/6 PASS |
+| Determinism, sealed replay | `make replay` | 5/5 byte-identical |
+| No published claim drifts | `make docs-verify` | 22 facts, 18/18 checks PASS |
+| Release audit | `make release-audit` | **6/6 PASS** (secrets, file list, size, dependencies, entrypoint, submission) |
 | Frozen contract surface | `freeze_release --verify` | 30 files, `0747baf0…` |
+| Offline container | CI `docker-offline` (GitHub Actions) | green on the release merge commit: `--network=none --read-only --cap-drop ALL`, `PIP_NO_INDEX=1`, non-root `USER 10001` |
 
-Release audit detail, re-measured on the v1.0.1 tree: 0 credentials in 521
-tracked files, 0 forbidden paths, 5 643 787 bytes (budget 50 MB), 109 runtime
-modules with **0** external dependencies, and the official entrypoint imported
-from cwd=`/` with 5/5 tool names accepted. (The v1.0.0 note said 494 files /
-5 449 805 bytes; both were true of that tag's tree and are preserved as history
-in `docs/PHASE_REPORTS/PHASE-16.md`. Live values are asserted by
-`make release-audit`, never transcribed.)
+The exact package byte size is printed by `make release-audit` (budget 50 MB) and is
+re-measured on every tree; it is never transcribed into this file. The figures
+recorded for the `v1.0.0` tag's tree (494 files / 5 449 805 bytes) are preserved as
+history in `docs/PHASE_REPORTS/PHASE-16.md`.
 
 Baseline policies over D01..D20 (seed 2026, 20 scenarios each) — published in
 the README generated block and re-measured by `make docs-verify`:
@@ -66,6 +111,7 @@ gate was shown to **fail** when it should:
   sealed truth, and an oversized file each produce a specific `FAIL`;
 - a tampered metric and a tampered observation each break `replay-all`;
 - an injected documentation drift produces `[DRIFT]` naming the exact line;
+- an injected pagination-cursor corruption stalls the L-fixture walk (C05 regression);
 - a phantom decision ID produces `[PHANTOM_ID]`.
 
 Every gate names its requirement ID, runs from a clean tree, and writes an
@@ -85,6 +131,13 @@ never silently omitted (`REQ-JUDGE-003`).
 4. Baseline numbers derive from the committed `trajectories.jsonl`; regenerating
    it is a reviewer step, not part of `make verify`.
 5. Difficulty calibration is validated on the D01..D20 set only.
+6. Organisational independence of the verifier remains **unevidenced** (`Q-ORG-01`,
+   `Q-ORG-02`, OPEN): the codebase was produced by AI agents in one shared session
+   context. The *technical* zero-common-mode separation is proven and tested; the
+   organisational half is disclosed, not claimed. See `docs/INDEPENDENCE.md`.
+7. The Docker offline check is exercised by CI (`docker-offline` job), not by every
+   developer machine; where no Docker daemon exists it is recorded as UNVERIFIED
+   rather than PASS (see `docs/PHASE_REPORTS/PHASE-16.md`, limitation L-C).
 
 The full, dated limitation list lives in `docs/LIMITATIONS.md`; the threat model
 is in `docs/THREAT_MODEL.md`, and every deviation is recorded with its reasoning
@@ -101,7 +154,7 @@ in `docs/DECISIONS.md`.
 | `docs/DEMO.md` | 3-minute demo and technical backup demo |
 | `docs/LIMITATIONS.md` | What this does not do |
 | `docs/THREAT_MODEL.md` | What it defends against, and how |
-| `docs/INDEPENDENCE.md` | Why generator, verifier and scorer are separable |
+| `docs/INDEPENDENCE.md` | Why generator, verifier and scorer are separable — and what is *not* proven |
 | `docs/PHASE_REPORTS/` | Per-phase scope, defects, commands and evidence |
 
 ## Reproducibility
@@ -113,3 +166,12 @@ make verify                    # requires Python 3.11 on PATH
 
 Expected: `verify: PASS`, exit 0, with `artifacts/reports/latest/verify_summary.json`
 and 20 evidence artefacts. Any deviation is a bug worth reporting.
+
+## Release record
+
+| Item | Value |
+|---|---|
+| Tag | `v1.0.1` (annotated), cut on the merge commit of the v1.0.1 PR after `make rc-check` PASS from clean-clone conditions |
+| Parent release | `v1.0.0` (`8da0af2`), retained for history |
+| Frozen contract surface | 30 files, `0747baf0…` (unchanged; this release touches no frozen file) |
+| `official_score_claimed` | `false` (TZ §23.6) |

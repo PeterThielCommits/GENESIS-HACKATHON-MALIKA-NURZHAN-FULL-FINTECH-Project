@@ -1,4 +1,4 @@
-# Project Status Matrix (Release v1.0.0)
+# Project Status Matrix (Release v1.0.1)
 
 | Phase / Track | Title | Status | Gate / Primary Evidence |
 | --- | --- | --- | --- |
@@ -17,7 +17,7 @@
 | Phase 13 | Property, Metamorphic (`M-01..M-07`), RNG & 26-Mutant Suites | DONE | `metamorphic/suite.py`, `judge/mutation_suite.py`, `docs/PHASE_REPORTS/PHASE-13.md` |
 | Phase 14 | 12-Gate Judge Kit & Self-Contained Offline HTML Report | DONE (re-audit 2026-11-21) | `judge/verify.py`, `judge/report.py`, `judge/schemas.py`, `judge/performance_and_deps.py`, `tests/judge/test_judge_kit.py`, `docs/PHASE_REPORTS/PHASE-14.md` |
 | Phase 15 | Complete Documentation & Demo (re-audit 2026-11-21) | DONE | `tools/verify_doc_claims.py`, `docs/API_USAGE.md`, `docs/POLICY_PROTOCOL.md`, `docs/DEMO.md`, `tests/judge/test_doc_claims.py`, `docs/PHASE_REPORTS/PHASE-15.md` |
-| Phase 16 | Hardened Offline Docker, Compose & CI Gate Verification | DONE | `Dockerfile`, `docker-compose.yml`, `.github/workflows/ci.yml`, `docs/PHASE_REPORTS/PHASE-16.md` |
+| Phase 16 | Hardened Offline Docker, Compose & CI Gate Verification | DONE (re-verified 2026-11-22, `v1.0.1`) | `Dockerfile`, `docker-compose.yml`, `.github/workflows/ci.yml`, `docs/PHASE_REPORTS/PHASE-16.md` (incl. v1.0.1 addendum); tag **`v1.0.1`** supersedes `v1.0.0` (`D-16-03`) |
 | Phase 17 | Post-Release Cryptographic Evidence Freeze | DONE | `tools/freeze_release.py`, `configs/release_freeze.json` (0747baf0…, D-12-02), `docs/PHASE_REPORTS/PHASE-17.md` |
 | Official 2026-11-20 | FinTech Checks (`C01..C20`, `D01..D20`, `Block 3`, `P01..P20`, `Baselines`) | DONE | `judge_adapter.py`, `adapter/official_env.py`, `scoring/official_scorer.py`, `tests/official/` |
 
@@ -125,3 +125,35 @@ Supersedes the earlier audit's test/check totals, not its historical sweep.
   **30 files intact**, `0747baf0…`. No scoring, tag, or frozen-contract changes.
 - Count recognition is intentionally bounded (see D-15-07); organisational
   independence remains unevidenced. Q-ORG-01/02, Q-REL-01, Q-DOC-01 remain OPEN.
+
+## Phase 16 v1.0.1 re-verification and release (2026-11-22)
+
+Phase 16 was re-executed in full against the post-`v1.0.0` tree (merge of PRs #23, #24, #25)
+before cutting the release the repo recommended since `D-16-02`. The tag `v1.0.0` ships a
+submission image that would contain `sealed/truth.json`; `v1.0.1` is the corrected submission
+artifact (`D-16-03`). **EXIT GATE 16 re-confirmed PASS on this tree.**
+
+- **16.2 clean clone:** `make rc-check` from a fresh `git clone` with an emptied evidence dir →
+  **exit 0** — verify **12/12** (82.2 s), docs **22 facts / 18 checks**, replay-all **80/80 runs,
+  567 steps**, release-audit **6/6**. Third tree `git archive` (no `.git`, i.e. the image case):
+  release-audit **6/6**, entrypoint PASS.
+- **16.3 offline Docker:** no Docker daemon in the execution sandbox (recorded UNVERIFIED there,
+  never PASS); CI `core` + `docker-offline` both **success** on the release-candidate commit
+  (`9737961`, run `45009197767`): `--network=none --read-only --cap-drop ALL --cpus=2 --memory=4g`,
+  `PIP_NO_INDEX=1`, non-root `USER 10001`.
+- **16.4 replay-all:** PASS (**80/80 runs, 567 steps byte-identical**) — rerun on this tree.
+- **16.5 audit:** SECRETS 0 matches (523 text files scanned), FILELIST 0 forbidden paths, SIZE
+  within the 50 MB budget, DEPS **0 undeclared external imports** (109 runtime modules).
+- **16.6 submission:** official entrypoint imported from cwd=`/` — 3 exports, `reset` 2-tuple,
+  `step` 5-tuple, **5/5 tool names accepted**; non-root offline image with the single documented
+  command; literal-conformance of `judge_adapter.py` re-checked by eye.
+- **Freeze:** 30 frozen files intact, `aggregate_sha256 = 0747baf0…` (no frozen change).
+- **Fixes in this session:** `pyproject.toml` `version` 0.1.0 → 1.0.1 (unreferenced package
+  metadata, stale); release notes retitled to v1.0.1 with `v1.0.0` kept as history.
+- **Released:** annotated tag **`v1.0.1`** on the merge commit of PR #26; GitHub release
+  `v1.0.1` published with report and limitations from `docs/RELEASE_NOTES.md`.
+  `official_score_claimed: false` (TZ §23.6). Tag `v1.0.0` retained, unchanged.
+- **Open, carried:** `Q-ORG-01` / `Q-ORG-02` (organisational independence unevidenced — human
+  owner decision), `Q-DOC-01` (partial), `Q-REL-01` **RESOLVED**.
+- Report: `docs/PHASE_REPORTS/PHASE-16.md` (v1.0.1 addendum) and
+  `docs/AGENT_REPORTS/2026-11-22/arena-phase-16-v1-0-1-release.md`.

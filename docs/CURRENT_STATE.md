@@ -1,59 +1,47 @@
-# Current State — 2026-11-22 (post structural audit)
+# Current State — 2026-11-22 (Phase 16 release v1.0.1)
 
-- Active branch: `arena/a30551a9-genesis-hackathon-malika-nurzh`, base `e0a2bbf`
-  (`main`, merge of PR #24).
-- **Phase 15 structural audit DONE, EXIT GATE 15 PASS** on the stricter reading of
-  the gate text. Report: `docs/PHASE_REPORTS/PHASE-15-STRUCTURAL-AUDIT.md`;
-  decisions `D-15-04`, `D-15-05`, `D-15-06`, `D-15-07`.
-- **What changed and why:** the documentation gate verified only that published
-  *numbers* match artifacts. It now also verifies that published *shapes* match the
-  repository — 7 new detectors (`C-PATHS`, `C-DATADICT`, `C-DEMO`,
-  `C-WORKBENCH-API`, `C-COMMANDS`, `C-REWARD`, `C-COUNTS`), with negative tests.
-  The initial 19 structural defects are fixed. Follow-up fixed an ASCII-console
-  crash and two stale prose totals missed by the old denylist (`D-15-07`).
+- Active branch: `arena/3af502e1-genesis-hackathon-malika-nurzh`, base `9737961`
+  (`main`, merge of PR #25). This branch carries the v1.0.1 release docs; the
+  merge commit of its PR is the `v1.0.1` tag target.
+- **Phase 16 re-executed in full; EXIT GATE 16 PASS on this tree** —
+  release `v1.0.1` cut (`D-16-03`). `v1.0.0` retained for history; it ships the
+  `.dockerignore` sealed-truth defect (`D-16-02`) and is superseded for submission.
+- **Phase 15 structural audit DONE** on the stricter reading of its gate
+  (`docs/PHASE_REPORTS/PHASE-15-STRUCTURAL-AUDIT.md`; decisions `D-15-04..D-15-07`).
+- **Phase 17 complete**; no re-freeze required — no frozen file changed in this
+  session (`freeze_release --verify` → 30 files, `0747baf0…`).
 
-## Latest measurements (historical commands labelled)
+## Latest measurements (this session, 2026-11-22)
 
-| Command | Result |
+| Command / condition | Result |
 |---|---|
-| `make verify` (empty evidence dir) | **12/12 PASS**, 47.416 s, 20 artifacts, **540 tests**, `critical_skipped=0` |
-| ASCII-only `make verify` (empty evidence + trajectories) | **12/12 PASS**, 45.443 s, zero non-ASCII bytes, zero critical skips |
-| `make verify-core` (initial audit) | 6/6 PASS, 41 s |
-| `make docs-verify` | **22 measured facts, 18/18 checks**, PASS |
-| `make lint` | `import boundary scan: CLEAN (REQ-ARC-001..007)` |
-| `python3 tools/freeze_release.py --verify` | **30 frozen files intact**, `0747baf0…` |
-| `python3 -m unittest tests.judge.test_doc_claims` | **60 tests OK** (was 25) |
-| `python3 tools/demo_walkthrough.py` | 6 segments, `full_os_sandbox=True` |
-| order-independence (`verify-core`→`docs`, `report`→`docs`, `docs`×2) | all exit 0 |
+| `make rc-check` (working tree) | **exit 0** — verify 12/12 (87.8 s), docs 22 facts/18 checks, replay-all 80/80 (567 steps), release-audit 6/6 |
+| `make rc-check` (fresh `git clone`, emptied evidence dir) | **exit 0** — verify 12/12 (82.2 s), same downstream gates |
+| `make release-audit` (`git archive` tarball, no `.git`) | **6/6 PASS** (the submission-image case) |
+| `make replay-all` | **80/80 runs, 567 steps byte-identical** |
+| `make test` counts (in verify) | 540 total (1 optional Hypothesis-class skip); official mirror 55 |
+| CI on `9737961` (run `45009197767`) | `core` **success**, `docker-offline` **success** (`--network=none --read-only --cap-drop ALL`, `PIP_NO_INDEX=1`, non-root) |
+| `python3 tools/freeze_release.py --verify` | **30 files intact**, `0747baf0…` |
 
-RC-001 in the clean normal run records 19 bootstrap/optional test skips; the
-overall summary records 20 optional skips (including non-test checks). The ASCII
-run without trajectories records 25 test skips / 26 overall optional skips.
-These are explicit positional skips; neither run has a critical skip.
-The populated-evidence regression suite passes 540 tests with one optional skip.
+RC-001 records explicit optional skips (bootstrap/optional); there is no critical
+skip. `official_score_claimed: false` everywhere.
 
-No frozen file changed (`contracts/*`, `configs/*`, `judge/rubric_map.json`,
-Master TZ untouched). `official_score_claimed: false`.
+## Open items (none block the release)
 
-## Open items (none block the next phase)
-
-1. **`Q-ORG-01` — organisational independence is unevidenced.** The verifier was
-   not built by a different human owner; this repository came from AI agents in one
-   session context. The *technical* separation is proven (`RC-002` + runtime
-   file-open spy). Needs a human owner: re-derive the verifier under a separate
-   context, or accept and keep the disclosure. See `docs/INDEPENDENCE.md`.
-2. **`Q-REL-01` — should `v1.0.1` be cut?** Tag `v1.0.0` (`8da0af2`) still carries
-   the `.dockerignore` defect that ships `sealed/truth.json` into the image
-   (`D-16-02`). The fix is on `main`, not in the tag. Release-authority decision.
-3. **Prose describing behaviour is only partly mechanical.** `C-DATADICT`,
-   `C-DEMO` and `C-WORKBENCH-API` pin the three shapes that mattered most; narrative
-   claims about *how* something behaves still rely on review.
+1. **`Q-ORG-01` / `Q-ORG-02` — organisational independence is unevidenced.** The
+   verifier was not built by a different human owner; this repository came from AI
+   agents in one session context. The *technical* separation is proven (`RC-002` +
+   runtime file-open spy). Needs a human owner: re-derive the verifier under a
+   separate context, or accept and keep the disclosure. See `docs/INDEPENDENCE.md`.
+2. **`Q-DOC-01`** — whether the 16-family distractor catalogue should appear in
+   narration at all. Currently derived per-episode; not published. OPEN (judgement).
+3. **Narrative behavioural claims** remain only partly mechanical (`C-DATADICT`,
+   `C-DEMO`, `C-WORKBENCH-API` pin three shapes); prose still needs review.
 
 ## Next actions
 
-1. Human owner answers `Q-ORG-01`, then either records acceptance in
-   `docs/DECISIONS.md` or scopes a separate verifier re-derivation.
-2. Decide `v1.0.1`; if approved, tag from `main` after `make rc-check` on the
-   reviewed commit, and note the image-content fix in the release body.
-3. `Phase 17` remains complete as recorded; no re-freeze is required by this
-   session because no frozen file changed.
+1. Human owner answers `Q-ORG-01`; record acceptance in `docs/DECISIONS.md` or
+   scope a separate verifier re-derivation (see `docs/CONTEXT/NEXT_AGENT.md`).
+2. Nothing else is pending for the release: `v1.0.1` is cut, documented and tagged.
+3. If a future defect is found in the released artifact, fix on a new branch, and
+   let the fix ride the next patch release (`v1.0.2`); do not move `v1.0.1`.
