@@ -75,6 +75,22 @@ DOC_SCAN: tuple[str, ...] = (
 # --------------------------------------------------------------------------- #
 # measurement helpers — every value originates in an artifact or frozen contract
 # --------------------------------------------------------------------------- #
+def _first_difference(expected: str, actual: str) -> str:
+    """Describe the first disagreeing line, so drift is diagnosable.
+
+    A bare "the block disagrees" is unusable in CI, where the failing job's log
+    is not always retrievable. Naming the line turns a mystery into a fix.
+    """
+    expected_lines = expected.splitlines()
+    actual_lines = actual.splitlines()
+    for index, (want, got) in enumerate(zip(expected_lines, actual_lines), start=1):
+        if want != got:
+            return f"line {index}: committed {got.strip()[:90]!r} != measured {want.strip()[:90]!r}"
+    if len(expected_lines) != len(actual_lines):
+        return f"line count: committed {len(actual_lines)} != measured {len(expected_lines)}"
+    return "whitespace or trailing newline differs"
+
+
 def _say(message: str) -> None:
     """Print without ever depending on the host locale's encoding.
 
@@ -592,7 +608,11 @@ def main(argv: list[str] | None = None) -> int:
                     {
                         "id": "G-BLOCK",
                         "status": "DRIFT",
-                        "detail": "generated facts block disagrees with measured artifacts; run --write after checking",
+                        "detail": (
+                            "generated facts block disagrees with measured artifacts "
+                            f"({_first_difference(comparable_current, comparable_rendered)}); "
+                            "run --write after checking"
+                        ),
                     }
                 )
         else:

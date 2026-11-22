@@ -54,7 +54,8 @@ jobs:
               print("::error::docker-check.log missing - the step failed before producing output")
               raise SystemExit(0)
           lines = [l.rstrip() for l in open(path, encoding="utf-8", errors="replace") if l.strip()]
-          tail = [l for l in lines if any(k in l for k in ("FAIL", "Error", "error", "Traceback", "Permission", "Exception", "No such file", "verify:"))][-8:] or lines[-8:]
+          keys = ("FAIL", "Error", "error", "Traceback", "Permission", "Exception", "No such file", "verify:", "DRIFT", "STALE", "line ")
+          tail = [l for l in lines if any(k in l for k in keys)][-10:] or lines[-8:]
           for line in tail:
               print("::error::" + line[:900])
           PY
