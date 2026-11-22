@@ -32,7 +32,7 @@ Now documented explicitly in both files (README note + `POLICY_PROTOCOL.md` §3 
 `docs/THREAT_MODEL.md` listed "9 encoding transforms" followed by **8** names, four of which were not the real transform identifiers. The actual transform list in `judge/canary_fuzzer.py` is `exact_utf8, casefold, hex_lower, hex_upper, base64_standard, base64_urlsafe_nopad, url_percent_encoded, unicode_nfc, unicode_nfkc`. Corrected and now source-driven.
 
 ### 2.4 Stale numbers
-`README.md` published **317 tests** (measured: **410**, now 428 after the new Phase 15 tests) and `mutation_score_exact: "26/26"` quoted as a percentage field. The baseline table's max-duration column did not match `trajectories.jsonl` (`0.004s` vs `0.005s`, `7.3` vs `7.35` steps).
+`README.md` published **317 tests** (measured: **410**, now 432 after the new Phase 15 tests) and `mutation_score_exact: "26/26"` quoted as a percentage field. The baseline table's max-duration column did not match `trajectories.jsonl` (`0.004s` vs `0.005s`, `7.3` vs `7.35` steps).
 
 ### 2.5 A phantom decision ID (my own error, caught by the new check)
 While rewriting `DESIGN.md` I cited `D-03-01`, which does not exist in `docs/DECISIONS.md`. Rather than just fix the prose, this is now a **referential-integrity check**: every `D-XX-YY` cited anywhere in the docs must be defined in `DECISIONS.md`, or the gate fails.
@@ -47,7 +47,7 @@ Task 15.6 ("no unsupported claims or fake metrics") cannot be satisfied by care 
 | Mechanism | What it stops |
 |---|---|
 | **Generated facts block** in `README.md` (`<!-- BEGIN GENERATED:measured-facts -->`) rendered from artifacts and compared byte-for-byte | any hand-edited number silently drifting |
-| **Prose assertions** (`428 tests`, `12-gate Judge Kit`, `5/5 byte-identical replays`, protocol enums) | stale counts in running text |
+| **Prose assertions** (`432 tests`, `12-gate Judge Kit`, `5/5 byte-identical replays`, protocol enums) | stale counts in running text |
 | **Stale-literal denylist** across 10 docs (`317 tests`, `Replay Suite: 0/0`, `15 invariants`, …) | old wrong values being reintroduced |
 | **Decision-ID referential integrity** | phantom `D-XX-YY` citations |
 
@@ -68,7 +68,11 @@ A fourth bug was caught by the tests themselves: one test hardcoded `**12/12**` 
 The `docker-offline` CI job runs `make verify` with `--read-only` rootfs and tmpfs mounts only for `artifacts/reports/latest` and `artifacts/trajectories`. The new Phase 15 report directory was therefore unwritable, and an unwritable path raised `FileNotFoundError` instead of reporting the verdict. Two fixes, both correct in their own right:
 
 1. `Dockerfile` pre-creates `artifacts/reports/doc_claims`, and `make docker-check` mounts a 16 MB tmpfs there — the rootfs stays read-only.
-2. `tools/verify_doc_claims.py` now treats the report as a convenience artifact, never as the verdict: if the write fails it prints a note and returns the real exit code. Verified by pointing the output path at a non-creatable location (`PASS`, exit 0) and by running the whole `make verify` in a simulated read-only layout.
+2. `tools/verify_doc_claims.py` now treats the report as a convenience artifact, never as the verdict: if the write fails it prints a note and returns the real exit code.
+
+The first fix was **not sufficient**, and the second CI run proved it: the job still failed. The deeper cause is that `make docker-check` mounts an **empty tmpfs over `artifacts/trajectories`**, which *masks* the committed `trajectories.jsonl`. Nothing in `make verify` regenerates that file (it comes from `make official-eval` and is committed), so the baseline rows — an asserted fact — were unreadable and the drift check fired. The masking is deliberate and correct: an offline container should prove it produces its own outputs from scratch.
+
+Fixed by making baseline rows an **optional fact block**: `baseline_log_available()` probes the log; when it is absent the block says so explicitly (`_(baselines omitted)_` + the reason), the comparison skips that section, and `--write` never erases the published rows. Verified in three ways: real repo (PASS), log removed (PASS), and a full simulated container layout with an empty trajectories directory (`make verify` 12/12 PASS). Locked by `TestOfflineContainerTolerance` (4 tests).
 
 ### 3.3 Pre-existing tooling gap this exposed
 
@@ -106,8 +110,9 @@ The relocated report also avoids a subtler trap: `artifacts/reports/latest/` is 
 | `python3 -m unittest tests.judge.test_doc_claims tests.judge.test_judge_kit` | 0 | 56 tests OK |
 | `python3 tools/freeze_release.py --verify` | 0 | 30 frozen files intact (`0747baf0…`) |
 | `make verify` in simulated read-only container layout | 0 | 12/12 PASS — doc-claims report degrades gracefully |
+| `make verify` with tmpfs-masked `artifacts/trajectories` | 0 | 12/12 PASS — baselines reported as omitted, no false drift |
 | `tools/verify_doc_claims.py` with unwritable output path | 0 | PASS verdict preserved, note printed |
-| full suite via RC-001 | 0 | **428 tests**, 1 optional skip (critical_skipped=0) |
+| full suite via RC-001 | 0 | **432 tests**, 1 optional skip (critical_skipped=0) |
 | `make verify` ×2 consecutive, then `docs-verify` | 0 | stable — no drift |
 
 ### 5.1 Negative tests (the gate must actually fail)

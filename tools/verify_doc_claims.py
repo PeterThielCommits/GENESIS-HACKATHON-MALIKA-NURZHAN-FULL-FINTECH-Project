@@ -149,6 +149,19 @@ def _src() -> tuple[list[str], list[str]]:
 # --------------------------------------------------------------------------- #
 # measured facts — the single source for every published number
 # --------------------------------------------------------------------------- #
+def baseline_log_available() -> bool:
+    """True when the committed trajectory log is readable.
+
+    ``make verify`` never writes it (it comes from ``make official-eval`` and is
+    committed), and the hardened offline container mounts an empty tmpfs over
+    ``artifacts/trajectories`` — which *masks* the committed file on purpose, so
+    that a run can prove it produces its own outputs from scratch. Baseline
+    rows are therefore an optional fact block, guarded by this probe, and are
+    skipped with an explicit note rather than crashing the whole gate.
+    """
+    return TRAJECTORY_LOG.is_file()
+
+
 def collect_facts() -> list[dict[str, str]]:
     """Return ordered (id, label, value, source) facts rendered into the README."""
     summary = _verify_summary()
@@ -323,6 +336,22 @@ BASELINE_POLICIES: tuple[tuple[str, str], ...] = (
 )
 
 
+BASELINE_HEADING = "### Measured Baselines"
+
+
+def strip_baselines(block: str) -> str:
+    """Return ``block`` with its baseline section removed.
+
+    Used for comparison when the trajectory log is unreadable: the committed
+    README still publishes the baseline rows, and a run that cannot read the log
+    must not report a drift that is purely an environment difference.
+    """
+    index = block.find(BASELINE_HEADING)
+    if index == -1:
+        return block
+    return block[:index] + "<!-- END GENERATED:measured-facts -->"
+
+
 def render_block() -> str:
     """Render the generated facts block (markdown), deterministically."""
     lines = [
@@ -345,6 +374,19 @@ def render_block() -> str:
         "| Policy | Isolation | Mean F1 | Mean Return | Mean Steps | Episodes |",
         "|---|---|---:|---:|---:|---:|",
     ]
+    if not baseline_log_available():
+        lines += [
+            "| _(baselines omitted)_ | Trajectory log not readable in this environment | "
+            "`artifacts/trajectories/trajectories.jsonl` |",
+            "",
+            "Baseline rows are published by the repository README and measured from",
+            "`artifacts/trajectories/trajectories.jsonl`. They are intentionally absent",
+            "here when that log is not readable (e.g. inside the hardened offline",
+            "container, which masks `artifacts/trajectories` with an empty tmpfs).",
+            END_MARK,
+        ]
+        return "\n".join(lines)
+
     for policy, isolation in BASELINE_POLICIES:
         s = _trajectory_stats(policy)
         # Wall-clock duration is a sample, not a deterministic property: it is
@@ -504,9 +546,22 @@ def main(argv: list[str] | None = None) -> int:
         start = readme.index(BEGIN_MARK)
         end = readme.index(END_MARK) + len(END_MARK)
         current = readme[start:end]
-        if current != rendered:
+        comparable_current, comparable_rendered = current, rendered
+        if not baseline_log_available():
+            comparable_current = strip_baselines(current)
+            comparable_rendered = strip_baselines(rendered)
+        if comparable_current != comparable_rendered:
             if args.write:
-                readme_path.write_text(readme[:start] + rendered + readme[end:], encoding="utf-8")
+                # Never erase published baseline rows just because this
+                # environment cannot read the log.
+                replacement = rendered
+                if not baseline_log_available():
+                    tail = current[current.find(BASELINE_HEADING):] if BASELINE_HEADING in current else ""
+                    replacement = strip_baselines(rendered).replace(
+                        "<!-- END GENERATED:measured-facts -->",
+                        tail if tail else "<!-- END GENERATED:measured-facts -->",
+                    )
+                readme_path.write_text(readme[:start] + replacement + readme[end:], encoding="utf-8")
                 checks.append({"id": "G-BLOCK", "status": "REFRESHED", "detail": "facts block updated"})
             else:
                 failures.append(

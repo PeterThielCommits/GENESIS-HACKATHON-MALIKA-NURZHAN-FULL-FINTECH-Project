@@ -41,7 +41,8 @@
     "Doc-claim tests placed inside RC-001 could not work: they read verify_summary.json, which the same run writes last (chicken-and-egg FileNotFoundError on a clean tree)",
     "Circular self-reference: asserting the gate pass-ratio made a doc-drift failure persist a failing summary that poisoned every subsequent run (deadlock)",
     "A doc-claim test hardcoded the value to corrupt, so it silently stopped testing anything once that fact was removed",
-    "Hardened offline container rejected the new report directory: --read-only rootfs with tmpfs only for reports/latest and trajectories caused FileNotFoundError. Fixed in Dockerfile (pre-create) + make docker-check (16 MB tmpfs) and made the checker report-write failure-tolerant"
+    "Hardened offline container rejected the new report directory: --read-only rootfs with tmpfs only for reports/latest and trajectories caused FileNotFoundError. Fixed in Dockerfile (pre-create) + make docker-check (16 MB tmpfs) and made the checker report-write failure-tolerant",
+    "The container tmpfs over artifacts/trajectories masks the committed trajectories.jsonl, and make verify never regenerates it, so the documentation gate hard-failed in docker-offline. Baseline rows are now an optional fact block, probed and reported explicitly"
   ],
   "decisions": [
     "D-15-01",
@@ -73,7 +74,7 @@
     {
       "command": "make verify",
       "exit_code": 0,
-      "result": "12/12 PASS in 61.9s, 21 artifacts, 428 tests"
+      "result": "12/12 PASS in 61.1s, 21 artifacts, 432 tests"
     },
     {
       "command": "make docs-verify",
@@ -98,12 +99,12 @@
     {
       "command": "python3 -m unittest tests.judge.test_doc_claims",
       "exit_code": 0,
-      "result": "18 tests OK"
+      "result": "22 tests OK"
     },
     {
       "command": "python3 -m unittest tests.judge.test_doc_claims tests.judge.test_judge_kit",
       "exit_code": 0,
-      "result": "56 tests OK"
+      "result": "60 tests OK"
     },
     {
       "command": "python3 tools/freeze_release.py --verify",
@@ -133,7 +134,7 @@
     "cited D-99-99": "PHANTOM_ID R-DECISION-ID, exit 1"
   },
   "metrics": {
-    "tests_total": 428,
+    "tests_total": 432,
     "tests_official": 55,
     "verify_gates": "12/12",
     "doc_claim_facts": 22,

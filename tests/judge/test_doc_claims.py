@@ -112,6 +112,48 @@ class TestGeneratedBlockMechanism(unittest.TestCase):
                 vdc.REPORT_DIR = saved
 
 
+class TestOfflineContainerTolerance(unittest.TestCase):
+    """The hardened offline container masks artifacts/trajectories with tmpfs.
+
+    `make verify` never writes trajectories.jsonl (it comes from
+    `make official-eval` and is committed), so the documentation gate must treat
+    baseline rows as an optional fact block instead of crashing or reporting
+    drift. Regression for the docker-offline CI failure.
+    """
+
+    def test_strip_baselines_removes_section_and_keeps_marker(self):
+        block = (
+            f"{vdc.BEGIN_MARK}\n### Measured Facts\n| a | b |\n"
+            f"{vdc.BASELINE_HEADING} — D01\n| row |\n{vdc.END_MARK}"
+        )
+        stripped = vdc.strip_baselines(block)
+        self.assertNotIn(vdc.BASELINE_HEADING, stripped)
+        self.assertIn(vdc.BEGIN_MARK, stripped)
+        self.assertTrue(stripped.endswith(vdc.END_MARK))
+
+    def test_strip_baselines_is_noop_without_section(self):
+        block = f"{vdc.BEGIN_MARK}\nno baselines here\n{vdc.END_MARK}"
+        self.assertEqual(vdc.strip_baselines(block), block)
+
+    def test_baseline_availability_probe_is_a_bool(self):
+        self.assertIsInstance(vdc.baseline_log_available(), bool)
+
+    def test_render_block_missing_log_is_explicit_not_silent(self):
+        """Without the log, the block must say so — never omit rows quietly."""
+        saved = vdc.TRAJECTORY_LOG
+        vdc.TRAJECTORY_LOG = Path("/nonexistent/trajectories.jsonl")
+        try:
+            self.assertFalse(vdc.baseline_log_available())
+            if not ARTIFACTS_READY:
+                self.skipTest(NOT_READY_REASON)
+            block = vdc.render_block()
+        finally:
+            vdc.TRAJECTORY_LOG = saved
+        self.assertIn("baselines omitted", block)
+        self.assertIn("tmpfs", block)
+        self.assertTrue(block.endswith(vdc.END_MARK))
+
+
 class TestProseMechanism(unittest.TestCase):
     """Mechanism 2: prose counts must track the measurement."""
 
