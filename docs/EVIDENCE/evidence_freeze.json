@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "8f1af83cfc62bc3a32eecd45df5ffc0ac5c35f65cc0d31093a788498a8762959",
+  "aggregate_sha256": "58cefae16011519e45fcdd6fb3eb6aeb1d0070877b7a69b24a1a06f6d899858c",
   "anchor_note": "aggregate_sha256 identifies the archived tree and is commit-independent; source_commit is the HEAD the working tree was based on when the archive was generated (the archive is written before the commit that carries it).",
   "code_version": "twinledger@1.0.0",
   "files": [
@@ -59,9 +59,9 @@
       "sha256": "c7c1f2ecaf9e45f1882601030ce946f40803e5f30ca13c160ee198f260f0ba79"
     },
     {
-      "bytes": 8143,
+      "bytes": 8244,
       "path": "Makefile",
-      "sha256": "950c61f9d507cb263ffe1087537252df1570d5f85a38d27cac30050cc1d09b47"
+      "sha256": "8bd15d687931ea9a6348194bf7bd7322c11ea3a0452aaddc66bfbe1859012df0"
     },
     {
       "bytes": 16491,
@@ -471,7 +471,7 @@
     {
       "bytes": 12334,
       "path": "docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json",
-      "sha256": "31c16eb025821544f7d8603cecb4c39d5a2812efc045e67445ab5ede4609391d"
+      "sha256": "b58447bbd78e07fd2b33ceefdca088ecae94100d4c804f08c204b0837dcad4a5"
     },
     {
       "bytes": 5530,
@@ -2755,7 +2755,7 @@
     }
   ],
   "frozen_file_count": 550,
-  "generated_at_utc": "2026-11-22T15:14:03Z",
+  "generated_at_utc": "2026-11-22T15:19:12Z",
   "official_score_claimed": false,
   "phase": 17,
   "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
@@ -3041,5 +3041,5 @@
     }
   },
   "schema_version": "1.0.0",
-  "source_commit": "7fecfcc2daf1602fda1e369f163abb5c91caf42e"
+  "source_commit": "3c645811f56c8273118f5a13801d13a5a19709ac"
 }

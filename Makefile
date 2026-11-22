@@ -20,7 +20,7 @@ help: ## Show available commands
 	@echo "  make demo-backup      Technical backup demo: verify + docs-verify + replay + freeze"
 	@echo "  make release-audit    Phase 16: secrets, file list, size, dependencies, entrypoint (TZ 16.5/16.6)"
 	@echo "  make replay-all       Replay ALL 80 published trajectories and compare every step (TZ 16.4)"
-	@echo "  make evidence-write   Phase 17: write the post-release evidence freeze manifest (run AFTER the tree is final)"
+	@echo "  make evidence-write   Phase 17: write the release archive + the evidence freeze manifest (run AFTER the tree is final)"
 	@echo "  make evidence-verify  Phase 17: verify the committed evidence freeze against the tree (TZ 17.1-17.3)"
 	@echo "  make rc-check         Release candidate gate: verify + docs-verify + replay-all + release-audit + evidence-verify"
 	@echo "  make docker-check     Offline Docker check (--network=none --cpus=2 --memory=4g)"
@@ -96,8 +96,10 @@ release-audit: ## Secrets, file list, package size, dependencies, official entry
 replay-all: ## Replay every published trajectory and compare all 80 runs (TZ 16.4)
 	@$(PYTHON) tools/replay_all_trajectories.py
 
-evidence-write: ## Phase 17: archive the release surface (code+config hashes) and the gate verdicts (TZ 17.1-17.3)
+evidence-write: ## Phase 17: write the release archive, then the release-surface manifest (TZ 17.1-17.3)
+	@$(PYTHON) tools/release_evidence.py --write
 	@$(PYTHON) tools/evidence_freeze.py --write
+	@$(PYTHON) tools/release_evidence.py --verify --strict
 
 evidence-verify: ## Phase 17: verify the committed evidence freeze against the working tree (TZ 17.1-17.3)
 	@$(PYTHON) tools/evidence_freeze.py --verify --require-reports
