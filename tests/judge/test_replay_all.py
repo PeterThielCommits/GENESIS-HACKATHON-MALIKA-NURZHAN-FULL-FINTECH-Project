@@ -21,7 +21,9 @@ if str(REPO_ROOT) not in sys.path:
 from tools import replay_all_trajectories as rp
 
 TRAJ = rp.TRAJECTORIES
-TRAJ_READY = TRAJ.is_file() and rp.OUTPUT_PATH.is_file()
+# The committed trajectory log is the input; the report is a gitignored output,
+# so gating on it skipped everything on a clean clone (see Phase 15 D-15-01).
+TRAJ_READY = TRAJ.is_file()
 
 
 def setUpModule() -> None:

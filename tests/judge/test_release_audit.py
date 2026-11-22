@@ -24,7 +24,11 @@ if str(REPO_ROOT) not in sys.path:
 
 from tools import release_audit as ra
 
-AUDIT_READY = ra.OUTPUT_PATH.is_file()
+# Integration checks depend on the generated evidence (and on a Git checkout),
+# NOT on the audit report itself: artifacts/reports/release/ is gitignored, so
+# gating on it made every integration test skip on a clean clone, which turned
+# RC-001 into SKIPPED and failed the suite (23 skips). Gate on the input.
+AUDIT_READY = (ra.REPO_ROOT / "artifacts" / "reports" / "latest" / "verify_summary.json").is_file()
 
 
 def setUpModule() -> None:
@@ -179,14 +183,14 @@ class TestDependencyAudit(unittest.TestCase):
 
 
 class TestEntrypointContract(unittest.TestCase):
-    @unittest.skipUnless(AUDIT_READY, "release audit report not generated yet")
+    @unittest.skipUnless(AUDIT_READY, "evidence artifacts not generated yet")
     def test_entrypoint_passes_in_real_repo(self):
         result = ra.audit_entrypoint()
         self.assertEqual(result["status"], "PASS", json.dumps(result, indent=2))
         self.assertEqual(result["metrics"]["step_tuple_len"], 5)
         self.assertEqual(result["metrics"]["reset_tuple_len"], 2)
 
-    @unittest.skipUnless(AUDIT_READY, "release audit report not generated yet")
+    @unittest.skipUnless(AUDIT_READY, "evidence artifacts not generated yet")
     def test_every_adapter_tool_is_accepted(self):
         tools = ra.audit_entrypoint()["metrics"]["tools"]
         for name in ra.ADAPTER_TOOL_NAMES:
@@ -205,7 +209,7 @@ class TestEntrypointContract(unittest.TestCase):
 
 
 class TestSubmissionFormat(unittest.TestCase):
-    @unittest.skipUnless(AUDIT_READY, "release audit report not generated yet")
+    @unittest.skipUnless(AUDIT_READY, "evidence artifacts not generated yet")
     def test_submission_format_passes_in_real_repo(self):
         self.assertEqual(ra.audit_submission_format()["status"], "PASS")
 
@@ -221,7 +225,7 @@ class TestSubmissionFormat(unittest.TestCase):
 
 
 class TestReportContract(unittest.TestCase):
-    @unittest.skipUnless(AUDIT_READY, "release audit report not generated yet")
+    @unittest.skipUnless(AUDIT_READY, "evidence artifacts not generated yet")
     def test_report_shape(self):
         report = json.loads(ra.OUTPUT_PATH.read_text(encoding="utf-8"))
         self.assertEqual(report["status"], "PASS")
