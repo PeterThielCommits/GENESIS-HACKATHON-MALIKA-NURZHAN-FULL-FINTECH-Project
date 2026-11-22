@@ -1,7 +1,7 @@
 PYTHON ?= python3
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: help setup lint test test-official test-property build-episodes official-eval verify-core verify replay audit-shortcuts mutation-test report docs-verify demo demo-backup release-audit replay-all evidence-write evidence-verify rc-check docker-build docker-check-container docker-check clean
+.PHONY: help setup lint test test-official test-property build-episodes official-eval verify-core verify replay audit-shortcuts mutation-test report docs-verify demo demo-backup release-audit replay-all evidence-write evidence-verify rc-check docker-build docker-check-container docker-check container-local-check base-image-verify clean
 
 help: ## Show available commands
 	@echo "TwinLedger — available make targets:"
@@ -24,6 +24,8 @@ help: ## Show available commands
 	@echo "  make evidence-verify  Phase 17: verify the committed evidence freeze against the tree (TZ 17.1-17.3)"
 	@echo "  make rc-check         Release candidate gate: verify + docs-verify + replay-all + release-audit + evidence-verify"
 	@echo "  make docker-check     Offline Docker check (--network=none --cpus=2 --memory=4g)"
+	@echo "  make container-local-check  Container-equivalent local run (no Docker needed)"
+	@echo "  make base-image-verify Check the pinned Docker base image digest + recorded build info"
 	@echo "  make clean            Remove generated temp artifacts (keeps sealed source inputs)"
 
 setup: ## Check Python version and optional extras; nothing is downloaded
@@ -34,6 +36,7 @@ lint: ## Compile check (read-only rootfs safe) + import-boundary scan (REQ-ARC-0
 	@$(PYTHON) -c 'import pathlib; roots = "judge_adapter.py core contracts adapter gen invariants verifier nlp env harness scoring seal arena metamorphic judge tools tests independent_verifier".split(); [compile(p.read_bytes(), str(p), "exec") for r in roots for p in ([pathlib.Path(r)] if pathlib.Path(r).is_file() else sorted(pathlib.Path(r).rglob("*.py")))]'
 	@$(PYTHON) tools/check_import_boundaries.py
 	@$(PYTHON) tools/check_workflows.py --optional
+	@$(PYTHON) tools/check_compose_profile.py
 
 test: ## All unit, contract, and official mirror tests (stdlib unittest)
 	@$(PYTHON) -m unittest discover -s tests -t . -v
@@ -112,15 +115,25 @@ rc-check: ## Release candidate gate (TZ 16.2/16.4/16.5/16.6, 17.1-17.3): verify 
 	@$(MAKE) --no-print-directory evidence-verify
 	@echo "rc-check: PASS (release candidate is consistent)"
 
-docker-build: ## Build the offline verification image
+docker-build: ## Build the offline verification image (base image pinned by digest)
 	@docker build -t twinledger:eval .
 
 docker-check-container: ## Run the offline verification container (image must exist)
-	@docker run --rm --network=none --cpus=2 --memory=4g -e GITHUB_ACTIONS="$${GITHUB_ACTIONS:-}" --security-opt no-new-privileges:true --cap-drop ALL --read-only --tmpfs /tmp:rw,noexec,nosuid,mode=1777,size=256m --tmpfs /app/artifacts/reports/latest:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m --tmpfs /app/artifacts/reports/doc_claims:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=16m --tmpfs /app/artifacts/trajectories:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m twinledger:eval make verify
+	@docker run --rm --network=none --cpus=2 --memory=4g --pids-limit 512 --ulimit fsize=268435456:268435456 -e GITHUB_ACTIONS="$${GITHUB_ACTIONS:-}" --security-opt no-new-privileges:true --cap-drop ALL --read-only --tmpfs /tmp:rw,noexec,nosuid,mode=1777,size=256m --tmpfs /app/artifacts/reports/latest:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m --tmpfs /app/artifacts/reports/doc_claims:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=16m --tmpfs /app/artifacts/trajectories:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m twinledger:eval make verify
 
 docker-check: ## Offline Docker verification: build image, then run it hardened
+	@command -v docker >/dev/null 2>&1 || { echo "docker-check: no container runtime on this host."; \
+		echo "  Use 'make container-local-check' for the container-equivalent local run"; \
+		echo "  (no network, read-only tree, no capabilities, uid 10001)."; \
+		echo "  The Docker image build itself is CI-authoritative (job docker-offline)."; exit 4; }
 	@$(MAKE) --no-print-directory docker-build
 	@$(MAKE) --no-print-directory docker-check-container
+
+container-local-check: ## Container-equivalent local run (no Docker needed): build context + hardened offline execution
+	@$(PYTHON) tools/container_local_check.py
+
+base-image-verify: ## Check that the Docker base image is pinned by digest and that the recorded build info agrees
+	@$(PYTHON) tools/docker_build_info.py verify
 
 clean: ## Remove generated temp artifacts only (never sealed source inputs)
 	rm -rf artifacts/reports/latest/*.json artifacts/reports/latest/*.txt artifacts/reports/latest/*.csv artifacts/reports/latest/*.html artifacts/reports/latest/*.md

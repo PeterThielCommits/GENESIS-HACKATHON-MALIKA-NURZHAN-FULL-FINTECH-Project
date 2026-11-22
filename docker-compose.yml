@@ -1,8 +1,13 @@
-# TwinLedger hardened offline container profile (Master TZ §16.2, §22.4).
+# TwinLedger hardened offline container profile (Master TZ §16.2, §22.4, §22.5).
 # Enforces network_mode: "none", non-root UID 10001, read-only rootfs,
-# dropped capabilities, no-new-privileges, and unmounted sealed directories
-# for env/policy workers.
-
+# dropped capabilities, no-new-privileges, process/file-size limits and
+# unmounted sealed directories for env/policy workers.
+#
+# The contract of this file is machine-checked: `python3
+# tools/check_compose_profile.py` (wired into `make lint`) fails when a
+# service loses network isolation, the read-only rootfs, the capability drop,
+# the non-root user, the CPU/RAM ceilings or the process/file-size limits, or
+# when a bind mount or a sealed tmpfs is introduced.
 services:
   verify:
     build:
@@ -16,9 +21,15 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    pids_limit: 512
+    ulimits:
+      fsize:
+        soft: 268435456
+        hard: 268435456
     tmpfs:
       - /tmp:rw,noexec,nosuid,mode=1777,size=256m
       - /app/artifacts/reports/latest:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m
+      - /app/artifacts/reports/doc_claims:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=16m
       - /app/artifacts/trajectories:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m
     cpus: 2.0
     mem_limit: 4g
@@ -34,6 +45,11 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    pids_limit: 128
+    ulimits:
+      fsize:
+        soft: 67108864
+        hard: 67108864
     tmpfs:
       - /tmp:ro,noexec,nosuid,size=16m
       - /app/episodes:ro,noexec,nosuid,size=64k
@@ -50,6 +66,11 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    pids_limit: 128
+    ulimits:
+      fsize:
+        soft: 67108864
+        hard: 67108864
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=64m
     cpus: 1.0

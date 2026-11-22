@@ -93,3 +93,61 @@ tests in `tests/official/test_block1_contracts.py` and `test_block3_scorer.py`:
    at `limit=50`, on synthetic books whose combined rows across the 6 scanned
    tables exceed `99 * 50 = 4,950` rows, it exhausts its inspection budget before
    reading all records and submits partial findings at `remaining_steps == 1`.
+
+---
+
+## Failure Case 4 — Container Hardening Failures Found by Measuring the Real Build Context (Phase 18, Fixed & Re-Verified)
+
+This case is *measured failure analysis in the strict sense*: the failures were
+reproduced with a measurement, the cause was identified, the fix was applied,
+and the same measurement was repeated afterwards.
+
+### Measured failure (before the fix)
+
+| # | Failure | Measurement | Consequence |
+|---|---|---|---|
+| F1 | `.dockerignore` rules are root-anchored in Docker | effective build context = **750 files**, of which **197** were stale `.pyc` files from nested `__pycache__` directories | the image was not reproducible; stale bytecode shipped; nested `*.pem`/`.env` would ship too |
+| F2 | the base image was a floating tag | `FROM python:3.11-slim-bookworm` - no digest anywhere in the repository | TZ 22.4 ("pin the base image digest") unmet; the Python patch version inside the image was undefined |
+| F3 | the Compose profile had no process/file-size limits and one unwritten path | no `pids_limit`, no `ulimits`, no `/app/artifacts/reports/doc_claims` tmpfs; **nothing in the repository parsed the file** | TZ 16.2 resource limits unenforced; a judge starting the profile would hit a read-only write |
+| F4 | the dependency audit matched the Dockerfile with a literal substring | `RC-012 FAIL` while the measured facts were inside their targets (`step_p99=0.09ms < 5ms`, `peak_rss=22.4MB < 300MB`) | a release gate that measured a *spelling* instead of the property |
+
+The reproduction of F1 is deterministic and is now a test:
+`tools/docker_context.py` computes the effective context with Docker's own
+path semantics, so the "before" number (750 files / 197 `.pyc`) can be
+re-derived from the old rules at any time.
+
+### Root cause
+
+The container artifacts (`.dockerignore`, `Dockerfile`, `docker-compose.yml`)
+were the only parts of the repository that **nothing executed**. CI ran
+`docker build` and `docker run` (so the Dockerfile was exercised), but the
+build-context rules and the Compose profile were only ever read by eye - and
+the two tools that *did* parse files (`tools/check_workflows.py` for the
+workflows, `judge/performance_and_deps.py` for the Dockerfile) used literal
+substring matches that no longer described the intent.
+
+### Fix & re-verification (after the fix)
+
+| # | Measurement before | Measurement after | Test that locks it |
+|---|---|---|---|
+| F1 | 750 context files, 197 stale `.pyc` | **556 context files, 0 stale `.pyc`**, no sealed path, no key material | `tests/judge/test_docker_hardening.py` (7 context tests) |
+| F2 | no digest | `python:3.11-slim-bookworm@sha256:a36c24f9...` pinned in the Dockerfile, recorded in `docs/EVIDENCE/docker-build-info.json`, reported by the CI job `base-image` | `test_dockerfile_pins_the_base_image_by_digest`, `tools/release_audit.py` |
+| F3 | no limits, unparsed file | every service declares `pids_limit` + `fsize` ulimit; `tools/check_compose_profile.py` fails on any violation and runs in `make lint` | `TestComposeProfile` (6 tests) |
+| F4 | `RC-012 FAIL` (false negative) | `RC-012 PASS`, `dockerfile_base_image_digest_pinned: true` | `judge/performance_and_deps.py` + `test_static_verify_passes_for_the_committed_state` |
+
+### The measurement that could not be taken locally — and what replaced it
+
+The strongest measurement of the container contract is `docker build` +
+`docker run` on a host with a container runtime and a registry. The execution
+host has neither (`docker`, `podman`, `buildah`, `nerdctl`, `ctr`, `runc`,
+`containerd` absent; `registry-1.docker.io`, `ghcr.io`, `quay.io` unreachable
+- probed 2026-11-22), so that measurement is taken by the CI job
+`docker-offline`, and **only** by it.
+
+What replaced it locally is the container-equivalent run
+(`tools/container_local_check.py`, `make container-local-check`): the image is
+materialised from the build context and `make verify` runs as uid 10001 with
+no capabilities, `no_new_privs`, a read-only tree and tmpfs over the writable
+paths. Measured: PASS, 12/12 gates inside the sandbox, 20 artifacts
+identical in name to the host run. It is explicitly **not** a Docker build,
+and `docs/LIMITATIONS.md` (L9) says so.

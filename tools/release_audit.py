@@ -513,6 +513,57 @@ def audit_submission_format() -> dict[str, Any]:
         if target not in makefile:
             problems.append(f"Makefile target missing: {target.rstrip(':')}")
 
+    # TZ 22.4: the base image must be pinned by digest and the image must
+    # record its own provenance (base digest, Python patch version, package
+    # versions). The record is written from a *built* image, so its absence is
+    # reported here as a problem only when the release claims it.
+    if docker_text:
+        base_arg = re.search(
+            r'^\s*ARG\s+BASE_IMAGE\s*=\s*"?([^"\s]+)"?\s*$', docker_text, re.MULTILINE
+        )
+        reference = base_arg.group(1) if base_arg else ""
+        name, _, digest = reference.partition("@")
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest or ""):
+            problems.append(
+                "the Docker base image is not pinned by digest (TZ 22.4)"
+            )
+        elif len(set(digest.split(":", 1)[1])) <= 1:
+            problems.append("the pinned Docker base image digest is a placeholder")
+        elif name != "python:3.11-slim-bookworm":
+            problems.append(f"unexpected Docker base image {name!r}")
+        if "docker_build_info.py emit" not in docker_text:
+            problems.append("the Dockerfile does not record the image build provenance")
+    build_info_path = REPO_ROOT / "docs" / "EVIDENCE" / "docker-build-info.json"
+    if not build_info_path.is_file():
+        problems.append("docs/EVIDENCE/docker-build-info.json is missing (the image build record)")
+    else:
+        try:
+            build_info = json.loads(build_info_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            problems.append(f"docs/EVIDENCE/docker-build-info.json is not valid JSON: {exc}")
+            build_info = {}
+        if build_info:
+            if not re.fullmatch(r"sha256:[0-9a-f]{64}", str(build_info.get("base_image_digest", ""))):
+                problems.append("the recorded base image digest is not a digest")
+            if not str(build_info.get("python_version", "")).startswith("3.11."):
+                problems.append("the recorded Python patch version is not 3.11.x")
+            required_packages = build_info.get("apt_packages_required") or []
+            for package in ("make", "util-linux"):
+                if package not in required_packages:
+                    problems.append(f"the image build record does not declare the {package} package")
+            # TZ 22.4 asks for the *package versions* too. They are recorded,
+            # not pinned (L11), but a recorded version must be a real fact.
+            observed = build_info.get("apt_packages_observed") or {}
+            if not isinstance(observed, dict) or not observed:
+                problems.append("the image build record publishes no observed package versions")
+            else:
+                for package in ("make", "util-linux"):
+                    version = observed.get(package)
+                    if not version or version == "unknown":
+                        problems.append(
+                            f"the image build record publishes no real version for {package}"
+                        )
+
     docs = REPO_ROOT / "docs" / "API_USAGE.md"
     if not docs.is_file():
         problems.append("docs/API_USAGE.md missing")

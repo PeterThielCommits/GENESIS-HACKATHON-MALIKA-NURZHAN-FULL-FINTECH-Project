@@ -23,6 +23,7 @@ import json
 import os
 import platform
 import resource
+import re
 import shutil
 import sys
 import time
@@ -175,6 +176,29 @@ def _measure_performance() -> dict[str, Any]:
     }
 
 
+def _dockerfile_base_image(dockerfile_txt: str) -> tuple[str, str]:
+    """Return the base image name and digest declared by the Dockerfile.
+
+    The image pins its base through a build argument so that the digest has a
+    single source of truth::
+
+        ARG BASE_IMAGE="python:3.11-slim-bookworm@sha256:<64 hex>"
+        FROM ${BASE_IMAGE}
+
+    Both the argument and a literal ``FROM`` are understood, so the audit does
+    not depend on which of the two spellings the Dockerfile uses.
+    """
+    arg = re.search(
+        r'^\s*ARG\s+BASE_IMAGE\s*=\s*"?([^"\s]+)"?\s*$', dockerfile_txt, re.MULTILINE
+    )
+    reference = arg.group(1) if arg else ""
+    if not reference:
+        from_match = re.search(r"^\s*FROM\s+(\S+)\s*$", dockerfile_txt, re.MULTILINE)
+        reference = from_match.group(1) if from_match else ""
+    name, _, digest = reference.partition("@")
+    return name, digest
+
+
 def _audit_dependencies() -> dict[str, Any]:
     stdlib_names = set(sys.stdlib_module_names)
     local_roots = set(CORE_PACKAGES) | {"tools", "tests", "judge_adapter"}
@@ -197,8 +221,9 @@ def _audit_dependencies() -> dict[str, Any]:
                         third_party_imports.append(f"{py.relative_to(REPO_ROOT)}:{m}")
 
     dockerfile_txt = (REPO_ROOT / "Dockerfile").read_text(encoding="utf-8") if (REPO_ROOT / "Dockerfile").is_file() else ""
-    pinned_py311 = "FROM python:3.11" in dockerfile_txt
-    pinned_digest = "@sha256:" in dockerfile_txt
+    base_name, base_digest = _dockerfile_base_image(dockerfile_txt)
+    pinned_py311 = base_name.startswith("python:3.11")
+    pinned_digest = bool(re.fullmatch(r"sha256:[0-9a-f]{64}", base_digest)) if base_digest else False
     non_root_user = "USER 10001" in dockerfile_txt
     extras_state = {
         ext: ("PRESENT" if importlib.util.find_spec(ext) is not None else "ABSENT_OPTIONAL")
@@ -206,6 +231,16 @@ def _audit_dependencies() -> dict[str, Any]:
     }
     sec_prof = detect_security_profile()
     clean_core = len(third_party_imports) == 0 and pinned_py311 and non_root_user
+
+    # The Python patch version and the Debian package versions of the *image*
+    # are recorded by the build (configs/docker_build_info.json).
+    build_info: dict[str, Any] = {}
+    build_info_path = REPO_ROOT / "configs" / "docker_build_info.json"
+    if build_info_path.is_file():
+        try:
+            build_info = json.loads(build_info_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            build_info = {}
 
     return {
         "schema_version": "1.0.0",
@@ -222,6 +257,10 @@ def _audit_dependencies() -> dict[str, Any]:
         "dockerfile_python_311_pinned": pinned_py311,
         "dockerfile_non_root_user_pinned": non_root_user,
         "dockerfile_base_image_digest_pinned": pinned_digest,
+        "dockerfile_base_image": base_name,
+        "dockerfile_base_image_digest": base_digest,
+        "image_python_patch_version": build_info.get("python_version", "unknown"),
+        "image_apt_package_versions": build_info.get("apt_packages", {}),
         "runtime_network_required": False,
         "active_security_profile": sec_prof.to_dict(),
         "optional_extras": extras_state,

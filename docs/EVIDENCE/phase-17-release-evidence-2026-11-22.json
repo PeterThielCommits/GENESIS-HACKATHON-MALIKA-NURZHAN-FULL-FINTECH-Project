@@ -7,7 +7,7 @@
     "tool": "tools/freeze_release.py"
   },
   "decisions": {
-    "count": 49,
+    "count": 51,
     "ids": [
       "D-00-01",
       "D-01-01",
@@ -57,7 +57,9 @@
       "D-16-03",
       "D-16-04",
       "D-17-02",
-      "D-17-03"
+      "D-17-03",
+      "D-18-02",
+      "D-18-03"
     ],
     "index": [
       {
@@ -304,6 +306,16 @@
         "date": "2026-11-22",
         "id": "D-17-03",
         "title": "A published reward contract is derived from the live constants, never re-typed"
+      },
+      {
+        "date": "2026-11-22",
+        "id": "D-18-02",
+        "title": "The container environment is a pinned artifact, and the build context is computed, not guessed"
+      },
+      {
+        "date": "2026-11-22",
+        "id": "D-18-03",
+        "title": "The local container-equivalent run replaces \"no local evidence\", and says what it is not"
       }
     ],
     "path": "docs/DECISIONS.md"
@@ -351,8 +363,8 @@
       "status": "PASS"
     }
   },
-  "generated_at_utc": "2026-11-22T15:35:22Z",
-  "git_sha": "b6e7438ce3a46ac33d6cc803060f6c368bd46350",
+  "generated_at_utc": "2026-11-22T16:54:58Z",
+  "git_sha": "e3516000ea3f0bd3a795da45d68ec5f5ed01bb8c",
   "git_sha_note": "the commit the working tree was based on when the archive was generated (the archive is written before the commit that carries it); the frozen digest is the commit-independent anchor.",
   "limitations": {
     "note": "The archive records internal verification results only. It is not a jury score and never claims one (official_score_claimed: false).",

@@ -581,6 +581,298 @@ checked — the one artifact whose failure removes the checking.
 
 ---
 
+## BUG-TL-0010 — Root-anchored `.dockerignore` rules let stale bytecode and secrets into the image
+
+| Field | Value |
+|---|---|
+| Severity | **P1** (the submission image was not reproducible and could carry key material) |
+| Category | Container / build context |
+| Status | **VERIFIED FIXED** |
+| Discovered by | Phase 18: computing the *effective* build context with Docker's own path semantics |
+| Files affected | `.dockerignore`, `tools/docker_context.py`, `tools/container_local_check.py`, `tests/judge/test_docker_hardening.py` |
+
+### Symptom
+
+`.dockerignore` contained `__pycache__`, `.env`, `*.pem`, `*.key` and `.venv`.
+Docker anchors **every** pattern at the context root, so `__pycache__` matches
+only `<root>/__pycache__` - never `<root>/contracts/__pycache__`. The same
+holds for the other root-anchored rules.
+
+Measured on this repository with the old rules: the build context contained
+**750 files, of which 197 were stale `.pyc` files** from nested
+`__pycache__` directories. A nested `deploy/prod.pem` or `service/.env` would
+equally have entered the image.
+
+### Impact
+
+* the image was not byte-reproducible: the context depended on whatever
+  bytecode happened to exist in the developer's working tree;
+* stale `.pyc` files can shadow the sources inside a read-only runtime;
+* the same anchoring gap applied to the secret patterns, so a key file in a
+  subdirectory would have been baked into the published image.
+
+### Root cause
+
+The rules were written as if they were shell globs ("match any directory"),
+and the earlier fix for `D-16-02` (the depth-2 `sealed/` layout) only added
+the missing *depths* for the episode rules - the anchoring rule itself was
+never checked against Docker's real semantics.
+
+### Fix
+
+* Every nested rule now uses an explicit `**/` prefix
+  (`**/__pycache__`, `**/*.py[cod]`, `**/.env`, `**/*.pem`, `**/*.key`,
+  `**/.venv`, `**/.git`, ...).
+* New `tools/docker_context.py` implements Docker's path semantics (root
+  anchoring, `*` vs `**`, directory inheritance, last match wins) so the
+  **effective** build context can be computed instead of guessed.
+* `tools/container_local_check.py` computes the effective context and refuses
+  to run when it contains sealed truth, key material, VCS metadata or stale
+  bytecode.
+* The compose file and the Dockerfile keep their own, stricter contracts.
+
+### Regression evidence
+
+| Test | Fails on old code | Passes on new code |
+|---|---|---|
+| `tests/judge/test_docker_hardening.py::test_nested_bytecode_is_excluded` | yes (the old rules matched nothing nested) | yes |
+| `tests/judge/test_docker_hardening.py::test_root_anchored_patterns_are_not_used` | yes (`__pycache__`, `.env`, `*.pem`, `*.key` were root-anchored) | yes |
+| `tests/judge/test_docker_hardening.py::test_context_has_no_stale_bytecode` | yes (197 `.pyc` files) | yes |
+| `tests/judge/test_docker_hardening.py::test_context_contains_every_tracked_file_that_is_not_excluded` | n/a (the context did not exist as a computable object) | yes |
+| measured effective context | 750 files (197 stale `.pyc`) | 556 files, 0 stale `.pyc` |
+
+---
+
+## BUG-TL-0011 — The base image was a floating tag, so the image was not reproducible
+
+| Field | Value |
+|---|---|
+| Severity | **P1** (TZ 22.4 requires the base image digest to be pinned) |
+| Category | Container / reproducibility |
+| Status | **VERIFIED FIXED** |
+| Discovered by | Phase 18: TZ 22.4 audit ("pin the base image digest, the Python patch version, the package versions and the commands") |
+| Files affected | `Dockerfile`, `docs/EVIDENCE/docker-build-info.json`, `tools/docker_build_info.py`, `tools/release_audit.py`, `judge/performance_and_deps.py`, `tests/judge/test_docker_hardening.py` |
+
+### Symptom
+
+`FROM python:3.11-slim-bookworm` - a moving tag. Two builds a week apart
+produce different images, and the Python patch version inside the image is
+whatever the tag currently points at.
+
+### Impact
+
+The submission could not claim a reproducible verification image, and the
+rubric criterion "versions of the configurations" (Block 5, 0/1/2) was only
+partially met: the *code* and the *benchmark configs* were pinned, but not
+the environment the code runs in.
+
+### Root cause
+
+The Dockerfile was written for "run the verification", not for "the
+verification environment is itself a pinned artifact". Nothing in the
+repository recorded the base image, its digest or the Python patch version it
+contains.
+
+### Fix
+
+* `ARG BASE_IMAGE="python:3.11-slim-bookworm@sha256:a36c24f9cbdf4fd0f52d67f0823eeac19c2028c637cecc392d97f980d4fec56b"`
+  - the multi-platform (`linux/amd64` + `linux/arm64`) manifest of
+  **Python 3.11.16 / Debian bookworm** - and `FROM ${BASE_IMAGE}`.
+* The image writes its **own provenance record**
+  (`/usr/local/share/twinledger/build_info.json`): base image, base digest,
+  CPython patch version, Debian release, and the versions of the two Debian
+  packages it installs.
+* `docs/EVIDENCE/docker-build-info.json` records the pinned facts; the
+  release audit checks that the Dockerfile and the record agree.
+* `python3 tools/docker_build_info.py resolve` resolves the upstream tag
+  digest and reports drift; the CI job `base-image` runs it on every commit
+  and publishes the result as a commit status and an annotation.
+* The dependency audit (`judge/performance_and_deps.py`) now parses the
+  declared base image instead of matching a literal `FROM python:3.11`
+  substring (see BUG-TL-0013).
+
+### Regression evidence
+
+| Test | Fails on old code | Passes on new code |
+|---|---|---|
+| `tests/judge/test_docker_hardening.py::test_dockerfile_pins_the_base_image_by_digest` | yes (no digest) | yes |
+| `tests/judge/test_docker_hardening.py::test_committed_build_info_matches_the_dockerfile` | yes (no record existed) | yes |
+| `tools/release_audit.py` SUBMISSION check | yes (no digest check) | yes |
+| `python3 tools/docker_build_info.py verify --require-build-info` | FAIL ("not pinned") | PASS |
+
+---
+
+## BUG-TL-0012 — The Compose profile had no process/file-size limits and one unwritten path
+
+| Field | Value |
+|---|---|
+| Severity | **P2** (TZ 16.2 resource limits "where supported"; one writable path was not isolated) |
+| Category | Container / hardening |
+| Status | **VERIFIED FIXED** |
+| Discovered by | Phase 18: container hardening audit |
+| Files affected | `docker-compose.yml`, `tools/check_compose_profile.py`, `tests/judge/test_docker_hardening.py`, `Makefile` |
+
+### Symptom
+
+`docker-compose.yml` declared `network_mode: none`, `read_only: true`,
+`cap_drop: ALL`, `no-new-privileges`, `user: 10001:10001`, `cpus` and
+`mem_limit` - but **no** `pids_limit`, **no** `ulimits`, and the `verify`
+service did not mount `/app/artifacts/reports/doc_claims` as tmpfs (the
+Makefile's container run does). Nothing checked the file: CI never executes
+it.
+
+### Impact
+
+A judge starting the Compose profile would run without a process cap or a
+file-size cap, and one of the three writable report paths would not be
+isolated from the read-only image tree - the write would fail at runtime
+instead of being redirected to tmpfs.
+
+### Root cause
+
+The Compose file was written by hand and reviewed by eye; the CI container
+run (a `docker run` command line) is the artifact CI actually exercises, so
+the Compose drift was invisible.
+
+### Fix
+
+* Every service now declares `pids_limit` and an `fsize` ulimit, and the
+  `verify` service mounts all three writable paths as tmpfs.
+* New `tools/check_compose_profile.py` parses the file with a stdlib-only
+  YAML-subset reader and checks the whole hardening contract per service;
+  it runs in `make lint` (and therefore in CI) and is covered by
+  `tests/judge/test_docker_hardening.py`, including negative cases (a
+  service that regains network access, root, a bind mount or a missing limit
+  must be reported).
+
+### Regression evidence
+
+| Test | Fails on old code | Passes on new code |
+|---|---|---|
+| `tests/judge/test_docker_hardening.py::test_compose_profile_satisfies_the_hardening_contract` | yes (no `pids_limit`, no `ulimits`, missing tmpfs) | yes |
+| `tests/judge/test_docker_hardening.py::test_checker_detects_a_service_that_regains_network_access` | yes (no checker existed) | yes |
+| `tests/judge/test_docker_hardening.py::test_checker_detects_a_bind_mount` | yes | yes |
+| `make lint` | PASS (the file was never parsed) | PASS (and now proves the contract) |
+
+---
+
+## BUG-TL-0013 — The dependency audit matched the Dockerfile with a literal substring
+
+| Field | Value |
+|---|---|
+| Severity | **P2** (a false FAIL of a release gate; caught before release) |
+| Category | Judge Kit / audit |
+| Status | **VERIFIED FIXED** |
+| Discovered by | Phase 18: the new container-equivalent run reported `RC-012 FAIL` with `step_p99=0.09ms` (the metrics were *inside* the targets) |
+| Files affected | `judge/performance_and_deps.py`, `tests/judge/test_docker_hardening.py` |
+
+### Symptom
+
+`_audit_dependencies()` decided whether the image was pinned with
+
+```python
+pinned_py311 = "FROM python:3.11" in dockerfile_txt
+```
+
+After the Dockerfile moved to `ARG BASE_IMAGE=...` + `FROM ${BASE_IMAGE}`
+(TZ 22.4 pinning), the literal substring disappeared and the audit reported
+`dockerfile_python_311_pinned: false` -> `status: FAIL` -> the release gate
+`RC-012` failed even though the *measured* performance and dependency facts
+were all inside their targets.
+
+### Impact
+
+Left unfixed, the release would have been blocked by a gate that measured
+the wrong thing: the audit verified a *spelling* of the Dockerfile instead of
+the property it cares about.
+
+### Root cause
+
+The check was a text search written before the Dockerfile had a build
+argument; it was never re-checked against a changed Dockerfile.
+
+### Fix
+
+`judge/performance_and_deps.py` now parses the declared base image
+(`ARG BASE_IMAGE` or a literal `FROM`), derives the image name and the
+digest from it, and records both plus the image's Python patch version and
+the package versions in `dependency_report.json`.
+
+### Regression evidence
+
+| Test | Fails on old code | Passes on new code |
+|---|---|---|
+| `judge/performance_and_deps.py` on the ARG-based Dockerfile | `status: FAIL`, `dockerfile_python_311_pinned: false` | `status: PASS`, `dockerfile_base_image_digest_pinned: true` |
+| `tests/judge/test_docker_hardening.py::test_static_verify_passes_for_the_committed_state` | yes (the audit reported the unpinned image) | yes |
+
+---
+
+## BUG-TL-0014 — The CI package-version drift check could never fire
+
+| Field | Value |
+|---|---|
+| Severity | P2 |
+| Component | `tools/docker_build_info.py` (`publish`) and `docs/EVIDENCE/docker-build-info.json` |
+| Status | VERIFIED FIXED |
+| Discovered by | Phase 18: reading back the CI-built image's own provenance record |
+
+### Symptom
+
+`tools/docker_build_info.py publish` compares the image's own build record
+with the committed `docs/EVIDENCE/docker-build-info.json` and reports a
+difference. The comparison read the committed file's `apt_packages` map — a key
+the committed record never had (it only listed `apt_packages_required`, the
+package *names*). The loop therefore always found an empty expectation and
+skipped the check: the drift comparison for the Debian package versions was a
+silent no-op. A mirror that started serving a different `util-linux` would
+have produced no signal at all, even though TZ §22.4 asks for the package
+versions to be recorded.
+
+### Impact
+
+Low, but it is a *reporting* defect in the layer whose whole job is to report
+drift: the recorded-version check was structurally unreachable, so the
+"CI says so out loud" property was not actually true for the two packages.
+
+### Root cause
+
+The committed record was written from the *declared* contract (which packages
+the image installs) rather than from the *observed* contract (which versions
+the built image actually contains), and the two were never separated in the
+schema.
+
+### Fix
+
+The schema now separates them:
+
+* `apt_packages_required` — the names the image must install (unchanged);
+* `apt_packages_observed` — the versions read back from the CI-built image
+  (`make 4.3-4.1`, `util-linux 2.38.1-5+deb12u3`, CI run `45044654821`).
+
+`publish` now compares against `apt_packages_observed` and **splits the
+outcome by what is actually pinned**:
+
+* a changed base image, digest or Python patch version is a **hard failure**
+  — the image is no longer the released one (`DRIFT`);
+* a changed package version is a **warning** — the versions are resolved by
+  `apt` at build time and are deliberately not pinned (limitation L11), so a
+  moved Debian mirror must be reported, not fail the build.
+
+`docker_build_info.py verify` and the release audit now require that every
+tracked package has a *real* recorded version, and reject the literal
+`"unknown"`, so a missing observation can never be published as a fact.
+
+### Regression evidence
+
+| Test | Fails on old code | Passes on new code |
+|---|---|---|
+| `tests/judge/test_docker_hardening.py::test_committed_build_info_publishes_the_observed_package_versions` | yes (the record had no observed versions) | yes |
+| `tests/judge/test_docker_hardening.py::test_static_verify_rejects_an_unrecorded_package_version` | yes (the check could not fail) | yes |
+| `tools/docker_build_info.py verify --require-build-info` | PASS with no version recorded | PASS with the versions recorded |
+| `make release-audit` (SUBMISSION check) | PASS without any observed version | PASS, and now requires a real version per package |
+
+---
+
 ## Summary
 
 | ID | Severity | Component | Status |
@@ -594,6 +886,11 @@ checked — the one artifact whose failure removes the checking.
 | BUG-TL-0007 | P3 | `scoring/matcher.py` (docstring) | VERIFIED FIXED |
 | BUG-TL-0008 | P2 | `tools/verify_doc_claims.py` (artifact contract) | VERIFIED FIXED |
 | BUG-TL-0009 | P1 | `.github/workflows/ci.yml` (malformed YAML disabled CI) | VERIFIED FIXED |
+| BUG-TL-0010 | P1 | `.dockerignore` (root-anchored rules leaked bytecode/secrets) | VERIFIED FIXED |
+| BUG-TL-0011 | P1 | `Dockerfile` (floating base image tag) | VERIFIED FIXED |
+| BUG-TL-0012 | P2 | `docker-compose.yml` (no process/file-size limits) | VERIFIED FIXED |
+| BUG-TL-0013 | P2 | `judge/performance_and_deps.py` (substring check) | VERIFIED FIXED |
+| BUG-TL-0014 | P2 | `tools/docker_build_info.py` (package-version drift check) | VERIFIED FIXED |
 
 No claim is made that no bugs remain. Checks that were executed without
 finding a defect are listed in `FIX_VERIFICATION_MATRIX.md`, and residual
