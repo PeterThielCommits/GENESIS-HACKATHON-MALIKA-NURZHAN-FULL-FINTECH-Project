@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "199c055a081b9fd6f4f097c751212ad7cdd27549ff7827cea04bdebb73df7912",
+  "aggregate_sha256": "3bd438ed16bc59dce49fd267ff802af75f8d0d4e9bf3e8f042adf736bbde9923",
   "anchor_note": "aggregate_sha256 identifies the archived tree and is commit-independent; source_commit is the HEAD the working tree was based on when the archive was generated (the archive is written before the commit that carries it).",
   "code_version": "twinledger@1.0.0",
   "files": [
@@ -2334,9 +2334,9 @@
       "sha256": "58a4bdc855abefe6a518ee703837205b5aa21d3896d9e4810b45e5155d6beda8"
     },
     {
-      "bytes": 9986,
+      "bytes": 11743,
       "path": "tests/judge/test_evidence_freeze.py",
-      "sha256": "b6602b3c7b22d031784a4967cd072eae3bb514310dc454f1977efe8d2168eee8"
+      "sha256": "c90f7eab69a86c2690aed1b61e643abd536fab7828213304a5b21d28ceadcdb1"
     },
     {
       "bytes": 24523,
@@ -2609,9 +2609,9 @@
       "sha256": "5429eb7ca03c71e27f7e1ea923e74309f526267a311441d169f8540dbbe04152"
     },
     {
-      "bytes": 18831,
+      "bytes": 20018,
       "path": "tools/evidence_freeze.py",
-      "sha256": "bfbd4f3ed5bedee02d41316d3de5bf5bde1fb24782c2c46c1bda9affafe4cdd1"
+      "sha256": "09b3c9c3eab759218a844ad31942d264f604276c17fceca397347d4f867de2b2"
     },
     {
       "bytes": 7528,
@@ -2745,7 +2745,7 @@
     }
   ],
   "frozen_file_count": 548,
-  "generated_at_utc": "2026-11-22T14:49:35Z",
+  "generated_at_utc": "2026-11-22T14:54:32Z",
   "official_score_claimed": false,
   "phase": 17,
   "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
@@ -2755,7 +2755,7 @@
       "path": "artifacts/reports/doc_claims/doc_claims_report.json",
       "present": true,
       "required": false,
-      "sha256": "c5bb300dfd453051573eb86e42ebc32412a28bc689732f20a39e307940dc46f5",
+      "sha256": "19a06e2e770fc475e21f65ba639da4df37ffe17a342b1d6cd8ef56a309d2bb77",
       "verdict": {
         "checks": [
           {
@@ -2858,7 +2858,7 @@
       "path": "artifacts/reports/release/release_audit.json",
       "present": true,
       "required": false,
-      "sha256": "a8131e6582179b7d227b6d42bc397cb0dbe147f6c71879f264fc52422db85093",
+      "sha256": "a40588c2557242cc688f1b5616ac2d9cf5965b3e15d4baa94869dca3b2355fe7",
       "verdict": {
         "checks": [
           {
@@ -2895,7 +2895,7 @@
       "path": "artifacts/reports/latest/replay_report.json",
       "present": true,
       "required": true,
-      "sha256": "96bebfbec9224d0049167edbea89a7647a30b12116bda5db08616a1f5727adce",
+      "sha256": "8af7ff2ca3480ad89213a771f71d2c37efff88bc07d1ef08058b00c10749ec3b",
       "verdict": {
         "all_byte_identical": true,
         "all_hashes_identical": true,
@@ -2912,7 +2912,7 @@
       "path": "artifacts/reports/latest/report_index.json",
       "present": true,
       "required": true,
-      "sha256": "0033829386a8b047b76e0a77de93250d534e851d01f2d89ae4c66b37b59de961",
+      "sha256": "413de61dad50b3600ba494356a450b0020fc7828713e68be120984d4fc2e6653",
       "verdict": {
         "artifact_count": 20,
         "missing_optional_or_full_mode_artifacts": [],
@@ -2924,7 +2924,7 @@
       "path": "artifacts/reports/release/trajectory_replay.json",
       "present": true,
       "required": false,
-      "sha256": "1db5a3e6f6f053ef7680b62ae60a780a99af6fea8062a4a11dfbb99a91109532",
+      "sha256": "5c53e38a3c159bdb8b02695327d376d3ccd0d5823cefd40015fc3c1a52f32efa",
       "verdict": {
         "failure_count": 0,
         "runs_matched": 80,
@@ -2937,7 +2937,7 @@
       "path": "artifacts/reports/latest/verify_summary.json",
       "present": true,
       "required": true,
-      "sha256": "e65037a50af2e12e75c5e131a2f8b885518f1a1044fe2a61925609a9c11dd7d8",
+      "sha256": "dd465e5b08b848bffb3f6fdf34827ca35f60ba891ddf74610cea349dfe885858",
       "verdict": {
         "gates": [
           {
@@ -3017,9 +3017,7 @@
         "missing_artifacts": [],
         "official_score_claimed": false,
         "optional_checks": {
-          "critical_skipped": 0,
-          "passed": 2,
-          "skipped": 2
+          "critical_skipped": 0
         },
         "required_checks": {
           "blocked": 0,
@@ -3033,5 +3031,5 @@
     }
   },
   "schema_version": "1.0.0",
-  "source_commit": "68ded6e12f035a080b85092b5a96ab87d1960b7a"
+  "source_commit": "2575ebdc8a67654eb7e5c7306ca936ec85736263"
 }

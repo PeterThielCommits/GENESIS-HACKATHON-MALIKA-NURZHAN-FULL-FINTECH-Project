@@ -141,6 +141,40 @@ class TestEvidenceFreezeVerdicts(unittest.TestCase):
         self.assertNotIn("output_tail", json.dumps(verdict))
         self.assertEqual(verdict["gates"][0]["check_id"], "RC-001")
 
+    def test_verdict_ignores_the_environment_dependent_skip_count(self) -> None:
+        """The optional-skip count depends on the machine, so it is not archived.
+
+        A fresh checkout has no generated artifacts when the suite runs, so the
+        artifact-dependent tests skip themselves (19 skips instead of 2). The
+        archived verdict must be identical in both cases -- otherwise a
+        stranger cannot verify the release on a clean machine.
+        """
+        base = {
+            "status": "PASS",
+            "official_score_claimed": False,
+            "internal_pass_rate_pct": 100.0,
+            "required_checks": {"total": 12, "passed": 12, "failed": 0, "blocked": 0, "skipped": 0},
+            "optional_checks": {"passed": 2, "skipped": 2, "critical_skipped": 0},
+            "missing_artifacts": [],
+            "checks": [{"check_id": "RC-001", "status": "PASS", "required": True}],
+        }
+        warm = evidence_freeze._extract_verdict("verify_summary", base)
+        cold_doc = dict(base)
+        cold_doc["optional_checks"] = {"passed": 2, "skipped": 20, "critical_skipped": 0}
+        cold = evidence_freeze._extract_verdict("verify_summary", cold_doc)
+        self.assertEqual(warm, cold)
+        self.assertEqual(warm["optional_checks"], {"critical_skipped": 0})
+
+    def test_verdict_still_records_a_critical_skip(self) -> None:
+        """A critical skip must stay visible in the archived verdict."""
+        doc = {
+            "status": "PASS",
+            "optional_checks": {"passed": 2, "skipped": 2, "critical_skipped": 3},
+            "checks": [],
+        }
+        verdict = evidence_freeze._extract_verdict("verify_summary", doc)
+        self.assertEqual(verdict["optional_checks"]["critical_skipped"], 3)
+
     def test_verdict_detects_a_failing_gate(self) -> None:
         good = evidence_freeze._extract_verdict(
             "verify_summary", {"status": "PASS", "checks": [{"check_id": "RC-001", "status": "PASS"}]}

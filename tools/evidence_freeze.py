@@ -38,6 +38,11 @@ Design rules (learned in Phases 15-16):
   * Verdict extraction keeps only stable, status-level facts. A detail string
     such as "540 text files scanned" would drift the moment the tree grows,
     so counts that depend on the tree are deliberately excluded.
+  * The same rule applies to counts that depend on the *machine*: the number
+    of optional test skips depends on which generated artifacts existed when
+    the suite ran (a clean checkout skips the artifact-dependent tests), so
+    it is not archived. What is archived is the fact that no critical check
+    was skipped.
 
 Modes:
   python3 tools/evidence_freeze.py --write              write docs/EVIDENCE/evidence_freeze.json
@@ -137,6 +142,24 @@ def _check_statuses(doc: dict[str, Any]) -> list[dict[str, Any]]:
     return out
 
 
+def _stable_optional_counts(raw: Any) -> dict[str, Any]:
+    """The environment-independent part of the optional-check counters.
+
+    ``passed`` and ``skipped`` count the *optional* checks and the optional
+    test skips of this run, and both depend on what happened to exist on the
+    machine when the suite ran: a fresh checkout has no generated artifacts
+    yet, so the artifact-dependent tests skip themselves (19 optional skips
+    instead of 2). Archiving them would make the archive unverifiable by a
+    stranger on a clean machine -- exactly what EXIT GATE 17 forbids.
+
+    ``critical_skipped`` *is* an archived fact: a critical skip turns the
+    gate into SKIPPED, so a passing run always reports zero.
+    """
+    if not isinstance(raw, dict):
+        return {}
+    return {"critical_skipped": raw.get("critical_skipped")}
+
+
 def _extract_verdict(name: str, doc: Any) -> dict[str, Any]:
     """Reduce a report to the facts that must not change on a re-run."""
     if not isinstance(doc, dict):
@@ -148,7 +171,7 @@ def _extract_verdict(name: str, doc: Any) -> dict[str, Any]:
             "official_score_claimed": doc.get("official_score_claimed"),
             "internal_pass_rate_pct": doc.get("internal_pass_rate_pct"),
             "required_checks": doc.get("required_checks"),
-            "optional_checks": doc.get("optional_checks"),
+            "optional_checks": _stable_optional_counts(doc.get("optional_checks")),
             "missing_artifacts": list(doc.get("missing_artifacts") or []),
             "gates": [
                 {
