@@ -695,6 +695,9 @@ class DemoHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path in ("/", "/index.html"):
+            self._send_html((REPO_ROOT / "tools" / "web" / "index.html").read_text(encoding="utf-8"))
+            return
+        if parsed.path == "/advanced":
             self._send_html(HTML_PAGE)
             return
         if parsed.path == "/api/health":

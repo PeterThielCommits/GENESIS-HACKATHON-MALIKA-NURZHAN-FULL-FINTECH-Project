@@ -11,6 +11,55 @@ with the official **Genesis FinTech Check Definitions (2026-11-20)**
 > All companies, banks, counterparties, documents, and transactions are 100%
 > synthetic and generated deterministically from seed.
 
+
+## Quick start: browser demo / Запуск интерфейса
+
+**Requirements:** Python 3.11 and a local checkout. The demo uses only the
+standard library; there is no npm build or account setup.
+
+```bash
+git clone https://github.com/PeterThielCommits/GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project.git
+cd GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project
+python3 tools/demo_server.py --host 127.0.0.1 --port 8000
+```
+
+Open **http://127.0.0.1:8000** in your browser. Choose Қазақша, Русский or
+English, select a case, and click **Run analysis**. The results come from the
+actual verifier and crosscheck, not a static mockup. Amounts are displayed in
+minor currency units; F1 is the crosscheck metric, not a jury score. The
+technical workbench is available at `/advanced`. Stop the server with Ctrl+C.
+On first startup, the server regenerates local ignored `sealed/` data if needed.
+It needs a writable checkout. All cases are synthetic.
+
+**Security:** the demo server is an unauthenticated development tool, not a
+production service. Bind to `127.0.0.1` on your computer; do not expose it to
+untrusted networks or use real financial data. The hardened Compose profile
+below is for offline evaluation, not for hosting the web demo. Arena previews
+can use `--host 0.0.0.0` in an isolated preview environment.
+
+**Для быстрого открытия:** установите Python 3.11, выполните команды выше и
+перейдите по адресу в браузере. Выберите язык и кейс, затем нажмите кнопку
+анализа. Краткая инструкция для передачи находится в
+[`docs/OPEN_REPOSITORY_RU.md`](docs/OPEN_REPOSITORY_RU.md).
+
+**Қысқаша:** Python 3.11 орнатып, жоғарыдағы командаларды орындаңыз. Браузерде
+көрсетілген мекенжайды ашып, тілді және кейсті таңдаңыз да, талдауды бастаңыз.
+
+### Verification and container
+
+```bash
+python3 -m unittest discover -s tests -t . -q  # project test suite
+python3 tools/check_compose_profile.py        # static security-profile check
+make docker-check                             # Docker build and offline run; requires Docker
+```
+
+See [demo guide](docs/DEMO.md), [limitations](docs/LIMITATIONS.md), and
+[official rubric traceability](docs/RUBRIC_TRACEABILITY.md), and the
+[internal jury review in Russian](docs/JURY_REVIEW_RU.md) for scope,
+reproducibility and the distinction between internal checks and an official
+jury evaluation. Docker builds may require network access to fetch the pinned
+base image and OS packages; the verification container itself runs offline.
+
 ---
 
 ## Single-Command Verification (Offline, Python 3.11, stdlib-only)
@@ -151,7 +200,7 @@ python3 tools/verify_doc_claims.py   # re-measures and diffs this documentation
 ```
 
 Current measured state of this release (see the generated block for the full set):
-**12/12 PASS** verification gates, the full **655-test** suite, **5/5 byte-identical replays**,
+**12/12 PASS** verification gates, the full **657-test** suite, **5/5 byte-identical replays**,
 **0 canary hits**, `official_score_claimed: false`.
 
 ### Verify the release archive itself (Phase 17, TZ §24)
@@ -199,7 +248,7 @@ python3 tools/release_evidence.py --verify --strict
 |---|---|---|
 | Verification gates defined (RC-001..RC-012) | **12** | `judge/rubric_map.json (frozen contract)` |
 | Official organiser score claimed | **false** | `verify_summary.json` |
-| Total tests in the verification suite | **655** | `unittest discovery over tests/ (state-independent)` |
+| Total tests in the verification suite | **657** | `unittest discovery over tests/ (state-independent)` |
 | Official mirror tests (Blocks 1–5) | **55** | `unittest discovery over tests/official/ (state-independent)` |
 | Evidence artifacts indexed | **20** | `report_index.json` |
 | Required artifacts missing | **0** | `report_index.json` |
