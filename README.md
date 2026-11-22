@@ -27,6 +27,9 @@ make audit-shortcuts   # metadata-only L2 logistic regression audit (AUC <= 0.55
 make mutation-test     # 26/26 mutants killed matcher/reward suite + Official Block 3 M01..M12
 make report            # synthesize self-contained offline artifacts/reports/latest/report.html + report_index.json
 make official-eval     # run all 4 baseline policies across D01..D20 -> artifacts/trajectories/trajectories.jsonl + summary
+make replay-all        # replay ALL 80 published trajectories and compare every step (TZ 16.4)
+make release-audit     # release audit: secrets, file list, size, deps, official entrypoint (TZ 16.5/16.6)
+make rc-check          # release candidate gate: verify + docs-verify + replay-all + release-audit
 make docker-check      # build and run inside hardened offline container (--network=none --read-only --cap-drop ALL)
 python3 tools/demo_walkthrough.py        # deterministic 3-minute jury walkthrough (seed=2025)
 python3 tools/freeze_release.py --verify # cryptographic SHA-256 verification of frozen contracts & configs
