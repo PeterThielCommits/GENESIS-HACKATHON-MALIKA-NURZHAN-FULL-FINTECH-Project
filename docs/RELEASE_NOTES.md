@@ -9,8 +9,9 @@ behaviour. What it adds is the **Phase 17 evidence archive**: the release can no
 be restored *and* verified from the repository alone, with no oral explanation
 from the team.
 
-`v1.0.1` remains the recommended submission artifact; `v1.0.2` supersedes it as
-the verification reference. Tags `v1.0.0` and `v1.0.1` are **not** moved —
+`v1.0.2` **is** the recommended artifact: it is behaviour-identical to `v1.0.1`
+(same benchmark, same hardened image) and adds the Phase 17 evidence archive.
+`v1.0.1` is retained for history. Tags `v1.0.0` and `v1.0.1` are **not** moved —
 published tags never move (`D-16-03`).
 
 `official_score_claimed: false`. This release reports **internal verification
@@ -202,10 +203,12 @@ and 20 evidence artefacts. Any deviation is a bug worth reporting.
 
 | Item | Value |
 |---|---|
-| Tag | `v1.0.2` (annotated) on the merge commit of the Phase 17 PR, cut **after** `make rc-check` PASS and CI green on the merge commit |
-| Parent release | `v1.0.1` (`640c585`), retained and still the recommended submission artifact |
+| Tag | `v1.0.2` (annotated) — tag object `3d5855a4ad2c05723cab56a0cd120bc11c772949`, commit `48cfb17` (the merge commit of PR #29), cut **after** `make rc-check` PASS and CI green on the merge commit |
+| Parent release | `v1.0.1` (`640c585`), retained for history |
 | Release-surface archive | `docs/EVIDENCE/evidence_freeze.json` (every tracked file at the release commit, + the gate verdicts) |
 | Release audit (tag tree) | 551 tracked files (the release-surface archive counts 550: it excludes itself), 0 credentials, 0 forbidden paths, 0 undeclared external imports (118 runtime modules) |
+| CI on the tagged commit | `core` **pass**, `docker-offline` **pass** (run `45038110934`) |
+| Tag-tree verification | the full reconstruct sequence (`freeze_release --verify` → `make verify` → `make docs-verify` → `make replay-all` → `make release-audit` → `evidence_freeze --verify --require-reports` → `release_evidence --verify --strict` → `unittest`) exits **0** on a fresh `git clone --branch v1.0.2` |
 | Release evidence | `docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json` (frozen digest, rubric map, decisions, reconstruct commands) |
 | Frozen contract surface | 30 files, `0747baf0…` (unchanged; this release touches no frozen file) |
 | `official_score_claimed` | `false` (TZ §23.6) |

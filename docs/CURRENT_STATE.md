@@ -81,7 +81,8 @@ skip. `official_score_claimed: false` everywhere.
 1. Human owner answers `Q-ORG-01`; record acceptance in `docs/DECISIONS.md` or
    scope a separate verifier re-derivation (see `docs/CONTEXT/NEXT_AGENT.md`).
 2. Nothing else is pending for the release: `v1.0.2` is cut, documented and
-   tagged; `v1.0.1` remains the recommended submission artifact.
+   tagged; `v1.0.2` is the recommended artifact (behaviour-identical to `v1.0.1`
+   plus the Phase 17 archive) and `v1.0.1` is retained for history.
 3. If a future defect is found in the released artifact, fix on a new branch,
    re-run `make evidence-write` in the same commit, and let the fix ride the
    next patch release (`v1.0.3`); do not move `v1.0.1` or `v1.0.2`.

@@ -15,8 +15,8 @@ restorable **and** verifiable from the repository alone. Phases 0–17 are all
 this handoff authorises new features.
 
 ```
-v1.0.2   -> annotated tag on the merge commit of the Phase 17 PR; release published 2026-11-22 (D-17-02)
-v1.0.1   -> recommended submission artifact (image no longer ships sealed truth, D-16-02); tag unmoved
+v1.0.2   -> annotated tag (3d5855a4ad2c05723cab56a0cd120bc11c772949) on the merge commit 48cfb17 of PR #29; release published 2026-11-22 (D-17-02); the recommended artifact (same behaviour as v1.0.1 + the Phase 17 archive)
+v1.0.1   -> retained for history (image no longer ships sealed truth, D-16-02); tag unmoved
 v1.0.0   -> retained for history; superseded for submission; tag unmoved
 make verify                                          -> 12/12 gates, 601 tests, 20 artifacts
 make docs-verify                                     -> 22 measured facts, 22 checks
