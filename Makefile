@@ -84,8 +84,15 @@ demo-backup: ## Technical backup demo (TZ 15.4): gates + claims + replay + freez
 	@$(PYTHON) tools/freeze_release.py --verify
 	@echo "demo-backup: PASS (all four probes green)"
 
-docker-check: ## Offline Docker verification (--network=none --cpus=2 --memory=4g)
-	@docker build -t twinledger:eval . && docker run --rm --network=none --cpus=2 --memory=4g -e GITHUB_ACTIONS="$${GITHUB_ACTIONS:-}" --security-opt no-new-privileges:true --cap-drop ALL --read-only --tmpfs /tmp:rw,noexec,nosuid,mode=1777,size=256m --tmpfs /app/artifacts/reports/latest:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m --tmpfs /app/artifacts/reports/doc_claims:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=16m --tmpfs /app/artifacts/trajectories:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m twinledger:eval make verify
+docker-build: ## Build the offline verification image
+	@docker build -t twinledger:eval .
+
+docker-check-container: ## Run the offline verification container (image must exist)
+	@docker run --rm --network=none --cpus=2 --memory=4g -e GITHUB_ACTIONS="$${GITHUB_ACTIONS:-}" --security-opt no-new-privileges:true --cap-drop ALL --read-only --tmpfs /tmp:rw,noexec,nosuid,mode=1777,size=256m --tmpfs /app/artifacts/reports/latest:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m --tmpfs /app/artifacts/reports/doc_claims:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=16m --tmpfs /app/artifacts/trajectories:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m twinledger:eval make verify
+
+docker-check: ## Offline Docker verification: build image, then run it hardened
+	@$(MAKE) --no-print-directory docker-build
+	@$(MAKE) --no-print-directory docker-check-container
 
 clean: ## Remove generated temp artifacts only (never sealed source inputs)
 	rm -rf artifacts/reports/latest/*.json artifacts/reports/latest/*.txt artifacts/reports/latest/*.csv artifacts/reports/latest/*.html artifacts/reports/latest/*.md

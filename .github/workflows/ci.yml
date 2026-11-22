@@ -36,14 +36,34 @@ jobs:
     needs: core
     steps:
       - uses: actions/checkout@v4
-      - name: Build and run hardened offline container (--network=none, read-only rootfs, cap-drop ALL)
+      - name: Build the offline image
         run: |
           set -o pipefail
-          make docker-check 2>&1 | tee docker-check.log
+          make docker-build 2>&1 | tee docker-build.log
+      - name: Run hardened offline container (--network=none, read-only rootfs, cap-drop ALL)
+        run: |
+          set -o pipefail
+          make docker-check-container 2>&1 | tee docker-check.log
+      - name: Surface offline container failure in annotations
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import os
+          path = "docker-check.log"
+          if not os.path.exists(path):
+              print("::error::docker-check.log missing - the step failed before producing output")
+              raise SystemExit(0)
+          lines = [l.rstrip() for l in open(path, encoding="utf-8", errors="replace") if l.strip()]
+          tail = [l for l in lines if any(k in l for k in ("FAIL", "Error", "error", "Traceback", "Permission", "Exception", "No such file", "verify:"))][-8:] or lines[-8:]
+          for line in tail:
+              print("::error::" + line[:900])
+          PY
       - name: Upload offline container log
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: docker-check-log
-          path: docker-check.log
+          path: |
+            docker-build.log
+            docker-check.log
           if-no-files-found: warn
