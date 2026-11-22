@@ -87,6 +87,18 @@ def _render_svg_bar_chart(items: list[tuple[str, float]], *, title: str, max_val
     return "\n".join(lines)
 
 
+def _is_artifact(path: Any) -> bool:
+    """True for evidence files, False for bookkeeping placeholders.
+
+    ``artifacts/reports/latest/.gitkeep`` exists only so Git can track an empty
+    directory. Counting it as evidence made the reported artifact count depend
+    on *where* the code runs: 21 in a checkout, 20 inside the offline image
+    (Docker does not carry an empty directory's placeholder in the same way).
+    That difference is not a measurement, so placeholders are excluded.
+    """
+    return path.is_file() and not path.name.startswith(".")
+
+
 def _collect_public_proof_samples() -> list[dict[str, Any]]:
     samples: list[dict[str, Any]] = []
     dev_dir = REPO_ROOT / "episodes" / "dev"
@@ -303,7 +315,7 @@ def main() -> int:
     if not isinstance(summary, dict) or "status" not in summary or "checks" not in summary:
         print("report: configuration error: verify_summary.json missing required fields (status/checks)")
         return 2
-    present = sorted(p.name for p in REPORT_DIR.iterdir() if p.is_file() and p.name not in ("report.html", "report_index.json"))
+    present = sorted(p.name for p in REPORT_DIR.iterdir() if _is_artifact(p) and p.name not in ("report.html", "report_index.json"))
 
     html_doc = _build_html_report(summary, present + ["report.html", "report_index.json"])
     # Self-audit: zero external URLs in generated HTML (release blocker if violated).
@@ -313,7 +325,7 @@ def main() -> int:
         return 4
     (REPORT_DIR / "report.html").write_text(html_doc, encoding="utf-8")
 
-    all_present = sorted(p.name for p in REPORT_DIR.iterdir() if p.is_file() and p.name != "report_index.json")
+    all_present = sorted(p.name for p in REPORT_DIR.iterdir() if _is_artifact(p) and p.name != "report_index.json")
     missing_expected = [f for f in EXPECTED_TZ_ARTIFACTS if f not in all_present]
 
     index_doc = {

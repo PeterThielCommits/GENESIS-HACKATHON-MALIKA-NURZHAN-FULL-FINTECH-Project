@@ -45,11 +45,12 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 REPORT_DIR = REPO_ROOT / "artifacts" / "reports" / "latest"
 TRAJECTORY_LOG = REPO_ROOT / "artifacts" / "trajectories" / "trajectories.jsonl"
 # NOTE: deliberately NOT inside ``artifacts/reports/latest/``. That directory is
-# the frozen Judge Kit evidence set (TZ §23.5, exactly 21 files, 12 gates).
+# the frozen Judge Kit evidence set (TZ §23.5, 20 evidence files, 12 gates).
 # Adding a file there would make the artifact count depend on whether `make
 # docs-verify` ran before or after `make verify`, i.e. non-deterministic
 # documentation. This report is a Phase 15 documentation artefact and lives in
-# its own directory.
+# its own directory. (See D-15-03: the count is 20, stable across a checkout and
+# the offline image, because `.gitkeep` is a placeholder and not evidence.)
 OUTPUT_PATH = REPO_ROOT / "artifacts" / "reports" / "doc_claims" / "doc_claims_report.json"
 
 README = "README.md"

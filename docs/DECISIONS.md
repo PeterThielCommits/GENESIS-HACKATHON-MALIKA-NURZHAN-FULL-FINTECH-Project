@@ -296,6 +296,31 @@ The core JSONL protocol (`env/jsonl_server.py`, `contracts/tool_request.schema.j
 
 Decision: keep both and document the asymmetry rather than renaming either surface. Renaming the protocol would break the frozen `tool_request` schema; renaming the adapter would break the official harness contract. Both spellings are verified empirically, printed in the README adapter section and `docs/POLICY_PROTOCOL.md` §3, and pinned by the `C-PROTOCOL-TOOLS` claim check which reads the enum from the frozen schema, so the documentation cannot drift from the contract. No frozen file was modified.
 
+## D-15-03 (2026-11-22) — Evidence count excludes placeholder files (20, not 21)
+
+`artifacts/reports/latest/.gitkeep` exists only so Git can track an otherwise
+empty directory. `judge/report.py` counted every regular file in the evidence
+directory, so the published artifact count depended on **where the code ran**:
+21 in a checkout (which has `.gitkeep`) versus 20 inside the offline image
+(where it does not exist). The documentation gate compares the committed count
+against the measured one, so this environment difference surfaced as a real
+`docker-offline` CI failure:
+
+```
+[DRIFT] G-BLOCK (line 13: committed '| Evidence artifacts indexed | **21** |'
+                       != measured '| Evidence artifacts indexed | **20** |')
+```
+
+Decision: evidence is defined as *non-placeholder* files — `_is_artifact()`
+excludes dotfiles — so the count is **20** everywhere and is a genuine
+measurement rather than an accident of the filesystem. This matches the TZ
+§23.5 contract: 16 required reports + `report.html` (optional) + `report_index.json`
++ `robustness_report.json` (added in Phase 9) = 20, `missing: []`.
+
+The placeholder is kept (Git needs it); it is simply never counted. Locked by
+`TestArtifactPlaceholders` (4 tests), which also asserts that
+`report_index.json` and the directory contents agree exactly.
+
 ## D-17-01 (2026-11-21) — Post-release cryptographic contract & config freeze manifest
 
 `tools/freeze_release.py` locks SHA-256 digests over all 30 frozen contract schemas (`contracts/*.schema.json`, `contracts/version.json`), operational configs (`configs/*`), provisional rubricator (`judge/rubric_map.json`), official check spec (`spec/official_fintech_checks_2026-11-20.md`), and Master TZ v3.0.0 (`docs/reference/TwinLedger_v3_Master_TZ_AI_Agents.txt`) in `configs/release_freeze.json`.

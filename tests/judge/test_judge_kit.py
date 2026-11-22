@@ -184,6 +184,43 @@ class TestArtifactCompleteness(unittest.TestCase):
             self.assertEqual(verify_mod.check_artifact_completeness(Path(td)), [])
 
 
+class TestArtifactPlaceholders(unittest.TestCase):
+    """Bookkeeping dotfiles must never be counted as evidence.
+
+    `.gitkeep` exists so Git can track an empty directory. Counting it made the
+    reported artifact count environment-dependent -- 21 in a checkout versus 20
+    in the offline image -- which surfaced as a real `docker-offline` failure
+    (DRIFT: committed 20 != measured 21). Regression for D-15-03.
+    """
+
+    def test_dotfile_is_not_an_artifact(self):
+        with tempfile.TemporaryDirectory() as td:
+            placeholder = Path(td) / ".gitkeep"
+            placeholder.write_text("", encoding="utf-8")
+            self.assertFalse(report_mod._is_artifact(placeholder))
+
+    def test_regular_report_is_an_artifact(self):
+        with tempfile.TemporaryDirectory() as td:
+            real = Path(td) / "verify_summary.json"
+            real.write_text("{}", encoding="utf-8")
+            self.assertTrue(report_mod._is_artifact(real))
+
+    def test_directory_is_not_an_artifact(self):
+        with tempfile.TemporaryDirectory() as td:
+            self.assertFalse(report_mod._is_artifact(Path(td)))
+
+    def test_evidence_count_is_environment_independent(self):
+        """The published count must not change between a checkout and the image."""
+        from tools import verify_doc_claims as vdc
+
+        if not (vdc.REPORT_DIR / "report_index.json").is_file():
+            self.skipTest("evidence artifacts not generated yet")
+        indexed = json.loads((vdc.REPORT_DIR / "report_index.json").read_text(encoding="utf-8"))["artifacts"]
+        self.assertFalse([a for a in indexed if a.startswith(".")], "placeholder counted as evidence")
+        on_disk = sorted(p.name for p in vdc.REPORT_DIR.iterdir() if report_mod._is_artifact(p))
+        self.assertEqual(sorted(indexed), on_disk, "index disagrees with the evidence files on disk")
+
+
 class TestOfflineHtmlGuarantee(unittest.TestCase):
     def test_clean_html_has_no_violations(self):
         self.assertEqual(report_mod.audit_html_offline("<html><body>ok</body></html>"), [])
