@@ -10,7 +10,7 @@
 
 - **Phase 15 re-audit DONE, EXIT GATE 15 PASS** (branch above). Documentation is now mechanically tied to evidence: `make docs-verify` re-measures 22 facts and runs 11 checks against `artifacts/reports/latest/` (and `make verify` runs it automatically once artifacts exist); `make demo-backup` chains verify + docs + replay + freeze. Decisions `D-15-01`, `D-15-02`.
 - New this phase: `docs/API_USAGE.md`, `docs/POLICY_PROTOCOL.md` (Task 15.3 was previously missing), `docs/DEMO.md`, `tools/verify_doc_claims.py`, `tests/judge/test_doc_claims.py`; `docs/DESIGN.md` rewritten as-built.
-- Measured: `make verify` **12/12 PASS** (61.9 s, 20 artifacts), also PASS on a clean `git ls-files` tree (61.1 s), full suite **477 tests** OK (1 optional Hypothesis skip, `critical_skipped=0`), `make docs-verify` PASS, `make demo-backup` PASS, lint CLEAN, freeze **30 files** intact (`0747baf0…`), `official_score_claimed: false`.
+- Measured: `make verify` **12/12 PASS** (61.9 s, 20 artifacts), also PASS on a clean `git ls-files` tree (61.1 s), full suite **479 tests** OK (1 optional Hypothesis skip, `critical_skipped=0`), `make docs-verify` PASS, `make demo-backup` PASS, lint CLEAN, freeze **30 files** intact (`0747baf0…`), `official_score_claimed: false`.
 - No frozen file changed (`contracts/*`, `configs/*`, `judge/rubric_map.json`, Master TZ untouched).
 
 ## Phase 16 release candidate DONE, EXIT GATE 16 PASS (branch above, PR #21)
@@ -21,7 +21,7 @@
 - **16.6 submission:** entrypoint imported from cwd=`/` — 3 exports, `reset` 2-tuple, `step` 5-tuple, 5/5 tool names accepted; non-root offline image with the single documented command.
 - `make rc-check` chains verify + docs-verify + replay-all + release-audit, and was run PASS in **three trees**: Git checkout, clean clone, and a `git archive` tarball with no `.git`.
 - Five real defects fixed (none frozen): `.gitkeep` counted as evidence made the artifact count depend on the machine (**D-15-03**); C-locale `UnicodeEncodeError` inside the container; clean-clone tests gating on gitignored outputs (the `D-15-01` trap, one directory over); RC-001 reading a gitignored report; an audit that errored on `.git`-less trees — which is exactly what the Docker image is (**D-16-01**).
-- Measured: `make verify` **12/12 PASS** (71.6 s, 20 artifacts, **477 tests**, `critical_skipped=0`), `make docs-verify` PASS (22 facts, 11 checks), lint CLEAN, freeze **30 files** intact (`0747baf0…`), `official_score_claimed: false`.
+- Measured: `make verify` **12/12 PASS** (71.6 s, 20 artifacts, **479 tests**, `critical_skipped=0`), `make docs-verify` PASS (22 facts, 11 checks), lint CLEAN, freeze **30 files** intact (`0747baf0…`), `official_score_claimed: false`.
 
 ## Next actions
 1. **16.7 / 16.8 (release authority):** after PR #21 merges, tag the merge commit (`v1.0.0`) and publish the GitHub release using `docs/RELEASE_NOTES.md`; record the tag and commit hash in `docs/STATUS.md` and `docs/PHASE_REPORTS/PHASE-16.json`.

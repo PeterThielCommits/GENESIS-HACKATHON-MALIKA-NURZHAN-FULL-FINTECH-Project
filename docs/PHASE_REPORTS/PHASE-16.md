@@ -217,7 +217,7 @@ All three under `LC_ALL=C`, matching the container locale.
 | Package size | 5 449 805 bytes (budget 50 MB) |
 | Runtime modules parsed | 109 |
 | Undeclared runtime dependencies | 0 (stdlib only) |
-| Tests | **477** (1 optional Hypothesis skip, `critical_skipped=0`) |
+| Tests | **479** (1 optional Hypothesis skip, `critical_skipped=0`) |
 | Evidence artefacts | 20 (frozen Judge Kit set) |
 | Documents facts machine-checked | 22 facts, 11 checks |
 | Replay | 80/80 runs, 567 steps byte-identical |

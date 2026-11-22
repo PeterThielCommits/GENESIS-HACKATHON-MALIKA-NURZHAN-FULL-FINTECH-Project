@@ -32,7 +32,7 @@ Now documented explicitly in both files (README note + `POLICY_PROTOCOL.md` §3 
 `docs/THREAT_MODEL.md` listed "9 encoding transforms" followed by **8** names, four of which were not the real transform identifiers. The actual transform list in `judge/canary_fuzzer.py` is `exact_utf8, casefold, hex_lower, hex_upper, base64_standard, base64_urlsafe_nopad, url_percent_encoded, unicode_nfc, unicode_nfkc`. Corrected and now source-driven.
 
 ### 2.4 Stale numbers
-`README.md` published **317 tests** (measured: **410**, now 477 after the new Phase 15 tests) and `mutation_score_exact: "26/26"` quoted as a percentage field. The baseline table's max-duration column did not match `trajectories.jsonl` (`0.004s` vs `0.005s`, `7.3` vs `7.35` steps).
+`README.md` published **317 tests** (measured: **410**, now 479 after the new Phase 15 tests) and `mutation_score_exact: "26/26"` quoted as a percentage field. The baseline table's max-duration column did not match `trajectories.jsonl` (`0.004s` vs `0.005s`, `7.3` vs `7.35` steps).
 
 ### 2.5 A phantom decision ID (my own error, caught by the new check)
 While rewriting `DESIGN.md` I cited `D-03-01`, which does not exist in `docs/DECISIONS.md`. Rather than just fix the prose, this is now a **referential-integrity check**: every `D-XX-YY` cited anywhere in the docs must be defined in `DECISIONS.md`, or the gate fails.
@@ -47,7 +47,7 @@ Task 15.6 ("no unsupported claims or fake metrics") cannot be satisfied by care 
 | Mechanism | What it stops |
 |---|---|
 | **Generated facts block** in `README.md` (`<!-- BEGIN GENERATED:measured-facts -->`) rendered from artifacts and compared byte-for-byte | any hand-edited number silently drifting |
-| **Prose assertions** (`477 tests`, `12-gate Judge Kit`, `5/5 byte-identical replays`, protocol enums) | stale counts in running text |
+| **Prose assertions** (`479 tests`, `12-gate Judge Kit`, `5/5 byte-identical replays`, protocol enums) | stale counts in running text |
 | **Stale-literal denylist** across 10 docs (`317 tests`, `Replay Suite: 0/0`, `15 invariants`, …) | old wrong values being reintroduced |
 | **Decision-ID referential integrity** | phantom `D-XX-YY` citations |
 
@@ -88,7 +88,7 @@ Fixed properly rather than by deleting punctuation:
 - `TestLocaleSafety` (3 tests) locks the contract and asserts no raw
   `print()` in `main()` bypasses it.
 
-Whole suite under `LC_ALL=C`/ASCII: **477 tests, OK**. Full simulated container
+Whole suite under `LC_ALL=C`/ASCII: **479 tests, OK**. Full simulated container
 layout under `LC_ALL=C` + empty trajectories + read-only evidence dir:
 `make verify` 12/12 PASS.
 
@@ -134,7 +134,7 @@ The relocated report also avoids a subtler trap: `artifacts/reports/latest/` is 
 | `make verify` in simulated read-only container layout | 0 | 12/12 PASS — doc-claims report degrades gracefully |
 | `make verify` with tmpfs-masked `artifacts/trajectories` | 0 | 12/12 PASS — baselines reported as omitted, no false drift |
 | `tools/verify_doc_claims.py` with unwritable output path | 0 | PASS verdict preserved, note printed |
-| full suite via RC-001 | 0 | **477 tests**, 1 optional skip (critical_skipped=0) |
+| full suite via RC-001 | 0 | **479 tests**, 1 optional skip (critical_skipped=0) |
 | `make verify` ×2 consecutive, then `docs-verify` | 0 | stable — no drift |
 
 ### 5.1 Negative tests (the gate must actually fail)

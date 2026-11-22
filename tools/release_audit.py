@@ -155,12 +155,19 @@ def _walk_fallback() -> list[str]:
 
 def tracked_files() -> list[str]:
     """Return the release file list, from Git when available."""
-    result = subprocess.run(
-        ["git", "ls-files", "-z"],
-        cwd=str(REPO_ROOT),
-        capture_output=True,
-        check=False,
-    )
+    # The offline image has no `git` binary at all (only make + python), so this
+    # raises FileNotFoundError rather than returning non-zero. Catch OSError, not
+    # just a bad exit code -- otherwise the submission image cannot audit itself,
+    # which is precisely where the audit matters most.
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "-z"],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            check=False,
+        )
+    except OSError:
+        return _walk_fallback()
     if result.returncode != 0:
         return _walk_fallback()
     files = [p for p in result.stdout.decode("utf-8", "replace").split("\0") if p]

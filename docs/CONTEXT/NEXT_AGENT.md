@@ -8,7 +8,7 @@ verified on a clean machine, replayed end to end, audited, and its official
 entrypoint is proven by execution.
 
 ```
-make verify        -> 12/12 PASS, 477 tests, 20 evidence artifacts (docs gate runs inside)
+make verify        -> 12/12 PASS, 479 tests, 20 evidence artifacts (docs gate runs inside)
 make docs-verify   -> 22 measured facts, 11 checks PASS
 make replay-all    -> 80/80 published runs, 567 steps byte-identical
 make release-audit -> 6/6 PASS (secrets, file list, size, deps, entrypoint, submission)

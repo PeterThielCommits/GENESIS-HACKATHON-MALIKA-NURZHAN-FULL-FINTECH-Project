@@ -176,6 +176,44 @@ class TestFileListWithoutGit(unittest.TestCase):
         self.assertIn("schema_version", report)
 
 
+class TestNoGitBinary(unittest.TestCase):
+    """The offline image ships no `git` binary -- only make and python.
+
+    Found in CI: subprocess.run(["git", ...]) raises FileNotFoundError there,
+    which is an OSError and not a non-zero return code, so the filesystem
+    fallback was never reached and RC-001 failed inside docker-offline.
+    """
+
+    def test_missing_git_binary_falls_back_instead_of_raising(self):
+        import unittest.mock as mock
+
+        with tempfile.TemporaryDirectory() as td:
+            (Path(td) / "real.py").write_text("x = 1\n", encoding="utf-8")
+            saved = ra.REPO_ROOT
+            ra.REPO_ROOT = Path(td)
+            try:
+                with mock.patch.object(ra.subprocess, "run", side_effect=FileNotFoundError("git")):
+                    files = ra.tracked_files()
+            finally:
+                ra.REPO_ROOT = saved
+        self.assertEqual(files, ["real.py"])
+
+    def test_audit_passes_without_git_binary(self):
+        import unittest.mock as mock
+
+        real_run = ra.subprocess.run
+
+        def only_git_is_missing(*args, **kwargs):  # noqa: ANN002, ANN003
+            if args and args[0] and args[0][0] == "git":
+                raise FileNotFoundError("git")
+            return real_run(*args, **kwargs)
+
+        with mock.patch.object(ra.subprocess, "run", side_effect=only_git_is_missing):
+            report = ra.run_audit()
+        self.assertEqual(report["status"], "PASS", report.get("failed"))
+        self.assertEqual(report["failed"], [])
+
+
 class TestSizeBudget(unittest.TestCase):
     def test_budget_constants_are_sane(self):
         self.assertLessEqual(ra.MAX_SINGLE_FILE_BYTES, ra.MAX_PACKAGE_BYTES)
