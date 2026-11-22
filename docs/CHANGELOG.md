@@ -1,6 +1,48 @@
 # TwinLedger — Changelog
 
-## Unreleased — Phase 16 §7 risk-closure round (2026-11-22)
+## 1.0.2 — Phase 17 deep execution: reconstructable release archive (2026-11-22)
+
+- **The release surface is now archived (`D-17-02`).** New `tools/evidence_freeze.py`
+  writes `docs/EVIDENCE/evidence_freeze.json`: SHA-256 for every tracked release
+  file (code, configs, contracts, rubric map, Dockerfile, Makefile, entrypoint,
+  episodes, docs) plus the **verdicts** of the Judge Kit, replay, audit and
+  doc-claim reports. Report bytes carry timestamps and are regenerable, so the
+  archived fact is the *verdict* (status + counts), never the byte hash.
+- **The release is reconstructible from the repository alone.** New
+  `tools/release_evidence.py` writes
+  `docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json`: the frozen digest,
+  the twelve rubric gates `RC-001..RC-012`, the decision register and the exact
+  command list a stranger runs to rebuild and re-verify the release.
+- **The archive is a gate, not a note.** `make evidence-write` /
+  `make evidence-verify` are wired into `make rc-check` and into the CI `core`
+  job: the committed archive must match the committed tree. `C-ARCHIVE` (new
+  check in `tools/verify_doc_claims.py`) asserts the archive is honest, quotes
+  the frozen digest, archives the rubric map, lists only existing decisions and
+  names only reconstruct commands whose scripts exist.
+- **The contract freeze is now a test.** `tests/judge/test_release_freeze.py`
+  asserts the committed freeze matches the tree, that the frozen surface is
+  exactly the declared 30 files, and that the aggregate is still the released
+  `0747baf0…`. A silent re-freeze is no longer possible — it needs a CR.
+- **Three published-evidence defects fixed (non-frozen, each with a failing-on-old-code
+  regression test):** BUG-TL-0005 (P1) the reward-property matrix published the
+  superseded provisional formula and `provisional: true` although its numbers
+  were official; BUG-TL-0006 (P2) the robustness report published a
+  `score_contract` claiming it was *not* scored by `official_scorer`; BUG-TL-0007
+  (P3) stale "provisional / pending Q-005" wording in `scoring/matcher.py` and in
+  a property-test comment. The published reward contract is now **derived from the
+  live constants** (`scoring/official_scorer.official_formula_text()`), and
+  `C-REWARD` audits generated artifacts as well as prose (`D-17-03`).
+- **Docs:** Phase 17 report rewritten, `docs/HANDOFF/phase-17-evidence-freeze.md`
+  added, `docs/STATUS.md` + `docs/CURRENT_STATE.md` + `docs/CONTEXT/NEXT_AGENT.md`
+  updated, `docs/LIMITATIONS.md` extended to L1..L10, `docs/DECISIONS.md` gains
+  `D-17-02` and `D-17-03`, the historical Phase 6 reward matrix annotated as
+  superseded.
+- No frozen file changed (`freeze_release --verify` → 30 files, `0747baf0…`); no
+  tag moved (`v1.0.0`, `v1.0.1`); `code_version` stays `twinledger@1.0.0`;
+  `schema_version` stays `1.0.0`; `official_score_claimed: false`.
+
+### Also in this release — Phase 16 §7 risk-closure round (2026-11-22)
+
 
 - **Independent re-derivation implementation (`D-16-04`):** new `independent_verifier/` — a from-scratch Stage-1 verifier authored from `spec/` + `contracts/` alone (own money/FX via `Fraction`, `zoneinfo` fiscal periods, own discovery algorithms, own ProofGraph acyclicity/path checks, own evidence minimality/ablation). Measured agreement: all 10 committed dev/train episodes signature-identical (identical `episode_public_hash`); official `D01..D20` (`master_seed=2026`) re-derived and cross-checked at **F1 = 1 exact, FP = 0, FN = 0**; evidence enumeration complete. New `tools/verify_independent_rederivation.py` harness + `docs/EVIDENCE/independent-rederivation-2026-11-22.json`. **Not** organisational independence — `Q-ORG-01` stays OPEN.
 - **Offline verification beyond CI:** new `tools/offline_local_check.py` (user+net+mount namespace, read-only bind of the tree, no network route, full suite PASS) + static Dockerfile/`.dockerignore` audit (10/10) + `docs/EVIDENCE/offline-local-2026-11-22.json`. The Docker image build remains CI-authoritative (`docker-offline` green on `main` and on the `v1.0.1` tag commit); local scope and limits are recorded in the artifact.

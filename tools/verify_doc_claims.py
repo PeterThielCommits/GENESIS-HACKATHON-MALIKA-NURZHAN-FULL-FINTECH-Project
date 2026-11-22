@@ -714,20 +714,20 @@ def _generated_dir_contracts() -> dict[str, tuple[str, ...]]:
     verify_source = (REPO_ROOT / "judge" / "verify.py").read_text(encoding="utf-8")
     match = re.search(r"REQUIRED_FULL_ARTIFACTS[^=]*=\s*\((.*?)\)", verify_source, re.DOTALL)
     frozen: set[str] = set(re.findall(r'"([^"]+\.(?:json|txt|csv|html|md))"', match.group(1))) if match else set()
-    # Artifacts other producers own, named by their own outputs.
-    extra = {
-        "doc_claims_report.json",
-        "release_audit.json",
-        "replay_all_report.json",
-        "official_eval_summary.json",
-        "performance_report.json",
-    }
+    # ``reward_property_matrix.json`` is part of the published evidence set
+    # (20 files, D-15-03) but is written by the reward-property test suite, not
+    # by ``judge/verify.py`` -- so it has to be added explicitly or a doc that
+    # cites it is falsely reported as a phantom path (BUG-TL-0008).
+    frozen.add("reward_property_matrix.json")
+    # Artifacts other producers own, named by their own outputs. The names must
+    # match what the producers actually write (``trajectory_replay.json``,
+    # not the earlier ``replay_all_report.json``, which no producer emits).
     doc_claims = REPORT_DIR.parent / "doc_claims"
     release = REPORT_DIR.parent / "release"
     _GENERATED_DIR_CONTRACTS = {
         "artifacts/reports/latest/": tuple(sorted(frozen)),
-        "artifacts/reports/doc_claims/": tuple(sorted(extra & {"doc_claims_report.json"})),
-        "artifacts/reports/release/": tuple(sorted(extra & {"release_audit.json", "replay_all_report.json"})),
+        "artifacts/reports/doc_claims/": ("doc_claims_report.json",),
+        "artifacts/reports/release/": ("release_audit.json", "trajectory_replay.json"),
         "artifacts/reports/evaluation/": ("official_eval_summary.json",),
         "artifacts/trajectories/": ("trajectories.jsonl",),
     }
@@ -1585,6 +1585,159 @@ def evidence_artifact_check() -> list[dict[str, str]]:
     return failures
 
 
+def release_archive_check() -> list[dict[str, str]]:
+    """``C-ARCHIVE``: the Phase 17 release archive exists and is self-consistent.
+
+    EXIT GATE 17 -- "the release can be restored and checked without oral
+    explanations from the team" -- is only a claim until the archive that
+    makes it true is machine-checked. This probe therefore asserts that:
+
+      * the archive exists, is honest (``official_score_claimed: false``),
+        records EXIT GATE 17 as PASS and carries a full git SHA;
+      * all six Phase 17 tasks (17.1-17.6) are recorded with an evidence
+        pointer;
+      * the frozen-contract digest it quotes is the digest in
+        ``configs/release_freeze.json`` (30 files);
+      * the archived gate verdicts are PASS (12/12 Judge Kit gates, 80/80
+        replayed trajectories, release audit PASS);
+      * the rubric map it archives carries all 12 gates RC-001..RC-012;
+      * every decision id it lists is defined in ``docs/DECISIONS.md``;
+      * the reconstruct command list is non-empty and names only scripts
+        that exist.
+    """
+    failures: list[dict[str, str]] = []
+    archive_path = REPO_ROOT / "docs" / "EVIDENCE" / "phase-17-release-evidence-2026-11-22.json"
+    if not archive_path.is_file():
+        return [
+            {
+                "id": "C-ARCHIVE",
+                "status": "MISSING",
+                "detail": (
+                    "docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json not found "
+                    "(run `python3 tools/release_evidence.py --write`)"
+                ),
+            }
+        ]
+    try:
+        archive = json.loads(archive_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return [
+            {
+                "id": "C-ARCHIVE",
+                "status": "UNPARSEABLE",
+                "detail": f"{archive_path.relative_to(REPO_ROOT)}: {exc}",
+            }
+        ]
+
+    def fail(status: str, detail: str) -> None:
+        failures.append({"id": "C-ARCHIVE", "status": status, "detail": detail})
+
+    if archive.get("official_score_claimed") is not False:
+        fail("SCORE_CLAIM", "the archive must keep official_score_claimed false")
+    if archive.get("exit_gate_17") not in ("PASS", "PARTIAL"):
+        fail(
+            "GATE_NOT_PASS",
+            "the archive must record EXIT GATE 17 as PASS (a complete archive of a "
+            "passing run) or PARTIAL (an archive of an incomplete run)",
+        )
+    if not re.fullmatch(r"[0-9a-f]{40}", str(archive.get("git_sha", ""))):
+        fail("GIT_SHA_MISSING", "git_sha must be a full 40-hex commit id")
+
+    tasks = archive.get("tasks") or {}
+    for task_id in ("17.1", "17.2", "17.3", "17.4", "17.5", "17.6"):
+        entry = tasks.get(task_id)
+        if not isinstance(entry, dict) or entry.get("status") != "DONE":
+            fail("TASK_MISSING", f"task {task_id} is not recorded as DONE")
+        elif not str(entry.get("evidence", "")).strip():
+            fail("TASK_NO_EVIDENCE", f"task {task_id} has no evidence pointer")
+
+    contract = archive.get("contract_freeze") or {}
+    freeze_path = REPO_ROOT / "configs" / "release_freeze.json"
+    if freeze_path.is_file():
+        freeze = json.loads(freeze_path.read_text(encoding="utf-8"))
+        if contract.get("aggregate_sha256") != freeze.get("aggregate_sha256"):
+            fail(
+                "FREEZE_DIGEST_DRIFT",
+                "the archive quotes a different contract-freeze digest than "
+                "configs/release_freeze.json",
+            )
+        if contract.get("frozen_file_count") != freeze.get("frozen_file_count"):
+            fail(
+                "FREEZE_COUNT_DRIFT",
+                "the archive quotes a different frozen-file count than "
+                "configs/release_freeze.json",
+            )
+
+    # The archived gate verdicts are the release-run snapshot. A FINAL archive
+    # must record a passing release run; a DRAFT archive must say, explicitly,
+    # which verdict was not PASS when it was written (an archive never hides a
+    # failing run). The release-time gate is `release_evidence --verify
+    # --strict`, which additionally demands a fresh, passing measurement.
+    status = archive.get("status")
+    if status not in ("FINAL", "DRAFT"):
+        fail("ARCHIVE_STATUS", f"the archive must declare FINAL or DRAFT, found {status!r}")
+    gates = archive.get("gates") or {}
+    verify = gates.get("verify") or {}
+    replay = gates.get("replay_all") or {}
+    audit = gates.get("release_audit") or {}
+    if status == "FINAL":
+        if archive.get("exit_gate_17") != "PASS":
+            fail("GATE_NOT_PASS", "a FINAL archive must record EXIT GATE 17 as PASS")
+        if verify.get("status") != "PASS" or verify.get("gates_passed") != verify.get("gates_total"):
+            fail("GATE_NOT_PASS", "a FINAL archive must record a fully passing verify verdict")
+        if replay.get("status") != "PASS" or replay.get("runs_matched") != replay.get("runs_replayed"):
+            fail("GATE_NOT_PASS", "a FINAL archive must record a fully matching replay verdict")
+        if audit.get("status") != "PASS":
+            fail("GATE_NOT_PASS", "a FINAL archive must record a passing release-audit verdict")
+    else:
+        if archive.get("exit_gate_17") != "PARTIAL":
+            fail("GATE_NOT_PASS", "a DRAFT archive must record EXIT GATE 17 as PARTIAL")
+        if not str(archive.get("draft_reason", "")).strip():
+            fail("DRAFT_NO_REASON", "a DRAFT archive must name the verdict that was not PASS")
+
+    rubric = archive.get("rubric_map") or {}
+    expected_gates = [f"RC-{i:03d}" for i in range(1, 13)]
+    if list(rubric.get("gates") or []) != expected_gates:
+        fail(
+            "RUBRIC_DRIFT",
+            "the archived rubric map does not carry exactly RC-001..RC-012",
+        )
+
+    decisions_path = REPO_ROOT / "docs" / "DECISIONS.md"
+    if decisions_path.is_file():
+        defined = set(re.findall(r"^##\s+(D-\d{2}-\d{2})\b", decisions_path.read_text(encoding="utf-8"), re.M))
+        for decision_id in (archive.get("decisions") or {}).get("ids") or []:
+            if decision_id not in defined:
+                fail("DECISION_UNDEFINED", f"archived decision {decision_id} is not defined in docs/DECISIONS.md")
+
+    commands = (archive.get("reconstruct") or {}).get("commands") or []
+    if not commands:
+        fail("NO_RECONSTRUCT", "the archive carries no reconstruct command list")
+    for command in commands:
+        parts = command.split()
+        if (
+            len(parts) >= 2
+            and parts[0] == "python3"
+            and not parts[1].startswith("-")
+            and not (REPO_ROOT / parts[1]).is_file()
+        ):
+            fail("COMMAND_MISSING", f"reconstruct command names a missing script: {command}")
+
+    if not failures:
+        return [
+            {
+                "id": "C-ARCHIVE",
+                "status": "PASS",
+                "detail": (
+                    "the Phase 17 release archive exists, is honest, and pins the frozen "
+                    "digest, the gate verdicts, the rubric map, the decisions and the "
+                    "reconstruct commands"
+                ),
+            }
+        ]
+    return failures
+
+
 def score_honesty_check() -> list[dict[str, str]]:
     """``C-SCORE-HONEST``: no scanned doc may claim an official jury score.
 
@@ -1756,6 +1909,84 @@ def reward_provenance_check() -> list[dict[str, str]]:
                     ),
                 }
             )
+    # The same rule applies to the *generated* evidence, not only to prose:
+    # an artifact whose numbers come from the official implementation must
+    # not quote the retired provisional formula (BUG-TL-0005) nor call the
+    # official reward provisional (BUG-TL-0006).
+    superseded_formula = "R = max(0, F1 - eta * steps_used / max_steps)"
+    report_dir = REPO_ROOT / "artifacts" / "reports" / "latest"
+    if report_dir.is_dir():
+        for path in sorted(report_dir.glob("*.json")):
+            text = path.read_text(encoding="utf-8", errors="replace")
+            if superseded_formula in text:
+                failures.append(
+                    {
+                        "id": "C-REWARD",
+                        "status": "ARTIFACT_FORMULA_STALE",
+                        "doc": path.relative_to(REPO_ROOT).as_posix(),
+                        "detail": (
+                            "the artifact quotes the superseded provisional formula; "
+                            f"the live implementation computes `{formula_text}`"
+                        ),
+                    }
+                )
+        matrix = report_dir / "reward_property_matrix.json"
+        if matrix.is_file():
+            try:
+                doc = json.loads(matrix.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                doc = None
+            if isinstance(doc, dict):
+                from scoring.official_scorer import official_formula_text
+
+                published = str(doc.get("formula", ""))
+                if published != official_formula_text():
+                    failures.append(
+                        {
+                            "id": "C-REWARD",
+                            "status": "ARTIFACT_FORMULA_MISMATCH",
+                            "doc": matrix.relative_to(REPO_ROOT).as_posix(),
+                            "detail": (
+                                f"the reward-property matrix publishes {published!r}, "
+                                f"which is not the live formula "
+                                f"`{official_formula_text()}`"
+                            ),
+                        }
+                    )
+                if doc.get("provisional") is not False:
+                    failures.append(
+                        {
+                            "id": "C-REWARD",
+                            "status": "ARTIFACT_STILL_PROVISIONAL",
+                            "doc": matrix.relative_to(REPO_ROOT).as_posix(),
+                            "detail": (
+                                "the reward-property matrix is computed by the official "
+                                "implementation, so it must not publish "
+                                "`provisional: true`"
+                            ),
+                        }
+                    )
+        robustness = report_dir / "robustness_report.json"
+        if robustness.is_file():
+            try:
+                doc = json.loads(robustness.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                doc = None
+            if isinstance(doc, dict):
+                contract = str(doc.get("score_contract", ""))
+                if contract and "scoring.official_scorer" not in contract:
+                    failures.append(
+                        {
+                            "id": "C-REWARD",
+                            "status": "ARTIFACT_SCORE_CONTRACT_STALE",
+                            "doc": robustness.relative_to(REPO_ROOT).as_posix(),
+                            "detail": (
+                                "the robustness report publishes "
+                                f"{contract!r}; since D-18-01 there is one reward "
+                                "implementation (scoring.official_scorer)"
+                            ),
+                        }
+                    )
     if not failures:
         return [
             {
@@ -1913,6 +2144,7 @@ def main(argv: list[str] | None = None) -> int:
         ("C-REWARD", reward_provenance_check),
         ("C-COUNTS", functools.partial(stale_count_check, autofix=bool(args.write))),
         ("C-EVIDENCE", evidence_artifact_check),
+        ("C-ARCHIVE", release_archive_check),
         ("C-SCORE-HONEST", score_honesty_check),
         ("C-QORG-OPEN", org_questions_open_check),
     )

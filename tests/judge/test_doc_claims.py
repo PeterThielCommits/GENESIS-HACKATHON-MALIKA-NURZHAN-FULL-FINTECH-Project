@@ -324,6 +324,49 @@ class TestStructuralChecks(unittest.TestCase):
         line = "the old page named `gen/diff.py`, which does not exist"
         self.assertTrue(any(cue in line.lower() for cue in vdc._NEGATION_CUES))
 
+    def test_generated_artifact_contract_matches_the_producers(self):
+        """BUG-TL-0008: the contract must name what the producers actually write.
+
+        The contract used to list ``replay_all_report.json`` -- a file no
+        producer emits -- and to omit ``reward_property_matrix.json``, which is
+        part of the published 20-file evidence set (D-15-03). Both errors made
+        a *correct* citation look like a phantom path.
+        """
+        contracts = vdc._generated_dir_contracts()
+        producers = {
+            "artifacts/reports/doc_claims/": ("tools/verify_doc_claims.py",),
+            "artifacts/reports/release/": (
+                "tools/release_audit.py",
+                "tools/replay_all_trajectories.py",
+            ),
+            "artifacts/reports/evaluation/": ("tools/run_official_eval.py",),
+        }
+        for prefix, sources in producers.items():
+            for source in sources:
+                text = (REPO_ROOT / source).read_text(encoding="utf-8")
+                written = {
+                    name
+                    for name in contracts[prefix]
+                    if name in text
+                }
+                self.assertTrue(
+                    written,
+                    f"{source} writes into {prefix} but the contract names none of it",
+                )
+        # The replay report is written under the name the contract publishes.
+        replay_tool = (REPO_ROOT / "tools" / "replay_all_trajectories.py").read_text(encoding="utf-8")
+        self.assertIn("trajectory_replay.json", replay_tool)
+        self.assertIn(
+            "trajectory_replay.json", contracts["artifacts/reports/release/"]
+        )
+        self.assertNotIn(
+            "replay_all_report.json", contracts["artifacts/reports/release/"]
+        )
+        # The reward-property matrix belongs to the published evidence set.
+        self.assertIn(
+            "reward_property_matrix.json", contracts["artifacts/reports/latest/"]
+        )
+
     def test_real_repository_has_no_phantom_paths(self):
         outcome = vdc.path_reference_check()
         self.assertEqual([item for item in outcome if item["status"] != "PASS"], [])

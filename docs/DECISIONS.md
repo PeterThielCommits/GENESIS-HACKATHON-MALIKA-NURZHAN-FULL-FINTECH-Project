@@ -708,3 +708,113 @@ OPEN; Phase 17 not restarted; `make official-eval` not run (the committed
 Refs: Phase 16 report §10/§11 (`docs/PHASE_REPORTS/PHASE-16.md`),
 `docs/EVIDENCE/`, `docs/INDEPENDENCE.md` ("Re-derivation evidence"),
 `docs/AGENT_REPORTS/2026-11-22/`.
+
+---
+
+## D-17-02 (2026-11-22) — The release surface is archived, and the archive must match the tree
+
+`D-17-01` froze the **30 contract surfaces** (`configs/release_freeze.json`).
+That is the right invariant for "the contracts did not move", but it does not
+answer EXIT GATE 17: *"релиз можно восстановить и проверить без устных
+пояснений команды"* — the release must be restorable **and verifiable** from
+the repository alone. Three gaps were open against that sentence:
+
+1. **Nothing pinned the release surface.** 540 tracked files — runtime code,
+   operational configs, the rubric map, the Dockerfile, the Makefile, the
+   official entrypoint, the committed episodes and the whole documentation
+   set — had no digest of their own. A release could be reconstructed only by
+   trusting that nobody edited anything since the tag.
+2. **The generated evidence was not archived.** `make verify`,
+   `make replay-all`, `make release-audit` and `make docs-verify` produce
+   reports, but the reports are gitignored and regenerable; the *verdicts*
+   were only ever mentioned in prose.
+3. **The freeze was a manual command.** `tools/freeze_release.py --verify`
+   existed, but no test asserted it, so CI could not fail on drift.
+
+Decision:
+
+1. **`tools/evidence_freeze.py` (new)** archives the whole tracked release
+   surface with SHA-256 into `docs/EVIDENCE/evidence_freeze.json`, together
+   with the **verdicts** of the Judge Kit reports (status + counts, never
+   timestamps or run-ids). The manifest lives outside `configs/` on purpose:
+   a new file under `configs/` would itself drift the contract freeze, which
+   must stay at 30 files / `0747baf0…`.
+2. **Report bytes are informational; report verdicts are enforced.** A re-run
+   that changes only `generated_at_utc` or `run_id` still verifies; a re-run
+   whose gate verdicts changed does not. Verdict extraction deliberately keeps
+   only status-level facts, because a detail string such as "540 text files
+   scanned" drifts the moment the tree grows.
+3. **`tools/release_evidence.py` (new)** builds
+   `docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json`: one archive that
+   states the frozen digest, the measured gate verdicts, the rubric map
+   (RC-001..RC-012), the decision register, and the **exact command list** a
+   stranger runs to rebuild and re-verify the release. It is generated from
+   measured sources and `--verify` recomputes it.
+4. **The committed archive must match the committed tree.** `make evidence-verify`
+   is wired into `make rc-check` and into CI (`core` job). Any change to the
+   tree requires `make evidence-write` in the same commit — a deliberate,
+   visible act, not a silent drift. The two archive files are excluded from
+   the hashed surface: an archive cannot contain its own digest.
+5. **The contract freeze is now a gate.** `tests/judge/test_release_freeze.py`
+   asserts the committed contract freeze matches the tree, that the frozen
+   surface is exactly the declared set, and that the aggregate is still the
+   released `0747baf0…` — a re-freeze now needs an approved CR, because a test
+   fails otherwise.
+6. **`C-ARCHIVE`** (new check in `tools/verify_doc_claims.py`) asserts that
+   the release archive exists, is honest (`official_score_claimed: false`),
+   records EXIT GATE 17 as PASS with a full git SHA, records all six tasks
+   with an evidence pointer, quotes the frozen digest, archives the twelve
+   rubric gates, lists only decisions that exist in `docs/DECISIONS.md`, and
+   names only reconstruct commands whose scripts exist.
+
+Refs: `docs/PHASE_REPORTS/PHASE-17.md`, `docs/EVIDENCE/`, `docs/HANDOFF/phase-17-evidence-freeze.md`.
+
+## D-17-03 (2026-11-22) — A published reward contract is derived from the live constants, never re-typed
+
+`D-18-01` left exactly one reward implementation
+(`scoring.official_scorer.compute_official_metrics`), but two **published
+surfaces** still described the retired provisional contract:
+
+* `reward_property_matrix.json` published
+  `"formula": "R = max(0, F1 - eta * steps_used / max_steps)"` and
+  `"provisional": true`, although every number in that matrix had already
+  been computed by the official implementation (BUG-TL-0005). A reader would
+  have concluded the matrix measured a reward the jury does not use.
+* `robustness_report.json` published
+  `"score_contract": "scoring.reward (internal provisional; not
+  official_scorer)"`, although `scoring.reward` has been a thin view over
+  `scoring.official_scorer` since `D-18-01` (BUG-TL-0006). The report told
+  the reader it was scored by a different, provisional formula than the one
+  it actually used.
+
+This is the same failure mode as BUG-TL-0001 (a second copy of the formula),
+one level up: the *numbers* were migrated, the *label* was not.
+
+Decision:
+
+1. **`scoring.official_scorer.official_formula_text()`** is the single
+   renderer of the formula string; it derives the text from
+   `OFFICIAL_STEP_PENALTY_WEIGHT` and `OFFICIAL_STEP_BUDGET`, so changing the
+   weight moves every published string with it.
+2. **`scoring.reward.FORMULA`** is that function's result — not a second
+   literal. `scoring.diagnostics.build_reward_property_matrix` publishes the
+   same string and `provisional: false` (its rows come from the official
+   implementation).
+3. **`judge/robustness_audit.SCORE_CONTRACT`** names the single
+   implementation and carries the live formula; the report keeps
+   `separated_from_official_score: true` and adds a note that the audit is an
+   internal measurement, not a jury score.
+4. **`C-REWARD` now also audits generated artifacts**, not only prose: no
+   report under `artifacts/reports/latest/` may quote the superseded formula,
+   the reward matrix must publish the live formula and `provisional: false`,
+   and the robustness report must name `scoring.official_scorer`.
+5. Regression-locked by `tests/scoring/test_formula_provenance.py` (fails on
+   the old code) and by the artifact assertions in
+   `tests/scoring/test_reward_properties.py`.
+
+The frozen `configs/scoring/default.json` is **not** edited (D-14-02,
+D-18-01 item 4): it still carries `eta: 0.05` and `provisional: true` as a
+historical record that no longer influences the reward.
+
+Refs: `docs/QUALITY_AUDIT/BUG_REGISTRY.md` (BUG-TL-0005, BUG-TL-0006),
+`docs/PHASE_REPORTS/PHASE-17.md`.

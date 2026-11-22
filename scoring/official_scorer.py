@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from decimal import Decimal
 from fractions import Fraction
 from pathlib import Path
 from typing import Any, Collection, Mapping, Sequence
@@ -43,6 +44,30 @@ OFFICIAL_MAX_EVIDENCE_IDS = 10
 OFFICIAL_MAX_EXPLANATION_CODEPOINTS = 1000
 OFFICIAL_STEP_BUDGET = 100
 OFFICIAL_STEP_PENALTY_WEIGHT = Fraction(2, 10)  # 0.2
+
+
+def official_formula_text() -> str:
+    """Render the official reward formula **from the live constants**.
+
+    The formula string is published in artifacts (``reward_property_matrix``,
+    every ``RewardBreakdown``) and in the jury-facing docs. It used to be
+    written out as a second literal in several places, which is exactly how
+    the superseded provisional formula (``R = max(0, F1 - eta*steps/max_steps)``)
+    survived inside artifacts whose *numbers* had already been migrated to the
+    official implementation (BUG-TL-0005, D-18-01).
+
+    Deriving the text from the constants makes a second definition
+    impossible: change the weight and the published string changes with it.
+    """
+    weight = (
+        Decimal(OFFICIAL_STEP_PENALTY_WEIGHT.numerator)
+        / Decimal(OFFICIAL_STEP_PENALTY_WEIGHT.denominator)
+    )
+    rendered = format(weight.normalize(), "f")
+    return (
+        f"return = clip([-1, 1], 2*F1 - 1 - {rendered} * inspection_steps "
+        f"/ {OFFICIAL_STEP_BUDGET})"
+    )
 
 
 @dataclass(frozen=True)
@@ -569,6 +594,7 @@ __all__ = [
     "compute_official_metrics",
     "load_truths_from_episode_dir",
     "match_official_findings",
+    "official_formula_text",
     "parse_official_truths",
     "score_official_findings",
     "validate_official_findings_payload",

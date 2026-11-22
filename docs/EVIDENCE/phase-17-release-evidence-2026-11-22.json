@@ -1,0 +1,425 @@
+{
+  "artifact": "phase-17-release-evidence",
+  "contract_freeze": {
+    "aggregate_sha256": "0747baf087b9509aa5d5be1bf7345c58a04c8c57ff5d1918ec84fd62669be0c1",
+    "frozen_file_count": 30,
+    "manifest": "configs/release_freeze.json",
+    "tool": "tools/freeze_release.py"
+  },
+  "decisions": {
+    "count": 49,
+    "ids": [
+      "D-00-01",
+      "D-01-01",
+      "D-01-02",
+      "D-01-03",
+      "D-01-04",
+      "D-01-05",
+      "D-01-06",
+      "D-02-01",
+      "D-06-00",
+      "D-06-01",
+      "D-06-02",
+      "D-06-03",
+      "D-06-04",
+      "D-06-05",
+      "D-07-01",
+      "D-08-01",
+      "D-08-02",
+      "D-08-03",
+      "D-08-04",
+      "D-09-01",
+      "D-09-02",
+      "D-09-03",
+      "D-09-04",
+      "D-09-05",
+      "D-10-01",
+      "D-12-01",
+      "D-14-01",
+      "D-14-02",
+      "D-14-03",
+      "D-15-01",
+      "D-15-02",
+      "D-15-03",
+      "D-16-01",
+      "D-16-02",
+      "D-17-01",
+      "D-10-02",
+      "D-10-03",
+      "D-11-01",
+      "D-12-02",
+      "D-13-01",
+      "D-18-01",
+      "D-15-04",
+      "D-15-05",
+      "D-15-06",
+      "D-15-07",
+      "D-16-03",
+      "D-16-04",
+      "D-17-02",
+      "D-17-03"
+    ],
+    "index": [
+      {
+        "date": "2026-11-20",
+        "id": "D-00-01",
+        "title": "Official organiser contract status: UNKNOWN"
+      },
+      {
+        "date": "2026-11-20",
+        "id": "D-01-01",
+        "title": "Contract freeze v1.0.0 for MVP (Phase 1)"
+      },
+      {
+        "date": "2026-11-20",
+        "id": "D-01-02",
+        "title": "Flat package layout (no `twinledger/` prefix)"
+      },
+      {
+        "date": "2026-11-20",
+        "id": "D-01-03",
+        "title": "Stdlib-only core; optional extras isolated"
+      },
+      {
+        "date": "2026-11-20",
+        "id": "D-01-04",
+        "title": "Sealed data git policy (provisional)"
+      },
+      {
+        "date": "2026-11-20",
+        "id": "D-01-05",
+        "title": "Provisional reward/budget in configs, not code"
+      },
+      {
+        "date": "2026-11-20",
+        "id": "D-01-06",
+        "title": "Rubric map is provisional"
+      },
+      {
+        "date": "",
+        "id": "D-02-01",
+        "title": "local primitive conventions (provisional)"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-06-00",
+        "title": "Phase 6 base line: frozen-contract stack of PR #1/#2"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-06-01",
+        "title": "Finding/truth schemas adopted as scoring boundary"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-06-02",
+        "title": "Empty-denominator conventions for precision/recall/F1"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-06-03",
+        "title": "Exact rational reward, display-only decimals"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-06-04",
+        "title": "Formalised tie-break of the matcher"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-06-05",
+        "title": "Match predicate scope and experimental column"
+      },
+      {
+        "date": "",
+        "id": "D-07-01",
+        "title": "Provisional normalized operator boundary"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-08-01",
+        "title": "Zero common-mode verifier implementation"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-08-02",
+        "title": "Stage-1/Stage-2 crosscheck separation & digest lock"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-08-03",
+        "title": "Frozen independent verifier spec & provisional semantics"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-08-04",
+        "title": "Resolution of CR-06-01 & Phases 3\u20135/7\u20138 full integration"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-09-01",
+        "title": "Three-subprocess `CLOSED_EVAL` barrier & Zone-2 import discipline"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-09-02",
+        "title": "Normative trajectory hash chain without wall-clock fields"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-09-03",
+        "title": "Size-bound RFC-6962 domain-separated Merkle tree"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-09-04",
+        "title": "Explicit non-MAC `SecurityProfile` honesty contract"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-09-05",
+        "title": "Linux kernel namespace + seccomp-BPF sandbox & CSPRNG production rekey (supersedes D-09-04 on Linux)"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-10-01",
+        "title": "Isolated multilingual (`ru`/`kk`/`en`) & prompt-injection RNG streams + diagnostic explanation linter"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-12-01",
+        "title": "Privilege-separated oracle, 22-attack Arena, seed-grouped AutoHacker & within-table shortcut audit"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-14-01",
+        "title": "Complete 12-Gate Judge Kit & Offline Self-Contained HTML Report"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-14-02",
+        "title": "Frozen rubric map validated tolerantly; TZ \u00a723.5 envelope enforced as a contract gate"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-14-03",
+        "title": "EXIT GATE 14 is defined by clean-checkout reproduction, and report synthesis is ordered around it"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-15-01",
+        "title": "Documentation claims are generated and machine-checked, never hand-maintained"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-15-02",
+        "title": "Two tool vocabularies are intentional and documented, not unified"
+      },
+      {
+        "date": "2026-11-22",
+        "id": "D-15-03",
+        "title": "Evidence count excludes placeholder files (20, not 21)"
+      },
+      {
+        "date": "2026-11-22",
+        "id": "D-16-01",
+        "title": "Release gates measure, they do not describe"
+      },
+      {
+        "date": "2026-11-22",
+        "id": "D-16-02",
+        "title": "Mandatory targets must be runnable in any order"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-17-01",
+        "title": "Post-release cryptographic contract & config freeze manifest"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-10-02",
+        "title": "Phase 10 quality audit: pinned text dictionaries, scorer-side evidence-hierarchy enforcement, lazy NLP facade, explanation report artifact"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-10-03",
+        "title": "Review remediation: verbatim row-order loading + bounded episode-input reads"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-11-01",
+        "title": "Measured, fail-closed Phase 11 robustness evidence"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-12-02",
+        "title": "Maintainer-authorized release-freeze re-synchronization (Phase 12 closure)"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-13-01",
+        "title": "Phase 13 finite test evidence"
+      },
+      {
+        "date": "2026-11-21",
+        "id": "D-18-01",
+        "title": "One reward implementation; official formula supersedes provisional A-005"
+      },
+      {
+        "date": "2026-11-22",
+        "id": "D-15-04",
+        "title": "Documentation claims are checked on two axes: numbers *and* shapes"
+      },
+      {
+        "date": "2026-11-22",
+        "id": "D-15-05",
+        "title": "Organisational independence is disclosed as *unevidenced*, not asserted"
+      },
+      {
+        "date": "2026-11-22",
+        "id": "D-15-06",
+        "title": "A published fact may not depend on which target ran last"
+      },
+      {
+        "date": "2026-11-22",
+        "id": "D-15-07",
+        "title": "Locale-safe verdicts and discovery-backed prose totals"
+      },
+      {
+        "date": "2026-11-22",
+        "id": "D-16-03",
+        "title": "Cut `v1.0.1`; tag `v1.0.0` is superseded for submission"
+      },
+      {
+        "date": "2026-11-22",
+        "id": "D-16-04",
+        "title": "Phase 16 \u00a77 risk-closure round: evidence, not assertions"
+      },
+      {
+        "date": "2026-11-22",
+        "id": "D-17-02",
+        "title": "The release surface is archived, and the archive must match the tree"
+      },
+      {
+        "date": "2026-11-22",
+        "id": "D-17-03",
+        "title": "A published reward contract is derived from the live constants, never re-typed"
+      }
+    ],
+    "path": "docs/DECISIONS.md"
+  },
+  "draft_reason": "",
+  "evidence_freeze": {
+    "manifest": "docs/EVIDENCE/evidence_freeze.json",
+    "tool": "tools/evidence_freeze.py",
+    "verify_command": "python3 tools/evidence_freeze.py --verify"
+  },
+  "exit_gate_17": "PASS",
+  "exit_gate_note": "The release is reconstructible and verifiable from the repository alone: the frozen contract surface, the archived release surface, the measured gate verdicts, the rubric map and the decision register are all in the tree, and `reconstruct.commands` lists the exact steps.",
+  "gates": {
+    "doc_claims": {
+      "checks_passed": 22,
+      "checks_total": 22,
+      "facts_total": 22,
+      "path": "artifacts/reports/doc_claims/doc_claims_report.json",
+      "present": true,
+      "status": "PASS"
+    },
+    "release_audit": {
+      "checks_passed": 6,
+      "checks_total": 6,
+      "path": "artifacts/reports/release/release_audit.json",
+      "present": true,
+      "status": "PASS"
+    },
+    "replay_all": {
+      "path": "artifacts/reports/release/trajectory_replay.json",
+      "present": true,
+      "runs_matched": 80,
+      "runs_replayed": 80,
+      "status": "PASS",
+      "steps_replayed": 567
+    },
+    "verify": {
+      "gates_failed": 0,
+      "gates_passed": 12,
+      "gates_total": 12,
+      "internal_pass_rate_pct": 100.0,
+      "official_score_claimed": false,
+      "path": "artifacts/reports/latest/verify_summary.json",
+      "present": true,
+      "status": "PASS"
+    }
+  },
+  "generated_at_utc": "2026-11-22T13:49:58Z",
+  "git_sha": "6f25a90cb341f913194ff9e251a8521e854e5fb0",
+  "limitations": {
+    "note": "The archive records internal verification results only. It is not a jury score and never claims one (official_score_claimed: false).",
+    "path": "docs/LIMITATIONS.md"
+  },
+  "official_score_claimed": false,
+  "phase": 17,
+  "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+  "python_version": "3.11.2",
+  "reconstruct": {
+    "commands": [
+      "python3 tools/freeze_release.py --verify",
+      "python3 tools/evidence_freeze.py --verify",
+      "python3 tools/release_evidence.py --verify",
+      "make verify",
+      "make docs-verify",
+      "make replay-all",
+      "make release-audit",
+      "python3 -m unittest discover -s tests -t ."
+    ],
+    "note": "Run in this order from a clean checkout of the release tag; every command is offline, stdlib-only and deterministic."
+  },
+  "rubric_map": {
+    "gate_count": 12,
+    "gates": [
+      "RC-001",
+      "RC-002",
+      "RC-003",
+      "RC-004",
+      "RC-005",
+      "RC-006",
+      "RC-007",
+      "RC-008",
+      "RC-009",
+      "RC-010",
+      "RC-011",
+      "RC-012"
+    ],
+    "path": "judge/rubric_map.json",
+    "provisional": true
+  },
+  "schema_version": "1.0.0",
+  "status": "FINAL",
+  "tasks": {
+    "17.1": {
+      "evidence": "docs/EVIDENCE/evidence_freeze.json",
+      "status": "DONE"
+    },
+    "17.2": {
+      "evidence": "gates.verify / gates.replay_all",
+      "status": "DONE"
+    },
+    "17.3": {
+      "evidence": "rubric_map / decisions",
+      "status": "DONE"
+    },
+    "17.4": {
+      "evidence": "docs/RELEASE_NOTES.md + GitHub release",
+      "status": "DONE"
+    },
+    "17.5": {
+      "evidence": "docs/STATUS.md + docs/LIMITATIONS.md",
+      "status": "DONE"
+    },
+    "17.6": {
+      "evidence": "docs/CONTEXT/NEXT_AGENT.md + reconstruct.commands",
+      "status": "DONE"
+    }
+  },
+  "title": "Post-release evidence freeze - reconstructable release archive"
+}
