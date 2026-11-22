@@ -45,15 +45,16 @@ from scoring.matcher import MatchResult, optimal_matching
 from scoring.official_scorer import (
     OFFICIAL_STEP_PENALTY_WEIGHT,
     compute_official_metrics,
+    official_formula_text,
 )
 
 DEFAULT_CONFIG_PATH = (
     Path(__file__).resolve().parent.parent / "configs" / "scoring" / "default.json"
 )
 
-FORMULA = (
-    "return = clip([-1, 1], 2*F1 - 1 - 0.2 * inspection_steps / 100)"
-)
+#: The published formula string, derived from the live official constants
+#: (BUG-TL-0005: no second literal may define the formula).
+FORMULA = official_formula_text()
 
 #: Display rounding for decimal renderings (raw values stay exact).
 DISPLAY_PLACES = 7

@@ -122,6 +122,23 @@ class TestGeneratedBlockMechanism(unittest.TestCase):
         corrupted = original.replace(f"**{value}**", f"**{int(value) + 1}**", 1)
         self.assertNotEqual(corrupted, original, "corruption did not change the block")
 
+    def test_drift_message_labels_committed_and_measured_correctly(self):
+        """The drift message must not swap the two numbers.
+
+        A reader who is told "committed 586 != measured 584" goes and edits
+        the wrong number: the committed block is what the document says now,
+        the measured value is what the artifacts say.
+        """
+        committed = "| Total tests | **584** | src |\n"
+        measured = "| Total tests | **586** | src |\n"
+        message = vdc._first_difference(committed, measured)
+        self.assertIn("committed '| Total tests | **584** | src |'", message)
+        self.assertIn("measured '| Total tests | **586** | src |'", message)
+
+    def test_drift_message_reports_the_line_count_when_lengths_differ(self):
+        message = vdc._first_difference("a\nb\n", "a\n")
+        self.assertIn("line count: committed 2 != measured 1", message)
+
     def test_verifier_reports_missing_artifacts_loudly(self):
         """Without artifacts the checker must fail loudly, never emit a block."""
         saved = vdc.REPORT_DIR
@@ -323,6 +340,49 @@ class TestStructuralChecks(unittest.TestCase):
         # is documenting absence, which is the opposite of claiming presence.
         line = "the old page named `gen/diff.py`, which does not exist"
         self.assertTrue(any(cue in line.lower() for cue in vdc._NEGATION_CUES))
+
+    def test_generated_artifact_contract_matches_the_producers(self):
+        """BUG-TL-0008: the contract must name what the producers actually write.
+
+        The contract used to list ``replay_all_report.json`` -- a file no
+        producer emits -- and to omit ``reward_property_matrix.json``, which is
+        part of the published 20-file evidence set (D-15-03). Both errors made
+        a *correct* citation look like a phantom path.
+        """
+        contracts = vdc._generated_dir_contracts()
+        producers = {
+            "artifacts/reports/doc_claims/": ("tools/verify_doc_claims.py",),
+            "artifacts/reports/release/": (
+                "tools/release_audit.py",
+                "tools/replay_all_trajectories.py",
+            ),
+            "artifacts/reports/evaluation/": ("tools/run_official_eval.py",),
+        }
+        for prefix, sources in producers.items():
+            for source in sources:
+                text = (REPO_ROOT / source).read_text(encoding="utf-8")
+                written = {
+                    name
+                    for name in contracts[prefix]
+                    if name in text
+                }
+                self.assertTrue(
+                    written,
+                    f"{source} writes into {prefix} but the contract names none of it",
+                )
+        # The replay report is written under the name the contract publishes.
+        replay_tool = (REPO_ROOT / "tools" / "replay_all_trajectories.py").read_text(encoding="utf-8")
+        self.assertIn("trajectory_replay.json", replay_tool)
+        self.assertIn(
+            "trajectory_replay.json", contracts["artifacts/reports/release/"]
+        )
+        self.assertNotIn(
+            "replay_all_report.json", contracts["artifacts/reports/release/"]
+        )
+        # The reward-property matrix belongs to the published evidence set.
+        self.assertIn(
+            "reward_property_matrix.json", contracts["artifacts/reports/latest/"]
+        )
 
     def test_real_repository_has_no_phantom_paths(self):
         outcome = vdc.path_reference_check()

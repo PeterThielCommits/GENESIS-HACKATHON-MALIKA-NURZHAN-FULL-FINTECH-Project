@@ -1,4 +1,4 @@
-# Project Status Matrix (Release v1.0.1)
+# Project Status Matrix (Release v1.0.2)
 
 | Phase / Track | Title | Status | Gate / Primary Evidence |
 | --- | --- | --- | --- |
@@ -18,7 +18,7 @@
 | Phase 14 | 12-Gate Judge Kit & Self-Contained Offline HTML Report | DONE (re-audit 2026-11-21) | `judge/verify.py`, `judge/report.py`, `judge/schemas.py`, `judge/performance_and_deps.py`, `tests/judge/test_judge_kit.py`, `docs/PHASE_REPORTS/PHASE-14.md` |
 | Phase 15 | Complete Documentation & Demo (re-audit 2026-11-21) | DONE | `tools/verify_doc_claims.py`, `docs/API_USAGE.md`, `docs/POLICY_PROTOCOL.md`, `docs/DEMO.md`, `tests/judge/test_doc_claims.py`, `docs/PHASE_REPORTS/PHASE-15.md` |
 | Phase 16 | Hardened Offline Docker, Compose & CI Gate Verification | DONE (re-verified 2026-11-22, `v1.0.1`) | `Dockerfile`, `docker-compose.yml`, `.github/workflows/ci.yml`, `docs/PHASE_REPORTS/PHASE-16.md` (incl. v1.0.1 addendum); tag **`v1.0.1`** supersedes `v1.0.0` (`D-16-03`) |
-| Phase 17 | Post-Release Cryptographic Evidence Freeze | DONE | `tools/freeze_release.py`, `configs/release_freeze.json` (0747baf0…, D-12-02), `docs/PHASE_REPORTS/PHASE-17.md` |
+| Phase 17 | Post-Release Evidence Freeze (contract + release surface + verdicts) | DONE (deep execution 2026-11-22) | `tools/freeze_release.py`, `configs/release_freeze.json` (0747baf0…, D-12-02), `tools/evidence_freeze.py`, `tools/release_evidence.py`, `tools/check_workflows.py`, `docs/EVIDENCE/`, `docs/PHASE_REPORTS/PHASE-17.md` (D-17-02, D-17-03) |
 | Official 2026-11-20 | FinTech Checks (`C01..C20`, `D01..D20`, `Block 3`, `P01..P20`, `Baselines`) | DONE | `judge_adapter.py`, `adapter/official_env.py`, `scoring/official_scorer.py`, `tests/official/` |
 
 ## Phase 11 re-audit (2026-11-21)
@@ -201,3 +201,64 @@ Phase-16 final-report risks, closed with evidence (not by moving tags, not by ed
   `python3 tools/verify_doc_claims.py --write` (the only sanctioned edit path).
 - `code_version` stays `twinledger@1.0.0` (names the frozen contract line, `D-16-03`);
   `official_score_claimed: false`; `Q-ORG-01`/`Q-ORG-02`/`Q-DOC-01` OPEN.
+
+## Phase 17 deep execution (2026-11-22) — release v1.0.2
+
+EXIT GATE 17 re-executed against the strict reading of its sentence: *"релиз можно
+восстановить и проверить без устных пояснений команды"* — the release must be
+restorable **and** verifiable from the repository alone. The previous Phase 17
+only froze the 30 **contract** surfaces; the **release surface**, the measured
+**verdicts**, the rubric map, the decisions and a **reconstruct command list**
+were not archived anywhere.
+
+- **17.1 — release surface archived.** New `tools/evidence_freeze.py` hashes
+  every tracked file (code, configs, contracts, rubric map, Dockerfile,
+  Makefile, entrypoint, episodes, docs) into
+  `docs/EVIDENCE/evidence_freeze.json` (550 tracked files, one aggregate digest).
+- **17.2 — verify/replay reports archived as verdicts.** The manifest stores the
+  *verdicts* of `verify_summary`, `replay_report`, `report_index`,
+  `release_audit`, `doc_claims` and `trajectory_replay` (status + counts).
+  Report bytes carry timestamps/run-ids and are regenerable, so byte-identity
+  is deliberately **not** required on a re-run; the verdict is the archived fact.
+- **17.3 — rubric map + decisions archived.** New `tools/release_evidence.py`
+  builds `docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json`: the frozen
+  digest, the twelve rubric gates `RC-001..RC-012`, the decision register, and
+  the exact commands a stranger runs to rebuild and re-verify the release.
+- **17.4 — final commit + release tag.** Tag **`v1.0.2`** on the merge commit of
+  the Phase 17 PR; `v1.0.0` and `v1.0.1` are **not** moved (published tags never
+  move — `D-16-03`).
+- **17.5 — final status + limitations.** This section, `docs/LIMITATIONS.md`
+  (now L1..L10), `docs/CURRENT_STATE.md`.
+- **17.6 — next agent can reconstruct from the repo only.**
+  `docs/HANDOFF/phase-17-evidence-freeze.md` + `docs/CONTEXT/NEXT_AGENT.md` +
+  the machine-checked `reconstruct.commands` list in the archive.
+
+**Five real defects were found and fixed while auditing the publishedevidence** (all non-frozen; each with a regression test that fails on the old
+code):
+
+| ID | Severity | Defect |
+|---|---|---|
+| BUG-TL-0005 | P1 | `reward_property_matrix.json` published the **superseded provisional formula** and `provisional: true` although every number in it had been computed by the official implementation since `D-18-01` |
+| BUG-TL-0006 | P2 | `robustness_report.json` published `score_contract: "scoring.reward (internal provisional; not official_scorer)"` — false since `D-18-01` made `scoring.official_scorer` the single implementation |
+| BUG-TL-0007 | P3 | stale "provisional / pending Q-005" wording in `scoring/matcher.py` and in a property-test comment, although `Q-005` was resolved on 2026-11-20 |
+| BUG-TL-0008 | P2 | the documentation gate's artifact contract named `replay_all_report.json` (a file that does not exist; the real file is `trajectory_replay.json`) and omitted `reward_property_matrix.json`, so a correct citation was reported as a phantom path |
+| BUG-TL-0009 | P1 | the CI workflow file was malformed YAML (an unquoted `": "` in a step name): GitHub ran it with **zero jobs** on every push, so the twelve gates, the offline container check and the new evidence gate silently disappeared while the repository looked green |
+
+The published reward contract is now **derived, never re-typed**
+(`scoring/official_scorer.official_formula_text()` → `scoring.reward.FORMULA`
+→ the reward matrix), and `C-REWARD` audits the *generated artifacts* as well
+as the prose (`D-17-03`).
+
+**Two gates closed:** the contract freeze is now a **test**
+(`tests/judge/test_release_freeze.py`: the tree must match the committed
+manifest, the frozen surface must be exactly the declared 30 files, and the
+aggregate must still be the released `0747baf0…`), and the release archive is
+now a **check** (`C-ARCHIVE` in `tools/verify_doc_claims.py`). `make
+evidence-verify` is wired into `make rc-check` and into the CI `core` job, so
+the committed archive must match the committed tree.
+
+`official_score_claimed: false`; `Q-ORG-01` / `Q-ORG-02` / `Q-DOC-01` remain
+OPEN (human decisions). No frozen file changed (`freeze_release --verify` →
+30 files, `0747baf0…`); no published tag moved; `code_version` stays
+`twinledger@1.0.0`. See `docs/PHASE_REPORTS/PHASE-17.md` and
+`docs/HANDOFF/phase-17-evidence-freeze.md`. This row is not a jury score.

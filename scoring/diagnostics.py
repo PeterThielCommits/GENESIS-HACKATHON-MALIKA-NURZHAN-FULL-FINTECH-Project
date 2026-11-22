@@ -28,6 +28,7 @@ from typing import Any, Sequence
 from contracts.models import Finding, TruthFinding
 from scoring.canon import canonical_id_set, validate_findings, validate_truths
 from scoring.matcher import MatchResult, optimal_matching
+from scoring.official_scorer import official_formula_text
 from scoring.reward import RewardBreakdown, render_decimal
 
 DIAGNOSTICS_SCHEMA = "x_twinledger_internal_diagnostics/0.1.0"
@@ -272,8 +273,15 @@ def build_reward_property_matrix(rows: Sequence[dict[str, Any]]) -> dict[str, An
         }
     return {
         "generated_by": "scoring.diagnostics.build_reward_property_matrix",
-        "provisional": True,
-        "formula": "R = max(0, F1 - eta * steps_used / max_steps)",
+        # BUG-TL-0005: the matrix numbers come from the single official
+        # implementation (``scoring.official_scorer``), so the matrix is NOT
+        # provisional, and the formula it publishes is the live formula --
+        # derived from the live constants, not a second literal. The old
+        # values ("provisional": true and the superseded provisional formula
+        # "R = max(0, F1 - eta * steps_used / max_steps)") described a reward
+        # implementation that no longer exists (D-18-01).
+        "provisional": False,
+        "formula": official_formula_text(),
         "rows": materialised,
         "summary": summary,
     }
@@ -288,7 +296,7 @@ def evaluate_reward_properties(matrix: dict[str, Any]) -> dict[str, Any]:
     P4 flag-all is worse than the honest strategy on the corpus;
     P5 step savings distinguish equal completeness only boundedly:
        rewards are non-increasing in steps_used and the maximal total
-       step penalty never exceeds eta.
+       step penalty never exceeds the official weight (0.2).
 
     Returns per-property ``pass`` flags with per-check details; the
     caller decides how to surface them (test assertions + artifact).
@@ -380,7 +388,11 @@ def evaluate_reward_properties(matrix: dict[str, Any]) -> dict[str, Any]:
                 "rewards": [str(value) for value in rewards],
                 "non_increasing": monotone,
                 "max_spread": str(spread),
+                # ``eta_bound`` is the historical key name; the value is the
+                # official step-penalty weight actually applied by the reward
+                # (0.2), not the superseded provisional 0.05 (BUG-TL-0001/0005).
                 "eta_bound": str(eta_bound) if eta_bound is not None else None,
+                "step_penalty_bound_exact": str(eta_bound) if eta_bound is not None else None,
                 "pass": monotone and bounded,
             }
         )

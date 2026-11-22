@@ -1,12 +1,14 @@
 {
   "phase": 17,
-  "title": "POST-RELEASE CRYPTOGRAPHIC CONTRACT & CONFIG FREEZE",
+  "title": "POST-RELEASE EVIDENCE FREEZE",
   "outcome": "DONE",
   "exit_gate_17": "DONE",
-  "exit_gate_note": "EXIT GATE 17 PASS: SHA-256 freeze manifest generated and verified across all 30 frozen contract schemas, operational configs, rubric map, official check spec, and Master TZ v3.0.0.",
-  "date": "2026-11-21",
-  "branch": "arena/3a99279e-genesis-hackathon-malika-nurzh",
-  "base_commit": "da42d26008f948c294920ae8b02a30b08f541732",
+  "exit_gate_note": "EXIT GATE 17 PASS: the release is restorable AND verifiable from the repository alone - every tracked release file is hashed in docs/EVIDENCE/evidence_freeze.json, the measured gate verdicts are archived, the rubric map and the decision register are archived in docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json, and reconstruct.commands lists the exact steps a stranger runs.",
+  "date": "2026-11-22",
+  "branch": "arena/4c2f056f-genesis-hackathon-malika-nurzh",
+  "base_commit": "6f25a90cb341f913194ff9e251a8521e854e5fb0",
+  "release": "v1.0.2",
+  "official_score_claimed": false,
   "master_tz_sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36",
   "req_ids": [
     "REQ-CONTRACT-001",
@@ -15,15 +17,132 @@
   ],
   "tasks": {
     "17.1": "DONE",
-    "17.2": "DONE"
+    "17.2": "DONE",
+    "17.3": "DONE",
+    "17.4": "DONE",
+    "17.5": "DONE",
+    "17.6": "DONE"
   },
   "decisions": [
-    "D-17-01"
+    "D-17-02",
+    "D-17-03"
   ],
   "files": [
-    "tools/freeze_release.py",
-    "configs/release_freeze.json",
-    "docs/HANDOFF/phase-10-to-17-release.md"
+    "tools/evidence_freeze.py",
+    "tools/release_evidence.py",
+    "docs/EVIDENCE/evidence_freeze.json",
+    "docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json",
+    "docs/HANDOFF/phase-17-evidence-freeze.md",
+    "docs/PHASE_REPORTS/PHASE-17.md",
+    "tests/judge/test_evidence_freeze.py",
+    "tests/judge/test_release_evidence.py",
+    "tests/judge/test_release_freeze.py",
+    "tests/scoring/test_formula_provenance.py",
+    "scoring/official_scorer.py",
+    "scoring/reward.py",
+    "scoring/diagnostics.py",
+    "scoring/matcher.py",
+    "judge/robustness_audit.py",
+    "tools/verify_doc_claims.py",
+    "Makefile",
+    ".github/workflows/ci.yml"
   ],
-  "gate_evidence": "python3 tools/freeze_release.py --verify PASS (30 files verified in configs/release_freeze.json)."
+  "bugs_found_and_fixed": [
+    {
+      "id": "BUG-TL-0005",
+      "severity": "P1",
+      "summary": "reward_property_matrix.json published the superseded provisional formula and provisional: true although its numbers were computed by the official implementation",
+      "status": "VERIFIED FIXED"
+    },
+    {
+      "id": "BUG-TL-0006",
+      "severity": "P2",
+      "summary": "robustness_report.json published a score_contract claiming it was not scored by scoring.official_scorer",
+      "status": "VERIFIED FIXED"
+    },
+    {
+      "id": "BUG-TL-0007",
+      "severity": "P3",
+      "summary": "stale 'provisional / pending Q-005' wording in scoring/matcher.py and a property-test comment",
+      "status": "VERIFIED FIXED"
+    },
+    {
+      "id": "BUG-TL-0008",
+      "severity": "P2",
+      "summary": "the documentation gate's artifact contract named replay_all_report.json (written by no producer) and omitted reward_property_matrix.json, so a correct citation was reported as a phantom path",
+      "status": "VERIFIED FIXED"
+    },
+    {
+      "id": "BUG-TL-0009",
+      "severity": "P1",
+      "summary": "the CI workflow file was malformed YAML (an unquoted colon-space inside a step name), so GitHub ran it with zero jobs on every push and nothing in the repository failed",
+      "status": "VERIFIED FIXED"
+    }
+  ],
+  "gates": [
+    {
+      "gate": "contract freeze",
+      "command": "python3 tools/freeze_release.py --verify",
+      "result": "PASS",
+      "detail": "30 frozen files intact, aggregate 0747baf0..."
+    },
+    {
+      "gate": "judge kit",
+      "command": "make verify",
+      "result": "PASS",
+      "detail": "12/12 RC gates, 601 tests (1 optional skip), 20 artifacts"
+    },
+    {
+      "gate": "documentation claims",
+      "command": "make docs-verify",
+      "result": "PASS",
+      "detail": "22 measured facts, 22/22 checks (new: C-ARCHIVE)"
+    },
+    {
+      "gate": "all trajectories",
+      "command": "make replay-all",
+      "result": "PASS",
+      "detail": "80/80 runs, 567 steps byte-identical"
+    },
+    {
+      "gate": "release audit",
+      "command": "make release-audit",
+      "result": "PASS",
+      "detail": "6/6 checks (secrets, file list, size, deps, entrypoint, submission)"
+    },
+    {
+      "gate": "import boundaries",
+      "command": "python3 tools/check_import_boundaries.py",
+      "result": "CLEAN",
+      "detail": "REQ-ARC-001..007"
+    },
+    {
+      "gate": "release surface archive",
+      "command": "python3 tools/evidence_freeze.py --verify",
+      "result": "PASS",
+      "detail": "every tracked release file matches docs/EVIDENCE/evidence_freeze.json"
+    },
+    {
+      "gate": "release evidence archive",
+      "command": "python3 tools/release_evidence.py --verify",
+      "result": "PASS",
+      "detail": "archive is honest, self-consistent and current"
+    }
+  ],
+  "skipped": [
+    {
+      "item": "offline Docker image build and hardened container run",
+      "reason": "no container runtime on the execution host (docker/podman/buildah/nerdctl/ctr/runc/containerd absent)",
+      "status": "UNVERIFIED locally, CI-authoritative",
+      "owner": "maintainer with Docker"
+    }
+  ],
+  "open_questions": [
+    "Q-ORG-01",
+    "Q-ORG-02",
+    "Q-DOC-01"
+  ],
+  "frozen_files_changed": 0,
+  "tags_moved": [],
+  "release_tag": "v1.0.2"
 }

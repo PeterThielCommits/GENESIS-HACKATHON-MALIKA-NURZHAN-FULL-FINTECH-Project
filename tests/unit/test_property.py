@@ -231,10 +231,10 @@ class TestStdlibProperties(unittest.TestCase):
         )
 
     def test_scoring_stays_in_unit_interval(self):
-        # §20.2: scoring stays in [0,1] (provisional F1/reward). Official
-        # clip([-1,1]) lives in scoring/official_scorer.py and is covered by
-        # tests/official/test_block3_scorer.py; here we pin the provisional
-        # scoring/reward.py contract (max(0, F1 - penalty) in [0,1]).
+        # §20.2: F1 stays in [0,1]; the official reward is clip([-1,1]) and is
+        # covered by tests/official/test_block3_scorer.py. Since D-18-01 the
+        # reward path of scoring/reward.py IS the official one, so the bound
+        # asserted below is [-1, 1] -- not the superseded provisional [0, 1].
         from fractions import Fraction
 
         from scoring.reward import compute_reward, f1_score

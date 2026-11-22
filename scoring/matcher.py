@@ -2,7 +2,8 @@
 
 Implements Master TZ v3.0.0 sections 15.2-15.3 and Phase 6 tasks 6.3/6.4.
 
-Match predicate (TZ 15.2, provisional pending official contract Q-005):
+Match predicate (TZ 15.2; the official contract fixed it on 2026-11-20,
+Q-005 RESOLVED -- it is no longer provisional):
   1. ``type`` equals;
   2. canonical ``affected_ids`` sets are exactly equal;
   3. ``currency`` equals;

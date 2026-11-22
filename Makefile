@@ -1,7 +1,7 @@
 PYTHON ?= python3
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: help setup lint test test-official test-property build-episodes official-eval verify-core verify replay audit-shortcuts mutation-test report docs-verify demo demo-backup release-audit replay-all rc-check docker-build docker-check-container docker-check clean
+.PHONY: help setup lint test test-official test-property build-episodes official-eval verify-core verify replay audit-shortcuts mutation-test report docs-verify demo demo-backup release-audit replay-all evidence-write evidence-verify rc-check docker-build docker-check-container docker-check clean
 
 help: ## Show available commands
 	@echo "TwinLedger — available make targets:"
@@ -20,7 +20,9 @@ help: ## Show available commands
 	@echo "  make demo-backup      Technical backup demo: verify + docs-verify + replay + freeze"
 	@echo "  make release-audit    Phase 16: secrets, file list, size, dependencies, entrypoint (TZ 16.5/16.6)"
 	@echo "  make replay-all       Replay ALL 80 published trajectories and compare every step (TZ 16.4)"
-	@echo "  make rc-check         Release candidate gate: verify + docs-verify + replay-all + release-audit"
+	@echo "  make evidence-write   Phase 17: write the release archive + the evidence freeze manifest (run AFTER the tree is final)"
+	@echo "  make evidence-verify  Phase 17: verify the committed evidence freeze against the tree (TZ 17.1-17.3)"
+	@echo "  make rc-check         Release candidate gate: verify + docs-verify + replay-all + release-audit + evidence-verify"
 	@echo "  make docker-check     Offline Docker check (--network=none --cpus=2 --memory=4g)"
 	@echo "  make clean            Remove generated temp artifacts (keeps sealed source inputs)"
 
@@ -31,6 +33,7 @@ setup: ## Check Python version and optional extras; nothing is downloaded
 lint: ## Compile check (read-only rootfs safe) + import-boundary scan (REQ-ARC-001)
 	@$(PYTHON) -c 'import pathlib; roots = "judge_adapter.py core contracts adapter gen invariants verifier nlp env harness scoring seal arena metamorphic judge tools tests independent_verifier".split(); [compile(p.read_bytes(), str(p), "exec") for r in roots for p in ([pathlib.Path(r)] if pathlib.Path(r).is_file() else sorted(pathlib.Path(r).rglob("*.py")))]'
 	@$(PYTHON) tools/check_import_boundaries.py
+	@$(PYTHON) tools/check_workflows.py --optional
 
 test: ## All unit, contract, and official mirror tests (stdlib unittest)
 	@$(PYTHON) -m unittest discover -s tests -t . -v
@@ -93,11 +96,20 @@ release-audit: ## Secrets, file list, package size, dependencies, official entry
 replay-all: ## Replay every published trajectory and compare all 80 runs (TZ 16.4)
 	@$(PYTHON) tools/replay_all_trajectories.py
 
-rc-check: ## Release candidate gate (TZ 16.2/16.4/16.5/16.6): verify + docs + replay + audit
+evidence-write: ## Phase 17: write the release archive, then the release-surface manifest (TZ 17.1-17.3)
+	@$(PYTHON) tools/release_evidence.py --write
+	@$(PYTHON) tools/evidence_freeze.py --write
+	@$(PYTHON) tools/release_evidence.py --verify --strict
+
+evidence-verify: ## Phase 17: verify the committed evidence freeze against the working tree (TZ 17.1-17.3)
+	@$(PYTHON) tools/evidence_freeze.py --verify --require-reports
+
+rc-check: ## Release candidate gate (TZ 16.2/16.4/16.5/16.6, 17.1-17.3): verify + docs + replay + audit + evidence
 	@$(MAKE) --no-print-directory verify
 	@$(MAKE) --no-print-directory docs-verify
 	@$(MAKE) --no-print-directory replay-all
 	@$(MAKE) --no-print-directory release-audit
+	@$(MAKE) --no-print-directory evidence-verify
 	@echo "rc-check: PASS (release candidate is consistent)"
 
 docker-build: ## Build the offline verification image

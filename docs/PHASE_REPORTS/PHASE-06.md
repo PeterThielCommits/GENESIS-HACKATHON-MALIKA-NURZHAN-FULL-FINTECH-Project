@@ -1,5 +1,13 @@
 # Phase 6 — MATCHER И БАЗОВАЯ НАГРАДА
 
+> **Superseded note (2026-11-22, Phase 17 deep audit).** This is a dated
+> Phase 6 report. The reward formula quoted below was the *provisional* one
+> (assumption A-005); since `D-18-01` the official formula
+> `clip([-1,1], 2*F1 - 1 - 0.2*inspection_steps/100)` is the single
+> implementation, and the reward-property matrix in this folder is a
+> historical snapshot (annotated in `PHASE-06-reward-matrix.json`). Current
+> evidence: `artifacts/reports/latest/reward_property_matrix.json`.
+
 ## Outcome
 
 DONE (with the official-formula caveat below)

@@ -19,7 +19,7 @@ from pathlib import Path
 
 from contracts.canonical import canonical_json, sha256_hex
 from scoring.diagnostics import build_reward_property_matrix, evaluate_reward_properties
-from scoring.official_scorer import OFFICIAL_STEP_PENALTY_WEIGHT
+from scoring.official_scorer import OFFICIAL_STEP_PENALTY_WEIGHT, official_formula_text
 from scoring.reward import compute_reward, load_scoring_config
 from tests.scoring import fixtures as fx
 
@@ -144,7 +144,12 @@ class TestRewardProperties(unittest.TestCase):
         parsed = json.loads(ARTIFACT_PATH.read_text(encoding="utf-8"))
         self.assertIn("rows", parsed)
         self.assertIn("properties", parsed)
-        self.assertTrue(parsed["provisional"])
+        # BUG-TL-0005: the matrix is computed by the single official
+        # implementation, so it is not provisional and it publishes the live
+        # formula -- not the retired provisional one.
+        self.assertFalse(parsed["provisional"])
+        self.assertEqual(parsed["formula"], official_formula_text())
+        self.assertNotEqual(parsed["formula"], "R = max(0, F1 - eta * steps_used / max_steps)")
 
     def test_p1_correct_answer_beats_silence_on_dirty(self):
         verdict = self.verdicts["P1"]

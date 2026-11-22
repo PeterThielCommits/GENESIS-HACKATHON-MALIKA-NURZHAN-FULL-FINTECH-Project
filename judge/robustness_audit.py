@@ -39,11 +39,21 @@ from contracts.version import PROTOCOL_VERSION
 from env.environment import EnvConfig, TwinLedgerEnv
 from gen.core.clean_twin import CleanTwinSpec
 from gen.pipeline import EpisodeRecipe, build_episode
+from scoring.official_scorer import official_formula_text
 from scoring.reward import compute_reward, render_decimal
 from verifier import discover
 
 DEFAULT_CONFIG_PATH = REPO_ROOT / "configs" / "robustness" / "default.json"
 DEFAULT_REPORT_PATH = REPO_ROOT / "artifacts" / "reports" / "latest" / "robustness_report.json"
+
+#: What the audit's reward column actually is. Since ``D-18-01`` there is ONE
+#: reward implementation: ``scoring.official_scorer``. ``scoring.reward`` is a
+#: thin view over it, so describing the audit as "internal provisional; not
+#: official_scorer" published a stale contract (BUG-TL-0006).
+SCORE_CONTRACT = (
+    "scoring.official_scorer (single reward implementation; "
+    f"{official_formula_text()})"
+)
 
 
 def _run_episode_in_env(
@@ -249,7 +259,13 @@ def run_prompt_injection_robustness_audit(
         "python_version": sys.version.split()[0],
         "command": "python3 judge/robustness_audit.py",
         "separated_from_official_score": True,
-        "score_contract": "scoring.reward (internal provisional; not official_scorer)",
+        "score_contract": SCORE_CONTRACT,
+        "score_contract_note": (
+            "The reward column uses the same single implementation the jury "
+            "reaches (scoring.official_scorer); this audit is an internal "
+            "robustness measurement and is not a jury score "
+            "(official_score_claimed: false)."
+        ),
         "limitations": ["In-process public-API policy experiment; not an OS isolation test.",
                         "Behavioral change is a proxy, not proof of semantic instruction following.",
                         "Template-based synthetic policies; no LLM robustness claim.",

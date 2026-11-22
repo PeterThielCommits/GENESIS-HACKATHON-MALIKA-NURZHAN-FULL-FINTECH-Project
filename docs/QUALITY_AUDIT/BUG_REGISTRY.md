@@ -288,6 +288,299 @@ Old code + strengthened test → `AssertionError: {'code': 'BAD_CURSOR', …
 
 ---
 
+## BUG-TL-0005 — The reward-property matrix published a formula nobody implements
+
+| Field | Value |
+|---|---|
+| Severity | **P1** (published evidence contradicts the live implementation) |
+| Category | Evidence provenance / duplicate published contract |
+| Status | **VERIFIED FIXED** |
+| Discovered by | Phase 17 deep audit: reading every *published* artifact against `D-18-01` |
+| Files affected | `scoring/diagnostics.py`, `scoring/official_scorer.py`, `scoring/reward.py`, `tools/verify_doc_claims.py` |
+
+### Symptom
+
+`artifacts/reports/latest/reward_property_matrix.json` carried
+
+```
+"formula": "R = max(0, F1 - eta * steps_used / max_steps)",
+"provisional": true
+```
+
+while every **number** in the same file had been computed by the official
+implementation since `D-18-01` (BUG-TL-0001): the matrix's own rows report
+`eta_exact: "1/5"` and rewards such as `24/25` for a clean honest run at 20
+steps, which is `clip([-1,1], 2*F1 - 1 - 0.2*steps/100)` and **not**
+`max(0, F1 - eta*steps/max_steps)` with `eta = 0.05` (which would be `0.99`).
+
+### Impact
+
+The artifact told a reader that the published reward-property evidence
+measures a reward implementation that no longer exists — the exact
+misinformation that made BUG-TL-0001 dangerous, but one level up: the numbers
+were right and the *label* was wrong. A jury member comparing the matrix
+with `docs/API_USAGE.md` would have found two different formulas and had no
+way to tell which one the code implements.
+
+### Root cause
+
+The formula string was a **second literal**. `D-18-01` migrated the
+arithmetic and left the published text behind; nothing compared the artifact
+to the implementation, because `C-REWARD` only scanned prose (`DOC_SCAN`),
+never the generated reports.
+
+### Fix
+
+- `scoring.official_scorer.official_formula_text()` renders the formula
+  **from the live constants** (`OFFICIAL_STEP_PENALTY_WEIGHT`,
+  `OFFICIAL_STEP_BUDGET`); `scoring.reward.FORMULA` is that function's
+  result, and `scoring.diagnostics` publishes the same string with
+  `provisional: false`.
+- `C-REWARD` now also audits `artifacts/reports/latest/*.json`: the
+  superseded formula may not appear, the matrix must publish the live
+  formula and `provisional: false`.
+
+### Regression evidence
+
+| Test | Fails on old code | Passes on new code |
+|---|---|---|
+| `tests/scoring/test_formula_provenance.py::test_matrix_publishes_the_live_formula` | yes (old formula string) | yes |
+| `tests/scoring/test_formula_provenance.py::test_matrix_is_not_provisional` | yes (`True`) | yes |
+| `tests/scoring/test_formula_provenance.py::test_no_published_artifact_carries_the_superseded_formula` | yes (artifact quoted it) | yes |
+| `tests/scoring/test_reward_properties.py::test_matrix_artifact_written` | yes | yes |
+| `tools/verify_doc_claims.py` `C-REWARD` (artifact branch) | yes (`ARTIFACT_FORMULA_STALE`) | yes |
+
+---
+
+## BUG-TL-0006 — The robustness report claimed a scorer it does not use
+
+| Field | Value |
+|---|---|
+| Severity | **P2** (published evidence states a false provenance) |
+| Category | Evidence provenance |
+| Status | **VERIFIED FIXED** |
+| Discovered by | Phase 17 deep audit: same sweep as BUG-TL-0005 |
+| Files affected | `judge/robustness_audit.py` |
+
+### Symptom
+
+`artifacts/reports/latest/robustness_report.json` carried
+
+```
+"score_contract": "scoring.reward (internal provisional; not official_scorer)"
+```
+
+### Impact
+
+Since `D-18-01`, `scoring.reward` **is** a thin view over
+`scoring.official_scorer`; there is no second scorer. The report therefore
+told the reader that its reward column came from a provisional internal
+implementation that the jury does not use — while in fact it came from the
+one implementation the jury uses. The Phase 11 robustness evidence
+(`24` twin pairs, honest-policy reward delta `0`) is valid; only its stated
+provenance was wrong.
+
+### Root cause
+
+The string was written when two scorers existed and was never revisited when
+`D-18-01` removed one of them.
+
+### Fix
+
+`judge/robustness_audit.SCORE_CONTRACT` is derived from the live module and
+names `scoring.official_scorer` plus the live formula; the report keeps
+`separated_from_official_score: true` and adds `score_contract_note`
+("internal robustness measurement, not a jury score").
+
+### Regression evidence
+
+| Test | Fails on old code | Passes on new code |
+|---|---|---|
+| `tests/scoring/test_formula_provenance.py::test_score_contract_names_the_single_implementation` | yes | yes |
+| `tools/verify_doc_claims.py` `C-REWARD` (artifact branch, `ARTIFACT_SCORE_CONTRACT_STALE`) | yes | yes |
+
+---
+
+## BUG-TL-0007 — A resolved protocol question was still described as open in the matcher
+
+| Field | Value |
+|---|---|
+| Severity | **P3** (stale internal documentation) |
+| Category | Documentation drift |
+| Status | **VERIFIED FIXED** |
+| Discovered by | Phase 17 deep audit: sweep for "provisional"/"pending" wording after `Q-005` was resolved on 2026-11-20 |
+| Files affected | `scoring/matcher.py` |
+
+### Symptom
+
+The module docstring opened with
+
+```
+Match predicate (TZ 15.2, provisional pending official contract Q-005):
+```
+
+while `docs/QUESTIONS.md` records `Q-005` (official reward formula & clean-book
+rule) as **RESOLVED** on 2026-11-20, and the predicate it documents is the one
+the official spec fixed.
+
+### Impact
+
+Low: the code was correct and the docstring described the predicate
+correctly. But a reader checking the question log would have found the code
+claiming to wait for a contract that had arrived, which is exactly the kind of
+stale "provisional" wording that `D-18-01` had to clean out of the
+jury-facing docs.
+
+### Fix
+
+The docstring now states that the predicate is fixed by the official contract
+of 2026-11-20 (`Q-005` RESOLVED) and is no longer provisional.
+
+### Regression evidence
+
+No behavioural test is applicable (documentation-only). The Phase 17 sweep
+records the sweep command and its empty result; the general guard against
+this class is `C-REWARD` (prose) plus the artifact sweep in
+`tests/scoring/test_formula_provenance.py`.
+
+---
+
+## BUG-TL-0008 — The documentation gate's artifact contract named a file nobody produces
+
+| Field | Value |
+|---|---|
+| Severity | **P2** (the documentation gate could not tell truth from fiction) |
+| Category | Verification gate / phantom path |
+| Status | **VERIFIED FIXED** |
+| Discovered by | Phase 17 deep audit: reading `tools/verify_doc_claims.py` `C-PATHS` against the actual producers |
+| Files affected | `tools/verify_doc_claims.py`, `tests/judge/test_doc_claims.py` |
+
+### Symptom
+
+`C-PATHS` compares the file paths published in the documentation with the
+filesystem. Its contract for the generated directories was a hand-written
+list:
+
+```python
+extra = {
+    "doc_claims_report.json",
+    "release_audit.json",
+    "replay_all_report.json",   # no producer writes this file
+    "official_eval_summary.json",
+    "performance_report.json",
+}
+```
+
+Two consequences:
+
+1. `replay_all_report.json` **does not exist** — `make replay-all` writes
+   `artifacts/reports/release/trajectory_replay.json`. A document citing the
+   real file would have been reported as a *phantom path*, and the contract
+   advertised a file that is never produced.
+2. `reward_property_matrix.json` was **missing** from the contract, although
+   it is part of the published evidence set (20 artifacts, `D-15-03`) and is
+   written by `scoring.diagnostics.build_reward_property_matrix`. A document
+   citing it was falsely reported as a phantom path as well — the gate was
+   wrong in both directions.
+
+### Impact
+
+The documentation gate either blocked a correct document or accepted a
+document naming a file that does not exist. It made `make docs-verify`
+unreliable exactly where it claims to be a gate: the set of published
+artifacts.
+
+### Root cause
+
+The contract was a second literal, maintained by hand, while the producers
+were code. Nothing compared the two.
+
+### Fix
+
+The contract is now **derived from the producers**:
+
+- the `artifacts/reports/latest/` set is read out of
+  `judge/verify.py::REQUIRED_FULL_ARTIFACTS` (unchanged) and explicitly
+  extended with `reward_property_matrix.json`, whose producer is the
+  reward-property suite, not `judge/verify.py`;
+- the other directories name exactly what their producers write:
+  `doc_claims_report.json`, `release_audit.json` **and**
+  `trajectory_replay.json` (not `replay_all_report.json`),
+  `official_eval_summary.json`, `trajectories.jsonl`.
+
+### Regression evidence
+
+`tests/judge/test_doc_claims.py::test_generated_artifact_contract_matches_the_producers`
+builds the contract and compares it with the file names the producers
+actually write; it fails on the old contract (`replay_all_report.json`
+missing / `reward_property_matrix.json` absent) and passes on the new one.
+
+---
+
+## BUG-TL-0009 — A malformed workflow file silently disabled CI
+
+| Field | Value |
+|---|---|
+| Severity | **P1** (the CI gate disappeared; nothing in the repository failed) |
+| Category | Release infrastructure / YAML |
+| Status | **VERIFIED FIXED** |
+| Discovered by | Phase 17: every push of the branch ran a workflow with **zero jobs** and failed in 0 s |
+| Files affected | `.github/workflows/ci.yml`, `tools/check_workflows.py`, `tests/judge/test_workflows.py`, `Makefile` |
+
+### Symptom
+
+The Phase 17 evidence step was added to the CI workflow as
+
+```yaml
+- name: Evidence freeze (Phase 17: the committed archive must match the tree)
+  run: make evidence-verify
+```
+
+A **plain (unquoted) YAML scalar may not contain a colon followed by a
+space**: YAML reads `Phase 17: the committed archive must match the tree`
+as a mapping, not as text. The whole file therefore stopped being valid
+YAML.
+
+### Impact
+
+GitHub created a run for every push, the run failed **immediately with zero
+jobs**, and the only hint was "This run likely failed because of a workflow
+file issue". Nothing in the repository failed, because nothing in the
+repository ran: the twelve Judge Kit gates, the offline container check and
+the new evidence gate all silently disappeared, on four consecutive pushes.
+A reviewer looking only at the repository would have seen a green branch.
+
+### Root cause
+
+A step *name* was edited by hand, and nothing in the repository parses the
+workflow files. The CI configuration was the one artifact that was never
+checked — the one artifact whose failure removes the checking.
+
+### Fix
+
+- The step name no longer contains a colon (`Phase 17 - the committed
+  archive must match the tree`).
+- New `tools/check_workflows.py` (stdlib-only, offline) parses the workflow
+  files: a full YAML parse when PyYAML is importable, plus heuristics that
+  always run (no unquoted `": "`, no tab indentation, a `jobs:` mapping
+  must exist). The other YAML files of the repository
+  (`docker-compose.yml`, `spec/*.yaml`) are scanned with the same
+  heuristics.
+- It runs in `make lint` (and therefore in CI) and in
+  `tests/judge/test_workflows.py` (13 tests), so the hazard is caught
+  **before** a push, not after four of them.
+
+### Regression evidence
+
+| Test | Fails on old code | Passes on new code |
+|---|---|---|
+| `tests/judge/test_workflows.py::test_unquoted_colon_space_is_flagged` | yes (no checker existed) | yes |
+| `tests/judge/test_workflows.py::test_repository_workflows_are_well_formed` | yes (the broken file) | yes |
+| `tests/judge/test_workflows.py::test_tab_indentation_is_flagged` | yes | yes |
+| `tools/check_workflows.py` on the broken step name | reports the exact line | PASS |
+
+---
+
 ## Summary
 
 | ID | Severity | Component | Status |
@@ -296,6 +589,11 @@ Old code + strengthened test → `AssertionError: {'code': 'BAD_CURSOR', …
 | BUG-TL-0002 | P0 | `env/cursors.py` | VERIFIED FIXED |
 | BUG-TL-0003 | P1 | `env/cursors.py` | VERIFIED FIXED |
 | BUG-TL-0004 | P1 | official C05 test | VERIFIED FIXED |
+| BUG-TL-0005 | P1 | `scoring/diagnostics.py` (published formula) | VERIFIED FIXED |
+| BUG-TL-0006 | P2 | `judge/robustness_audit.py` (score contract) | VERIFIED FIXED |
+| BUG-TL-0007 | P3 | `scoring/matcher.py` (docstring) | VERIFIED FIXED |
+| BUG-TL-0008 | P2 | `tools/verify_doc_claims.py` (artifact contract) | VERIFIED FIXED |
+| BUG-TL-0009 | P1 | `.github/workflows/ci.yml` (malformed YAML disabled CI) | VERIFIED FIXED |
 
 No claim is made that no bugs remain. Checks that were executed without
 finding a defect are listed in `FIX_VERIFICATION_MATRIX.md`, and residual
