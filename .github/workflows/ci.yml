@@ -37,4 +37,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build and run hardened offline container (--network=none, read-only rootfs, cap-drop ALL)
-        run: make docker-check
+        run: |
+          set -o pipefail
+          make docker-check 2>&1 | tee docker-check.log
+      - name: Upload offline container log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-check-log
+          path: docker-check.log
+          if-no-files-found: warn
