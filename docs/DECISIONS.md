@@ -444,3 +444,53 @@ Clean-clone verification (`git clone --branch arena/3f693c20 … && make verify 
 
 ## D-13-01 (2026-11-21) — Phase 13 finite test evidence
 Expand the metamorphic sample from three to four scenarios and require changed public bytes, while checking verifier equivariance and policy reward equality. Capture pipeline clean twins for multiple operator plans; extend deterministic property loops and exercise optional Hypothesis separately. Use a reproducible repeat-sensitive tie-break mutant rather than a probabilistic kill. These tests are representative, not universal proofs; serialization difference alone does not prove a causal accounting change. No production behavior or release freeze is changed.
+
+## D-18-01 (2026-11-21) — One reward implementation; official formula supersedes provisional A-005
+
+`spec/official_fintech_checks_2026-11-20.md` (vendored verbatim from the
+organisers; byte-identical to the copy circulated to the team) fixes the
+reward as `return = clip([-1, 1], 2*F1 - 1 - 0.2*inspection_steps/100)` and
+publishes 20 exact matcher/reward vectors plus 12 worked examples.
+
+The repo held **two** implementations:
+
+- `scoring/official_scorer.compute_official_metrics` — official formula, used
+  by `judge_adapter.score_episode` and covered by `tests/official/`;
+- `scoring/reward.compute_reward` — the provisional
+  `R = max(0, F1 - eta*steps/max_steps)` with `eta = 0.05` (assumption A-005),
+  consumed by `arena/autohacker.py`, `judge/mutation_suite.py`,
+  `judge/robustness_audit.py` and the reward-property matrix.
+
+The second one failed 10 of the 11 published reward vectors, so every
+internal artifact derived from it published numbers the jury would never
+reproduce (BUG-TL-0001).
+
+Decision:
+
+1. `compute_official_metrics` is the **single** implementation. No second
+   reward formula may exist (TZ §23.2 "no duplicate competing
+   implementations").
+2. `scoring/reward.py` becomes a thin view: it keeps `RewardBreakdown`, the
+   config loader and the exact-decimal helpers, and obtains
+   `(precision, recall, f1, return)` from `reward_metrics()`, which delegates
+   to `compute_official_metrics`. `reward_metrics` exists only as a named
+   seam so fault-injection suites can patch the live path.
+3. `RewardBreakdown.eta` now reports the **applied** weight (0.2), not the
+   stale config value, so no consumer can read a 0.05 bound off a breakdown.
+4. `configs/scoring/default.json` is a **frozen contract** and is *not*
+   edited (D-14-02): it still contains `eta: 0.05` and
+   `provisional: true`. Those keys no longer influence the reward; the
+   discrepancy is documented here instead of silently re-frozen.
+5. `precision_score` / `recall_score` deliberately keep the vacuous-truth
+   convention (`1` when the denominator is empty), because the generator
+   cross-check (`scoring/crosscheck.py`, EXIT GATE 8) needs "nothing asserted,
+   nothing wrong" to read as perfect precision on clean episodes. The
+   official `P = R = 0` convention applies **only** to the reward breakdown
+   and the jury-facing scorer. Both conventions are documented in the
+   docstrings.
+
+Regression evidence: `tests/env/test_cursor_codec.py`,
+`tests/scoring/test_reward_sanity.py`, `tests/scoring/test_diagnostics.py`,
+`tests/scoring/test_reward_properties.py`, `tests/unit/test_property.py`,
+`tests/official/test_block1_contracts.py::test_C05_pagination_over_large_fixture_L_three_pages`,
+and mutation suite MUT-07/08/13 re-pointed at the live reward path.

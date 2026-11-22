@@ -24,11 +24,15 @@ benchmark toolkit.*
 
 ## Official vs provisional
 
-The official organiser TZ/rubric has **not** been published in this repo
-(Phase 0 incomplete). Everything from Master TZ assumptions A-001…A-016
-(tool names, 4 anomaly types, reward `R = max(0, F1 − 0.05·steps/100)`,
-100-step budget, 50 page size) is **provisional** and isolated in
-`adapter/` + `configs/`. See `docs/DECISIONS.md`, `docs/QUESTIONS.md`,
+> **Update 2026-11-21:** the organiser definitions *are* now published and
+> vendored verbatim at `spec/official_fintech_checks_2026-11-20.md`. The
+> reward formula below is therefore **official, not provisional** — see
+> `docs/DECISIONS.md` D-18-01. Items that remain provisional are the ones
+> the organisers deliberately leave to the team (episode values, seeds).
+
+Everything from Master TZ assumptions A-001…A-016 (tool names, 4 anomaly
+types, 100-step budget, 50 page size) that the official text does not fix is
+**provisional** and isolated in `adapter/` + `configs/`. See `docs/DECISIONS.md`, `docs/QUESTIONS.md`,
 `docs/RUBRIC_TRACEABILITY.md`. Never present provisional values as
 official facts.
 
@@ -64,12 +68,23 @@ finding counts/types, affected IDs, operator names, clean flags.
 `PERIOD_CUTOFF`. Affected-ID rules in `spec/anomaly_catalog.yaml`
 (provisional). Invariants INV-01…INV-17 in `spec/invariants.yaml`.
 
-## Reward (provisional, A-005)
+## Reward (official, Q-005 RESOLVED)
 
-`R = max(0, F1 − ETA·steps_used/max_steps)`, ETA=0.05, max_steps=100.
+`return = clip([-1, 1], 2·F1 − 1 − 0.2·inspection_steps/100)`.
+
+Source: `spec/official_fintech_checks_2026-11-20.md`, Block 3 and the
+"Точные соглашения matcher" section. The earlier provisional
+`R = max(0, F1 − 0.05·steps/100)` (assumption A-005) is **superseded**; it
+failed 10 of 11 published reward vectors (BUG-TL-0001). The single
+implementation is `scoring/official_scorer.compute_official_metrics`;
+`scoring/reward.py` is a thin view over it. `configs/scoring/default.json`
+is a frozen contract that still carries `eta: 0.05`, which no longer
+influences the reward.
+
+Clean book + empty submission gives `P = 0, R = 0, F1 = 1` (Block 3 test 3).
 Match requires type + exact canonical affected IDs + currency +
-|amount diff| ≤ tolerance + one full evidence set. Deterministic maximum
-matching with lexicographic tie-break. See Master TZ 15.
+|amount diff| ≤ τ (τ=0 by default) + one full evidence set. Deterministic
+maximum-cardinality matching with lexicographic tie-break.
 
 ## Determinism / money / time
 
