@@ -1,5 +1,53 @@
 # TwinLedger — Changelog
 
+## Unreleased — Phase 18: container hardening, pinned base image, real local container-equivalent run
+
+- **The base image is pinned by digest (TZ §22.4, `BUG-TL-0011`).** The Dockerfile
+  declares `ARG BASE_IMAGE="python:3.11-slim-bookworm@sha256:a36c24f9..."` (the
+  multi-platform `linux/amd64` + `linux/arm64` manifest of CPython 3.11.16 on
+  Debian bookworm) and `FROM ${BASE_IMAGE}`. The image now writes **its own
+  provenance record** (`/usr/local/share/twinledger/build_info.json`: base image,
+  base digest, CPython patch version, Debian release and the versions of the two
+  Debian packages it installs). `docs/EVIDENCE/docker-build-info.json` records the
+  pinned facts, `tools/release_audit.py` verifies that the Dockerfile and the
+  record agree, and the new CI job `base-image` resolves the upstream tag digest
+  and reports drift as a commit status plus an annotation.
+- **The `.dockerignore` rules now match Docker's real anchoring (`BUG-TL-0010`).**
+  Docker anchors every pattern at the context root, so `__pycache__` matched only
+  `<root>/__pycache__`: **197 stale `.pyc` files** (and any nested `.env`,
+  `*.pem`, `*.key`) entered the build context. All nested rules now use explicit
+  `**/` prefixes, and the new `tools/docker_context.py` implements Docker's path
+  semantics so the *effective* context is computable (750 files before → 556
+  files and 0 stale bytecode now).
+- **A real local container-equivalent run (`make container-local-check`).** The
+  image is materialised the way `docker build` would (build context with
+  `.dockerignore` applied, `compileall`, report directories) and the container's
+  own command (`make verify`) runs in an unprivileged user+mount+network
+  namespace as uid/gid 10001 with **every capability dropped**, `no_new_privs`, a
+  **read-only image tree** and tmpfs over the writable paths. Measured on the
+  execution host: PASS, 12/12 Judge Kit gates inside the sandbox, 20 artifacts
+  identical in name to the host run. It is explicitly **not** a Docker build - the
+  base image cannot be pulled without a registry - and the artifact says so.
+- **The Compose profile is machine-checked (`BUG-TL-0012`).** Every service now
+  declares `pids_limit` and an `fsize` ulimit, and the `verify` service mounts
+  all three writable report paths as tmpfs. `tools/check_compose_profile.py`
+  parses the file (stdlib-only YAML subset) and fails on any loss of network
+  isolation, read-only rootfs, capability drop, non-root user, CPU/RAM ceiling,
+  process/file-size limit, or on a bind mount or a sealed tmpfs. It runs in
+  `make lint` and therefore in CI.
+- **The dependency audit stopped matching a spelling (`BUG-TL-0013`).**
+  `judge/performance_and_deps.py` parsed the Dockerfile with the literal
+  substring `"FROM python:3.11"`, which the ARG-based `FROM` invalidated - a
+  false `RC-012` FAIL while the measured performance and dependency facts were
+  inside their targets. It now parses the declared base image and records the
+  image's Python patch version and package versions.
+- **The container run is capped.** `make docker-check-container` adds
+  `--pids-limit 512` and `--ulimit fsize=268435456:268435456` (TZ §16.2
+  "resource limits for CPU/RAM/processes/file size, where supported").
+- **Contract freeze unchanged:** 30 files, aggregate `0747baf0…`. The base image
+  pin is a *release* fact, not a benchmark-contract change, so the frozen surface
+  was deliberately left untouched (the build record lives in `docs/EVIDENCE/`).
+
 ## 1.0.2 — Phase 17 deep execution: reconstructable release archive (2026-11-22)
 
 - **The release surface is now archived (`D-17-02`).** New `tools/evidence_freeze.py`

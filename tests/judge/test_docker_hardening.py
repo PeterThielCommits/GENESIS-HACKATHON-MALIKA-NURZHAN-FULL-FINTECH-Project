@@ -20,7 +20,6 @@ These tests lock the three contracts that the submission image depends on:
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
 import tempfile
 import unittest
@@ -32,6 +31,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from tools import container_local_check as clc
 from tools import docker_build_info as dbi
+from tools import release_audit
 from tools.check_compose_profile import check_compose, check_service, parse_simple_yaml
 from tools.docker_context import DockerIgnore, build_context
 
@@ -104,19 +104,20 @@ class TestEffectiveBuildContext(unittest.TestCase):
         stale = [p for p in self.context if "__pycache__" in p or p.endswith(".pyc")]
         self.assertEqual(stale, [], stale)
 
-    def test_context_contains_every_tracked_file_that_is_not_excluded(self) -> None:
-        """A tracked file may only leave the context through a declared rule."""
-        proc = subprocess.run(
-            ["git", "ls-files"], cwd=str(REPO_ROOT), capture_output=True, text=True, check=False
-        )
-        if proc.returncode != 0:
-            self.skipTest("not a Git checkout")
-        tracked = set(proc.stdout.split())
+    def test_context_contains_every_shipped_file_that_is_not_excluded(self) -> None:
+        """Every file the release audit ships must reach the image.
+
+        The comparison uses the release audit's own file list, which falls back
+        to a filesystem walk when no ``git`` binary exists - the offline image
+        ships neither ``git`` nor a ``.git`` tree, so the check has to work
+        there as well (a skipped check is not a passed check).
+        """
+        shipped = set(release_audit.tracked_files())
         context = set(self.context)
         deliberately_excluded = {
             "artifacts/trajectories/trajectories.jsonl",  # generated inside the container
         }
-        missing = sorted(tracked - context - deliberately_excluded)
+        missing = sorted(shipped - context - deliberately_excluded)
         self.assertEqual(missing, [], missing)
 
     def test_required_runtime_files_are_present(self) -> None:

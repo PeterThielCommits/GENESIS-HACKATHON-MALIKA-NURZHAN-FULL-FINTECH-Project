@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "92bd81a6e52498e6707b747644db46f35f471a6d3e7ceb184bfc13166337fd6d",
+  "aggregate_sha256": "ad86772887e3f8b3f5fdbf897ccea13c7b5a88674473ea11213cc8485b2f6a49",
   "anchor_note": "aggregate_sha256 identifies the archived tree and is commit-independent; source_commit is the HEAD the working tree was based on when the archive was generated (the archive is written before the commit that carries it).",
   "code_version": "twinledger@1.0.0",
   "files": [
@@ -409,9 +409,9 @@
       "sha256": "dfea179322b43aae7b23ffce24f080ddce9ea56a46802f320b101c321c47aa83"
     },
     {
-      "bytes": 10507,
+      "bytes": 14012,
       "path": "docs/CHANGELOG.md",
-      "sha256": "ed192b5f609a1c3f274b33bd6aa0e166f79cd15f56a27fcb99d705d1103b8149"
+      "sha256": "074c52716f2b95fc0d30ef51fd9f9d153cb1d342ddff18bbf6c3fe20b4901a06"
     },
     {
       "bytes": 8340,
@@ -419,9 +419,9 @@
       "sha256": "175b4709b45293d3cb783993bd7725f8574e292614b6137f11ce8d23e487e3b0"
     },
     {
-      "bytes": 7245,
+      "bytes": 8484,
       "path": "docs/CONTEXT/NEXT_AGENT.md",
-      "sha256": "3aadfb62d3292db3785d784fe277df400fe1a13e5bb08eca90425371bcd2b1e9"
+      "sha256": "ffc480cd555088276c8d40d11597519019840976e4099491d1133b2ddb251d8a"
     },
     {
       "bytes": 0,
@@ -434,9 +434,9 @@
       "sha256": "eb845da4b600524d4155dc5ccccf000b69bfa7a55aaf8a9500c4422ad74cf4b5"
     },
     {
-      "bytes": 5768,
+      "bytes": 7870,
       "path": "docs/CURRENT_STATE.md",
-      "sha256": "a7323d030cb086ff31a194963f58e39659dd1f9f98156d81d11bb60d53f2552a"
+      "sha256": "35a00142bda64e58f0f86d1eeff834c18a423202365a05949dc2d4aacbbc111f"
     },
     {
       "bytes": 5422,
@@ -444,9 +444,9 @@
       "sha256": "5aed37bb33f04c8efc8be82099bc33077b667ff7a3909111df39ded7e7462a23"
     },
     {
-      "bytes": 58949,
+      "bytes": 64008,
       "path": "docs/DECISIONS.md",
-      "sha256": "fcfc076d4aa91ca8c4cd5325035bd64b316745159b76bea55259ed9d33da7225"
+      "sha256": "162efc7c2bbc3a2285414cf1ae9009b9dfaec905158e3c5cf77affed1fe48c4c"
     },
     {
       "bytes": 7783,
@@ -457,6 +457,11 @@
       "bytes": 6509,
       "path": "docs/DESIGN.md",
       "sha256": "b7d7a83a19934f6fe93d9976fb170f8d86c575891da0ed3b40cc338ff603521e"
+    },
+    {
+      "bytes": 5230,
+      "path": "docs/EVIDENCE/container-local-2026-11-22.json",
+      "sha256": "294de10e4347d9b669e7960118f3f596b48bad7dba1dcc2dff31595eaa32963c"
     },
     {
       "bytes": 1050,
@@ -474,14 +479,14 @@
       "sha256": "b43dfd8e2260b543635a1df5dcac1dc3d98a9b7b196c76740acb94a4d08add8a"
     },
     {
-      "bytes": 12334,
+      "bytes": 12736,
       "path": "docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json",
-      "sha256": "0b72a76dc8c84b5f612e2ad1dced868076a929e8bfbde0c5cd19fe0110380f76"
+      "sha256": "0dc14cd49c1601aeedd7e7492fa1390c42164fd70e9aa914c4127e3be1d3e3fa"
     },
     {
-      "bytes": 5530,
+      "bytes": 9728,
       "path": "docs/FAILURE_ANALYSIS.md",
-      "sha256": "8a286f9867de77a31aac81613714fd8ebe22c4e4059e5bff101545c05b53cdfb"
+      "sha256": "cd561ea126108a120faffe84088a54f4c285a2692d9a2427fcccb2de93938f9b"
     },
     {
       "bytes": 1947,
@@ -529,14 +534,14 @@
       "sha256": "c3b02dc743ac3a7e803698829c0b4d9f646056800028419ca648b57f1e511c9f"
     },
     {
-      "bytes": 7858,
+      "bytes": 10469,
       "path": "docs/LIMITATIONS.md",
-      "sha256": "df5ffae43cc101e0f6403af8db690948f1f282e553a24de97175f38c6a8bc147"
+      "sha256": "53049ff691adac0b5e1e5aad568dbd88630860f52ff68fe219c2602113ff260d"
     },
     {
-      "bytes": 6910,
+      "bytes": 7232,
       "path": "docs/OFFICIAL_COMPLIANCE_MATRIX.md",
-      "sha256": "8f07e52da641c56bc0ea6a33099e53c22252422779f33c2bca626e3e5f7a7e46"
+      "sha256": "2214cba530cf5a84a827b03ecb4c0115e83c997ca95587d5c5bb67327c26e140"
     },
     {
       "bytes": 4200,
@@ -679,6 +684,11 @@
       "sha256": "6c3cfbbae09574589e8c00828984c78ca2c99c1361cf6a30783c5eec26242411"
     },
     {
+      "bytes": 8113,
+      "path": "docs/PHASE_REPORTS/PHASE-18.md",
+      "sha256": "c43954ce9485544f626c9c49863af2812c36a43ee1dd74d4b47b998209fd5f99"
+    },
+    {
       "bytes": 1235,
       "path": "docs/PHASE_REPORTS/TEMPLATE.md",
       "sha256": "9bd8d54d7beb26931fb94d34b27a7b1f3dc2e583a46673e5ba53a6f13e11f98b"
@@ -704,9 +714,9 @@
       "sha256": "aa4dbe0caff6c6018fb09da4e933fc4a613d9a17bf480a20110ea3bd333e04d1"
     },
     {
-      "bytes": 23880,
+      "bytes": 34631,
       "path": "docs/QUALITY_AUDIT/BUG_REGISTRY.md",
-      "sha256": "af9aae50db81d4a7083d072a7834262cee7407b1d5c26c8d863c897f77025c94"
+      "sha256": "8d7a2b8099a4d16c556b062f8f560ed3924ca9b81ad59d9ab6dad94994d70a37"
     },
     {
       "bytes": 2921,
@@ -814,19 +824,19 @@
       "sha256": "0e736341f985c2d358375fdee26e100063a8397432c4a25f9d0e49ec4effafa6"
     },
     {
-      "bytes": 21463,
+      "bytes": 32664,
       "path": "docs/RELEASE_NOTES.md",
-      "sha256": "b0f13175450d660e59015e4c990c36f89c75dff63d0057493b2c5e191150560f"
+      "sha256": "3946508f9f139e78b8851af196e4fb7488cdd686e0aedd624c57a677f5ca8eb7"
     },
     {
-      "bytes": 1699,
+      "bytes": 1729,
       "path": "docs/RUBRIC_TRACEABILITY.md",
-      "sha256": "3fb0c5afc535532ec883c788e6a5c76e09ecd666ad5d6056da2391e59cba8c5a"
+      "sha256": "5d0a1d0acbfb25f32369b1547dd6ca9f90cb34809e07627081d94c00c8dba7e0"
     },
     {
-      "bytes": 25904,
+      "bytes": 26486,
       "path": "docs/STATUS.md",
-      "sha256": "25eedbf137abb281aff864bf22f321cd0b01f622f9940c225d0402ab4dbe1976"
+      "sha256": "d59d12249eea797282a5849fa6e28642349e324e16f6f805c4d1a04aa407abe1"
     },
     {
       "bytes": 607,
@@ -2339,9 +2349,9 @@
       "sha256": "4298545788f174c76ea4db317ed86cd86f75074c5dceecd53c9868c5c145e0fc"
     },
     {
-      "bytes": 11999,
+      "bytes": 12102,
       "path": "tests/judge/test_docker_hardening.py",
-      "sha256": "c0e8dc8988d2458af3f8b8656b5099da9e37f8da083a89aaa971c6a1a8ad3675"
+      "sha256": "891c965cefe806e8d541191d579ca95c3362e79fd85ca91e58b29ebf4114c855"
     },
     {
       "bytes": 11743,
@@ -2784,8 +2794,8 @@
       "sha256": "6db78d6ecca3fbc53cdaca71d28916fec587caae833fbf8dee05bf19dcaa584c"
     }
   ],
-  "frozen_file_count": 556,
-  "generated_at_utc": "2026-11-22T16:34:42Z",
+  "frozen_file_count": 558,
+  "generated_at_utc": "2026-11-22T16:46:58Z",
   "official_score_claimed": false,
   "phase": 17,
   "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
@@ -2795,7 +2805,7 @@
       "path": "artifacts/reports/doc_claims/doc_claims_report.json",
       "present": true,
       "required": false,
-      "sha256": "f7bfae0472af3578d68917bcb3ae2b1107b827bebcc9bcc42559f7f448a65040",
+      "sha256": "7b67c9656503da9bb90d1a0ce869f28d7f123e8491c56a9b2d664de55ed00ded",
       "verdict": {
         "checks": [
           {
@@ -2935,7 +2945,7 @@
       "path": "artifacts/reports/latest/replay_report.json",
       "present": true,
       "required": true,
-      "sha256": "f6aac0283ba844c3430790efa26e94af6f09e4026075255dbc4d8a5796ec0dee",
+      "sha256": "d53b1947944797b66b94dcd2b9cfc808ee4b0954a2aee600d780603f17da0828",
       "verdict": {
         "all_byte_identical": true,
         "all_hashes_identical": true,
@@ -2952,7 +2962,7 @@
       "path": "artifacts/reports/latest/report_index.json",
       "present": true,
       "required": true,
-      "sha256": "e15ee60d50ee17dda3ee4e19bfef8a1331e54627415c118cab482f8e811c45ab",
+      "sha256": "11fccba8f0cb5b6928b7e23cc6d56499ecf01228a611822ce113d217bf594230",
       "verdict": {
         "artifact_count": 20,
         "missing_optional_or_full_mode_artifacts": [],
@@ -2964,7 +2974,7 @@
       "path": "artifacts/reports/release/trajectory_replay.json",
       "present": true,
       "required": false,
-      "sha256": "ffa27f0d12ce00b0dd74f745b901f7e82fd128b5bdb7f302f8a37bc6d7921444",
+      "sha256": "bad776f77a77d58a415b350365361f4487885bcfa6b12aebb6fe1a3d4801c2b6",
       "verdict": {
         "failure_count": 0,
         "runs_matched": 80,
@@ -2977,7 +2987,7 @@
       "path": "artifacts/reports/latest/verify_summary.json",
       "present": true,
       "required": true,
-      "sha256": "4c5a994c5d35744bdc8992575f8809471ac1bf4dd788f777a8114873c57b0cec",
+      "sha256": "0aa96e49a132faa377aa5b7e1f330baa193068068b500969ff98c99a389d0834",
       "verdict": {
         "gates": [
           {
@@ -3071,5 +3081,5 @@
     }
   },
   "schema_version": "1.0.0",
-  "source_commit": "f3af3145383080f50b8faaadfd8a456e326d0aec"
+  "source_commit": "7ba87b1e79e55aece9719220b664dbfc1b948b4e"
 }

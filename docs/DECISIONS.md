@@ -829,3 +829,87 @@ historical record that no longer influences the reward.
 
 Refs: `docs/QUALITY_AUDIT/BUG_REGISTRY.md` (BUG-TL-0005, BUG-TL-0006,
 BUG-TL-0008), `docs/PHASE_REPORTS/PHASE-17.md`.
+
+
+## D-18-02 (2026-11-22) — The container environment is a pinned artifact, and the build context is computed, not guessed
+
+Context: TZ §22.4 ("Docker build must be reproducible as far as the base image
+allows; pin the base image digest, the Python patch version, the package
+versions and the commands"), §16.2 (resource limits for CPU/RAM/processes/file
+size where supported) and the case criterion "versions of the configurations"
+(Block 5, 0/1/2). Phase 18 audited every container artifact against those
+requirements and found three defects (`BUG-TL-0010..0012`).
+
+Decision:
+
+1. **The base image is pinned by digest, in one place.** The Dockerfile declares
+   `ARG BASE_IMAGE="python:3.11-slim-bookworm@sha256:<digest>"` and uses
+   `FROM ${BASE_IMAGE}`; the digest has exactly one occurrence in the
+   repository, and the image records it (with the CPython patch version, the
+   Debian release and the resolved package versions) in
+   `/usr/local/share/twinledger/build_info.json`. `docs/EVIDENCE/docker-build-info.json`
+   records the same pinned facts for humans and reviewers, and
+   `tools/release_audit.py` fails when the two disagree.
+2. **Upstream drift is reported, never adopted silently.** The CI job
+   `base-image` resolves the current digest of the upstream tag and publishes
+   drift as a commit status and an annotation. A moved tag does **not** change
+   the pinned digest: the release environment changes only through a reviewed
+   commit.
+3. **The Debian package versions are recorded, not pinned.** Vendoring the
+   `.deb` files is forbidden (TZ §22.3) and pinning an exact version would
+   break the build as soon as the mirror drops it. The versions actually
+   installed live in the image's own record and are published by CI.
+4. **The build context is computed with Docker's semantics, not approximated.**
+   `tools/docker_context.py` implements Docker's anchoring rules (every pattern
+   is anchored at the context root; `*` does not cross a separator, `**` does;
+   the last matching rule wins), so the *effective* context is a computable
+   object with tests. `tools/container_local_check.py` refuses to build an image
+   from a context that contains sealed truth, key material, VCS metadata or
+   stale bytecode.
+5. **The Compose profile is a checked artifact.** `tools/check_compose_profile.py`
+   enforces the whole hardening contract per service (network none, read-only
+   rootfs, `cap_drop ALL`, `no-new-privileges`, uid 10001, CPU/RAM ceilings,
+   `pids_limit`, `fsize` ulimit, no bind mounts, no sealed tmpfs) and runs in
+   `make lint`, i.e. in CI.
+6. **The contract freeze was deliberately not touched.** The base image pin is a
+   *release* fact, not a benchmark-contract change, so the frozen surface stays
+   at exactly 30 files with the published aggregate `0747baf0…`; the build
+   record therefore lives in `docs/EVIDENCE/`, outside `configs/`.
+
+Refs: `docs/QUALITY_AUDIT/BUG_REGISTRY.md` (BUG-TL-0010..0013),
+`docs/LIMITATIONS.md` (L9, L11), `docs/FAILURE_ANALYSIS.md` (Failure Case 4),
+`docs/PHASE_REPORTS/PHASE-18.md`.
+
+## D-18-03 (2026-11-22) — The local container-equivalent run replaces "no local evidence", and says what it is not
+
+Context: the execution host has no container runtime and no registry access, so
+`docker build` cannot run there and the only local evidence for the container
+contract was "the Dockerfile looks right". The CI job `docker-offline` remains
+the authority for the image build.
+
+Decision:
+
+1. **A local, container-equivalent run is provided and used.**
+   `tools/container_local_check.py` (`make container-local-check`) materialises
+   the image from the build context and runs the container's own command
+   (`make verify`) with the CI hardening applied through unprivileged user,
+   mount and network namespaces: uid/gid 10001, every capability dropped
+   (`CapEff = 0`), `NoNewPrivs = 1`, a read-only image tree and tmpfs over the
+   three writable paths. Each property is asserted *before* the command runs,
+   and the produced artifacts are captured for comparison with a host run.
+2. **It is not called a Docker build, anywhere.** The artifact, the tool's
+   docstring, `docs/LIMITATIONS.md` (L9) and the release notes all state that
+   the base image cannot be pulled without a registry and that the CI job
+   remains authoritative for the image.
+3. **The earlier namespace approximation is superseded.**
+   `tools/offline_local_check.py` (user+net+mount namespaces over the *source*
+   tree) remains in the repository for history, but the container-equivalent run
+   is the stronger local evidence: it exercises the *build context* and the
+   *image layout* as well.
+4. **CI runs it informationally.** The `docker-offline` job executes it with
+   `continue-on-error`, because a hosted runner may forbid unprivileged user
+   namespaces (Ubuntu 24.04 AppArmor); the authoritative container evidence
+   there is the real `docker run`.
+
+Refs: `docs/EVIDENCE/container-local-2026-11-22.json`,
+`docs/EVIDENCE/offline-local-2026-11-22.json`, `docs/LIMITATIONS.md` (L9).

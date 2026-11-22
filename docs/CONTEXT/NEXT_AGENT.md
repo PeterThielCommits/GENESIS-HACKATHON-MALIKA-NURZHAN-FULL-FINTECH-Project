@@ -1,32 +1,50 @@
-# Next agent — handoff after the Phase 17 deep execution (release v1.0.2)
+# Next agent — handoff after the Phase 18 container hardening (release v1.0.3)
 
-Read `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/PHASE_REPORTS/PHASE-17.md`,
-`docs/HANDOFF/phase-17-evidence-freeze.md`, `docs/QUESTIONS.md` (the process
-questions), and decisions `D-17-02`, `D-17-03`, `D-16-02`, `D-16-03`,
-`D-18-01`, `D-15-04..D-15-07` first. Then read `docs/INDEPENDENCE.md`
+Read `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/PHASE_REPORTS/PHASE-18.md`,
+`docs/PHASE_REPORTS/PHASE-17.md`, `docs/HANDOFF/phase-17-evidence-freeze.md`,
+`docs/QUESTIONS.md` (the process questions), and decisions `D-18-02`,
+`D-18-03`, `D-17-02`, `D-17-03`, `D-16-02`, `D-16-03`, `D-18-01`,
+`D-15-04..D-15-07` first. Then read `docs/INDEPENDENCE.md`
 ("Ownership — and an honest correction"), which is the most important
 paragraph in the repository.
 
 ## Where the project stands
 
-Phase 17 is `DONE` against the strict reading of its exit gate: the release is
-restorable **and** verifiable from the repository alone. Phases 0–17 are all
-`DONE` (see `docs/STATUS.md`). The repository is feature-frozen; nothing in
-this handoff authorises new features.
+Phase 18 is `DONE`: the submission container is hardened against TZ §22.4 and
+§16.2 (base image pinned by digest, Docker-correct build context, machine-
+checked Compose profile, process/file-size limits) and the execution host
+finally produces real container evidence - a container-equivalent run that
+executes `make verify` as uid 10001 with no capabilities, `no_new_privs`, a
+read-only tree and no network. Phases 0–18 are all `DONE` (see
+`docs/STATUS.md`). The repository is feature-frozen; nothing in this handoff
+authorises new features.
 
 ```
-v1.0.2   -> annotated tag (3d5855a4ad2c05723cab56a0cd120bc11c772949) on the merge commit 48cfb17 of PR #29; release published 2026-11-22 (D-17-02); the recommended artifact (same behaviour as v1.0.1 + the Phase 17 archive)
+v1.0.3   -> annotated tag on the merge commit of the Phase 18 PR; the recommended artifact (same benchmark behaviour as v1.0.2 + the container hardening)
+v1.0.2   -> retained for history (adds the Phase 17 evidence archive); tag unmoved
 v1.0.1   -> retained for history (image no longer ships sealed truth, D-16-02); tag unmoved
 v1.0.0   -> retained for history; superseded for submission; tag unmoved
-make verify                                          -> 12/12 gates, 601 tests, 20 artifacts
+make verify                                          -> 12/12 gates, 623 tests, 20 artifacts
 make docs-verify                                     -> 22 measured facts, 22 checks
 make replay-all                                      -> 80/80 runs, 567 steps byte-identical
 make release-audit                                   -> 6/6 PASS
+make container-local-check                           -> PASS (12/12 gates inside the sandbox; uid 10001, CapEff 0, no_new_privs, read-only tree, no network)
+python3 tools/docker_build_info.py verify            -> base image pinned by digest; the recorded build info agrees
+python3 tools/check_compose_profile.py               -> every Compose service keeps the hardening contract
 python3 tools/freeze_release.py --verify             -> 30 frozen files intact, 0747baf0…
 python3 tools/evidence_freeze.py --verify            -> release surface intact (one aggregate digest)
 python3 tools/evidence_freeze.py --verify --require-reports -> + archived gate verdicts (CI gate)
 python3 tools/release_evidence.py --verify           -> release archive honest and self-consistent
 ```
+
+### What is still not provable here (read this before claiming anything)
+
+The **image build** is CI-authoritative: the execution host has no container
+runtime and no registry access, so `docker build` cannot run there. The local
+`make container-local-check` is a *container-equivalent* run - it materialises
+the image from the build context and applies the same hardening, but it does
+**not** pull or build the base image. Do not describe it as a Docker build
+(see `docs/LIMITATIONS.md`, L9, and `D-18-03`).
 
 ## Reconstruct the release from the repository alone
 

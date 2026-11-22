@@ -65,8 +65,8 @@ Verified by `tests/official/test_block2_episodes.py` using zero-common-mode `ver
 
 | Anchor | Target | Evidence |
 |---|---|---|
-| Single run command | 2/2 | `make verify` / `make docker-check` (Dockerfile default `CMD ["make", "verify"]`) |
-| Pinned versions & configs | 2/2 | `configs/official_eval_manifest.json`, `requirements-core.txt` (stdlib-only), Python 3.11 |
+| Single run command | 2/2 | `make verify` / `make docker-check` (Dockerfile default `CMD ["make", "verify"]`); on a host without a container runtime `make container-local-check` runs the same command under the same hardening (`docs/EVIDENCE/container-local-2026-11-22.json`) |
+| Pinned versions & configs | 2/2 | `configs/official_eval_manifest.json`, `requirements-core.txt` (stdlib-only), Python 3.11, **base image pinned by digest** (`python:3.11-slim-bookworm@sha256:a36c24f9…`, CPython 3.11.16 / Debian bookworm, `docs/EVIDENCE/docker-build-info.json`) |
 | Trajectories | 2/2 | `artifacts/trajectories/trajectories.jsonl` (80 episodes: `D01..D20` x 4 policies, zero obs leakage) |
 | Measured failure analysis | 2/2 | `docs/FAILURE_ANALYSIS.md` (measured before/after verifier bug catch + measured baseline failures) |
 | Honest limitations | 2/2 | `docs/LIMITATIONS.md` (every limitation linked to concrete scenarios; zero unverified RL claims) |
