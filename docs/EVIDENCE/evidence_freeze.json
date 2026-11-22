@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "58cefae16011519e45fcdd6fb3eb6aeb1d0070877b7a69b24a1a06f6d899858c",
+  "aggregate_sha256": "2d96a23b6b4fa55ae3ee7910b667e9270405f726d41a07524c6cfcc2d2aff20f",
   "anchor_note": "aggregate_sha256 identifies the archived tree and is commit-independent; source_commit is the HEAD the working tree was based on when the archive was generated (the archive is written before the commit that carries it).",
   "code_version": "twinledger@1.0.0",
   "files": [
@@ -419,9 +419,9 @@
       "sha256": "175b4709b45293d3cb783993bd7725f8574e292614b6137f11ce8d23e487e3b0"
     },
     {
-      "bytes": 7138,
+      "bytes": 7245,
       "path": "docs/CONTEXT/NEXT_AGENT.md",
-      "sha256": "1f9db1a8d136579f4ef0e99a1a8ac81407fa6a3af2ab988718a365d38046cf15"
+      "sha256": "3aadfb62d3292db3785d784fe277df400fe1a13e5bb08eca90425371bcd2b1e9"
     },
     {
       "bytes": 0,
@@ -434,9 +434,9 @@
       "sha256": "eb845da4b600524d4155dc5ccccf000b69bfa7a55aaf8a9500c4422ad74cf4b5"
     },
     {
-      "bytes": 5684,
+      "bytes": 5768,
       "path": "docs/CURRENT_STATE.md",
-      "sha256": "7e8add0db1b171be305f228a4769672e40518e28aa7ef4caf1f620dbe185ff2e"
+      "sha256": "a7323d030cb086ff31a194963f58e39659dd1f9f98156d81d11bb60d53f2552a"
     },
     {
       "bytes": 5422,
@@ -471,7 +471,7 @@
     {
       "bytes": 12334,
       "path": "docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json",
-      "sha256": "b58447bbd78e07fd2b33ceefdca088ecae94100d4c804f08c204b0837dcad4a5"
+      "sha256": "137c8a3f158cf2518e97b590ad82e3035c289a9af9a72e02459de7c646384570"
     },
     {
       "bytes": 5530,
@@ -809,9 +809,9 @@
       "sha256": "0e736341f985c2d358375fdee26e100063a8397432c4a25f9d0e49ec4effafa6"
     },
     {
-      "bytes": 20924,
+      "bytes": 21463,
       "path": "docs/RELEASE_NOTES.md",
-      "sha256": "c42e91d5d435f43ea4e5e4ff6fffa6fae254492d2d77a6e024c1263c6a757b67"
+      "sha256": "b0f13175450d660e59015e4c990c36f89c75dff63d0057493b2c5e191150560f"
     },
     {
       "bytes": 1699,
@@ -2755,7 +2755,7 @@
     }
   ],
   "frozen_file_count": 550,
-  "generated_at_utc": "2026-11-22T15:19:12Z",
+  "generated_at_utc": "2026-11-22T15:35:22Z",
   "official_score_claimed": false,
   "phase": 17,
   "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
@@ -2765,7 +2765,7 @@
       "path": "artifacts/reports/doc_claims/doc_claims_report.json",
       "present": true,
       "required": false,
-      "sha256": "eb56f0925496add8a043315348991953fe3cbc7bea2198041949ea11922ff196",
+      "sha256": "7c79a765e08d822548c3645eecc2962feaae442e3c89e222a4ca1deea9dc5f2a",
       "verdict": {
         "checks": [
           {
@@ -2868,7 +2868,7 @@
       "path": "artifacts/reports/release/release_audit.json",
       "present": true,
       "required": false,
-      "sha256": "ec220606ce1802991a10e4b5a866b5f47298b216e6b15d24b6b4e8c813d9b00f",
+      "sha256": "23794c34df89e5b3de384ebb4b7f538b6bb5ef3c57b6fcc74a5d32bd034ee3db",
       "verdict": {
         "checks": [
           {
@@ -2905,7 +2905,7 @@
       "path": "artifacts/reports/latest/replay_report.json",
       "present": true,
       "required": true,
-      "sha256": "8e19c4653a39cf99acf95abd16f3560b3c356fb199d9df7c6d9274488089a071",
+      "sha256": "5255442fc2bbc90f842d43ffaacd0ccc937db8eef687f4fd87f6492ab187b3f6",
       "verdict": {
         "all_byte_identical": true,
         "all_hashes_identical": true,
@@ -2922,7 +2922,7 @@
       "path": "artifacts/reports/latest/report_index.json",
       "present": true,
       "required": true,
-      "sha256": "73c6c009c2a5c8c74f5985e978b973a87f16c1bf1ec1c5085e5acc6e18d5c120",
+      "sha256": "998e7c8e72115b1fded7578a216d6126068191a7aca6f67fafa2467067c9bfb2",
       "verdict": {
         "artifact_count": 20,
         "missing_optional_or_full_mode_artifacts": [],
@@ -2934,7 +2934,7 @@
       "path": "artifacts/reports/release/trajectory_replay.json",
       "present": true,
       "required": false,
-      "sha256": "6db056024ce9fe31a9f5dbb8c22b44f78d200ccc7f6107f3aaaac890f57d516a",
+      "sha256": "ed44460ee4d1eabb749886b3d76bee7b4ba26b7102e6ce7ebf313de07259152a",
       "verdict": {
         "failure_count": 0,
         "runs_matched": 80,
@@ -2947,7 +2947,7 @@
       "path": "artifacts/reports/latest/verify_summary.json",
       "present": true,
       "required": true,
-      "sha256": "6dafb88ad2f5d53349717ae083fe77be16ae0af9bf9df4b7c6c7494484052bd9",
+      "sha256": "56d4428d86ec0507e6c3b9304c3d19f87097799fee731f37fa82d10ba332da29",
       "verdict": {
         "gates": [
           {
@@ -3041,5 +3041,5 @@
     }
   },
   "schema_version": "1.0.0",
-  "source_commit": "3c645811f56c8273118f5a13801d13a5a19709ac"
+  "source_commit": "b6e7438ce3a46ac33d6cc803060f6c368bd46350"
 }

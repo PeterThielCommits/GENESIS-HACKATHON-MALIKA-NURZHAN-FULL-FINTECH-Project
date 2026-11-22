@@ -351,8 +351,8 @@
       "status": "PASS"
     }
   },
-  "generated_at_utc": "2026-11-22T15:19:11Z",
-  "git_sha": "3c645811f56c8273118f5a13801d13a5a19709ac",
+  "generated_at_utc": "2026-11-22T15:35:22Z",
+  "git_sha": "b6e7438ce3a46ac33d6cc803060f6c368bd46350",
   "git_sha_note": "the commit the working tree was based on when the archive was generated (the archive is written before the commit that carries it); the frozen digest is the commit-independent anchor.",
   "limitations": {
     "note": "The archive records internal verification results only. It is not a jury score and never claims one (official_score_claimed: false).",
