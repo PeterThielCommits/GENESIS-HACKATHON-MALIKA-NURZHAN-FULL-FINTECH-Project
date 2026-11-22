@@ -268,6 +268,11 @@ def build_archive() -> dict[str, Any]:
         ),
         "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "git_sha": _git_commit(),
+        "git_sha_note": (
+            "the commit the working tree was based on when the archive was "
+            "generated (the archive is written before the commit that carries "
+            "it); the frozen digest is the commit-independent anchor."
+        ),
         "platform": platform.platform(),
         "python_version": platform.python_version(),
         "tasks": {

@@ -1,5 +1,6 @@
 {
-  "aggregate_sha256": "042b90c3726d40aa94c1608a7e5a993aeaf1ddfe716355be03258b9922b04104",
+  "aggregate_sha256": "5f03e58ba1aa5c4b381bb6658e6d87141302d9ea7cc029ad081efe97883e5fe7",
+  "anchor_note": "aggregate_sha256 identifies the archived tree and is commit-independent; source_commit is the HEAD the working tree was based on when the archive was generated (the archive is written before the commit that carries it).",
   "code_version": "twinledger@1.0.0",
   "files": [
     {
@@ -468,9 +469,9 @@
       "sha256": "b43dfd8e2260b543635a1df5dcac1dc3d98a9b7b196c76740acb94a4d08add8a"
     },
     {
-      "bytes": 12084,
+      "bytes": 12289,
       "path": "docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json",
-      "sha256": "8d93797d40d6b8fa9887ca40858532fab58f66d30a8862f27768bf1dfd90e838"
+      "sha256": "c65ae4df821879f7164f0f2035f98cd1b8fb2014cd448f3eee9d83db789b882a"
     },
     {
       "bytes": 5530,
@@ -2608,9 +2609,9 @@
       "sha256": "5429eb7ca03c71e27f7e1ea923e74309f526267a311441d169f8540dbbe04152"
     },
     {
-      "bytes": 17107,
+      "bytes": 17422,
       "path": "tools/evidence_freeze.py",
-      "sha256": "bfcce5601e2f6073faf4fc6642911663c5c479c8d8c15003e502d8c7c936ebdf"
+      "sha256": "85ec0e6d67dce57ef8f119d846c5c1eede3e40f1e432c200d0ed8f54149f45d0"
     },
     {
       "bytes": 7528,
@@ -2643,9 +2644,9 @@
       "sha256": "d5e43425622e9d0da2f61f0af90585e541dcad30d41736078058e87180cd0e5b"
     },
     {
-      "bytes": 19247,
+      "bytes": 19512,
       "path": "tools/release_evidence.py",
-      "sha256": "c2351fb0a6c7500075c96d41877189c7525726fa1b201f74501188ce6b0ecce6"
+      "sha256": "64fe46ff38dd8e377557ab0ad4892a75c9413c1402aef983259ab80aa4e686b3"
     },
     {
       "bytes": 9826,
@@ -2744,7 +2745,7 @@
     }
   ],
   "frozen_file_count": 548,
-  "generated_at_utc": "2026-11-22T13:52:09Z",
+  "generated_at_utc": "2026-11-22T13:52:43Z",
   "official_score_claimed": false,
   "phase": 17,
   "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
@@ -3032,5 +3033,5 @@
     }
   },
   "schema_version": "1.0.0",
-  "source_commit": "6f25a90cb341f913194ff9e251a8521e854e5fb0"
+  "source_commit": "99a0ddd41240313d42242cbe01572514c56a8935"
 }

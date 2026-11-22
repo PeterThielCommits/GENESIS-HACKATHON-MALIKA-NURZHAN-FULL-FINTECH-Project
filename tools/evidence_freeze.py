@@ -310,6 +310,12 @@ def compute_manifest(repo_root: Path = REPO_ROOT) -> dict[str, Any]:
         "code_version": "twinledger@1.0.0",
         "official_score_claimed": False,
         "source_commit": _git_commit(repo_root),
+        "anchor_note": (
+            "aggregate_sha256 identifies the archived tree and is "
+            "commit-independent; source_commit is the HEAD the working tree "
+            "was based on when the archive was generated (the archive is "
+            "written before the commit that carries it)."
+        ),
         "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "python_version": platform.python_version(),
         "platform": platform.platform(),
