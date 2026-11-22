@@ -77,8 +77,11 @@ ignore) were found and fixed by PRs #23–#25 and are covered by regression test
 
 | Item | Value |
 |---|---|
-| Tag | `v1.0.1` (annotated) on the merge commit of PR #26 |
+| Tag | `v1.0.1` (annotated, object `3601493b64ff983946bb6188c2a06bdfed5a5e1a`) on commit `640c585a672fc91328d53c15d457eca690bf414f` (merge of PR #26) |
 | Parent release | `v1.0.0` (`8da0af2`), unchanged |
+| CI | PR run `45020405354` and merge-commit run `45020669250`: `core` + `docker-offline` both success |
+| Tag-tree audit | 524 tracked files, 5 790 897 bytes; 0 credentials; 0 undeclared external imports (109 modules); `make rc-check` PASS from a clean GitHub clone (verify 12/12, 113.1 s) |
+| Release | published 2026-11-22T12:11:27Z — https://github.com/PeterThielCommits/GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project/releases/tag/v1.0.1 |
 | Notes | `docs/RELEASE_NOTES.md` (v1.0.1) — published as the GitHub release body |
 | Frozen | 30 files, `0747baf0…` |
 

@@ -322,10 +322,11 @@ structural audits merged in #24/#25 had already closed the substantive issues.
 
 | Item | Value |
 |---|---|
-| Tag | `v1.0.1` (annotated), on the merge commit of the v1.0.1 PR |
-| Tagged after | `make rc-check` PASS from clean-clone conditions (§10.1) |
+| Tag | `v1.0.1` (annotated, object `3601493…`) on commit `640c585` (merge of PR #26) |
+| Tagged after | `make rc-check` PASS from clean-clone conditions on the merge commit (verify 12/12, 113.1 s) plus CI `45020669250` (core + docker-offline) green on the merge commit; PR CI `45020405354` green |
+| Release | " + URL +  (published 2026-11-22T12:11:27Z; not draft, not prerelease) |
 | Parent release | `v1.0.0` (`8da0af2`), unchanged |
-| Release notes | `docs/RELEASE_NOTES.md` (v1.0.1) |
+| Tag-tree audit | 524 tracked files, 5 790 897 bytes (budget 52 428 800); 0 credentials; 0 undeclared external imports (109 runtime modules) |
 | Frozen surface | 30 files, `0747baf0…` (unchanged) |
 | `official_score_claimed` | `false` (TZ §23.6) |
 
