@@ -74,9 +74,17 @@ otherwise                 -> return = clip([-1, 1], 2 * F1 - 1 - 0.2 * inspectio
 Structural violations (more than 30 findings, more than 10 `evidence_ids`,
 `explanation` over 1000 code points, non-integer `claimed_amount_minor`) return
 `return = -1.0` with `null` for `tp/fp/fn/precision/recall/f1`.
-Internal reward parameters are **provisional**
-(`configs/scoring/default.json`, `provisional: true`) and are never presented as
-an organiser score.
+
+The formula above is the **organisers' official formula**, fixed on 2026-11-20
+(`spec/official_fintech_checks_2026-11-20.md`, decision `D-18-01`) and reproduced
+by the 20 published reward vectors plus the 12 worked examples. There is exactly
+one implementation, `scoring/official_scorer.compute_official_metrics`;
+`scoring/reward.py` is a thin view over it. `configs/scoring/default.json` still
+carries `eta: 0.05` and `provisional: true` as a frozen historical record, but
+those keys no longer influence the computed reward — the applied penalty weight
+is `0.2` over a budget of `100` steps. What remains *internal* is the claim, not
+the formula: a `return` from this module is an internal measurement and is never
+presented as an organiser jury score (`official_score_claimed: false`).
 
 ---
 

@@ -17,13 +17,19 @@ Missing files must be named explicitly, never invented.
 
 ## Ownership (one owner per zone, TZ 4)
 
-| Zone | Directories | Owner |
+| Zone | Directories | Intended owner |
 |---|---|---|
 | 1 Generator/Data | `gen/`, `episodes/` | A |
 | 2 Env/Evaluator | `env/`, `adapter/`, `harness/`, `scoring/`, `seal/` | B |
 | 3 Verification/Red team | `verifier/`, `arena/` | C |
 | 4 Docs/QA/Judge | `judge/`, `docs/`, cross-zone tests | D |
 | Contracts/spec | `contracts/`, `spec/`, `invariants/`, `configs/` | Orchestrator (A0) |
+
+**Honest status:** the table is the intended ownership model, not a record of who
+worked on this code. No such accounts exist; the repository was produced by AI
+agents in one shared session context. Do **not** cite this table as evidence that
+four independent humans reviewed anything. See `docs/INDEPENDENCE.md`
+("Ownership — and an honest correction").
 
 Change only your zone without permission. Frozen-contract changes require
 an approved CR in `docs/CR/`.

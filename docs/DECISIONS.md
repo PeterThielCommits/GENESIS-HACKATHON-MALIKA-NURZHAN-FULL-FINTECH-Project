@@ -494,3 +494,101 @@ Regression evidence: `tests/env/test_cursor_codec.py`,
 `tests/scoring/test_reward_properties.py`, `tests/unit/test_property.py`,
 `tests/official/test_block1_contracts.py::test_C05_pagination_over_large_fixture_L_three_pages`,
 and mutation suite MUT-07/08/13 re-pointed at the live reward path.
+
+## D-15-04 (2026-11-22) — Documentation claims are checked on two axes: numbers *and* shapes
+
+The Phase 15 gate verified one thing well: every published **number** is
+re-measured from the artifact that produced it. Re-auditing against the literal
+EXIT GATE text ("the jury can deploy from the README and verify the key claims")
+found that all the numbers were right while the prose around them described files,
+fields, routes and a demo that did not exist — 19 defects, none of which the
+numeric gate could see. A number can be re-measured; a sentence cannot, so the
+sentence must be pinned to something that defines it.
+
+Decision: six **structural** detectors are added to `tools/verify_doc_claims.py`,
+each with a negative test proving it fires, and each pinned to a source rather
+than to a second copy of the truth:
+
+| Check | Pinned to |
+|---|---|
+| `C-PATHS` | the filesystem (with generated artifacts resolved against `judge/verify.py::REQUIRED_FULL_ARTIFACTS`) |
+| `C-DATADICT` | a real generated episode, compared **both ways** |
+| `C-DEMO` | `tools/demo_walkthrough.py::SEGMENTS` |
+| `C-WORKBENCH-API` | `tools/demo_server.py`'s real dispatchers |
+| `C-COMMANDS` | the filesystem and the Makefile |
+| `C-REWARD` | `scoring/official_scorer.py`'s live constants |
+
+Three sub-rules were forced by the work and are part of the decision:
+
+1. **Single source, not agreement.** The demo's clock and titles live in one
+   `SEGMENTS` tuple that the program prints *and* the checker compares. Two copies
+   of a clock is one copy too many.
+2. **Assert the contract, not the file.** A bare `replay_report.json` is legitimate
+   prose on a bare checkout; it is resolved against the gate's own artifact list so
+   the check means something before any artifact exists.
+3. **Absence must be documentable.** "`gen/diff.py` does not exist" is a true
+   sentence. Lines carrying a negation cue (`does not exist`, `forbidden`,
+   `renamed`) are exempt; incident reports and limitation disclosures need to be
+   able to say what is *not* there.
+
+Consequence: 19 defects fixed. The most serious was not a path but a claim —
+`docs/INDEPENDENCE.md` asserted a "different human owner" for the verifier, which
+this repository cannot evidence (see `D-15-05`).
+
+## D-15-05 (2026-11-22) — Organisational independence is disclosed as *unevidenced*, not asserted
+
+Master TZ §4 (REQ-ORG-001/002) requires the independent verifier to be built under
+a different human owner or agent context from the generator. `docs/INDEPENDENCE.md`
+stated this as accomplished fact, and `.github/CODEOWNERS` named four handles
+(`@twinledger-owner-a..d`) that do not exist. The repository was produced by AI
+agents in one shared session context.
+
+Decision: split the claim into its two halves and state each at its true strength.
+
+- **Technical zero-common-mode separation — proven and continuously tested.**
+  `verifier/` imports neither `gen/` nor `core/` nor `invariants/` nor `nlp/`
+  (AST scan + fresh-subprocess import test, `RC-002`, release blocker); a runtime
+  `io.open`/`Path.open` spy over an episode that *has* `sealed/truth.json` proves
+  discovery never leaves `public/`; Stage-1 output is committed as a canonical
+  SHA-256 digest before truth is visible and Stage 2 rejects post-hoc tampering.
+- **Organisational separation — not evidenced.** Stated as such in
+  `docs/INDEPENDENCE.md` ("Ownership — and an honest correction"), in `AGENTS.md`
+  and in the `CODEOWNERS` header, and raised as `Q-ORG-01` / `Q-ORG-02` in
+  `docs/QUESTIONS.md` as **OPEN**, answerable only by a human owner.
+
+Rationale: a judge can verify the first half themselves in one command. Overstating
+the second half would put the project's central architectural argument at risk the
+moment anyone opened the CODEOWNERS file.
+
+## D-15-06 (2026-11-22) — A published fact may not depend on which target ran last
+
+Third occurrence of one bug class (after `D-15-01` and `D-15-03`), so it is now a
+named rule with a test rather than a lesson.
+
+`make verify-core` writes a six-gate summary into the same directory as the
+twelve-gate full run. Two published facts were read *out of that summary*:
+
+- `F-TESTS` / `F-TESTS-OFFICIAL` — the test counts. Under `--core` these reported
+  524/524 while a full run reported 522/524, because two tests skip on core-mode
+  evidence. `make verify-core && make docs-verify` therefore failed on a correct
+  tree.
+- `test_check_mode_passes_on_repository` re-litigated the whole documentation gate
+  inside RC-001 against whatever summary happened to be there.
+
+Decision:
+
+1. Test counts are measured by `unittest` **discovery** over `tests/` and
+   `tests/official/`, never read from a run's summary. Discovery is the same set
+   every time, so the number is state-independent (`F-TESTS` now cites
+   "unittest discovery over tests/ (state-independent)").
+2. `test_checker_runs_under_ascii_stdout` asserts the *locale* contract only
+   (no `UnicodeEncodeError`, ASCII-clean stream, a well-formed exit code). It no
+   longer asserts `rc == 0`, which belongs to the authoritative check in
+   `judge/verify.py`.
+3. `test_check_mode_passes_on_repository` requires **full-mode** evidence and
+   skips explicitly otherwise; that skip reason is registered in
+   `judge/verify.py::_OPTIONAL_SKIP_RE` as a positional skip, in the same way as
+   the existing bootstrap skip.
+
+Proven order-independent by running three sequences, all green: `verify-core` →
+`docs-verify`; `report` → `docs-verify`; `docs-verify` twice.

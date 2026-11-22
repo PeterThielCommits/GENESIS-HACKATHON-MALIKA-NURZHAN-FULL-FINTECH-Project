@@ -1,12 +1,41 @@
 # TwinLedger — Verifier Independence
 
-## Ownership
+## Ownership — and an honest correction
+
+**This is the weakest link in the independence claim, so it is stated first.**
+
+Master TZ §4 requires that the independent verifier be built under a *different
+human owner or agent context* from the generator (REQ-ORG-001, REQ-ORG-002).
+The zone model names four owners and `.github/CODEOWNERS` maps the directories
+to them:
 
 - Generator (Zone 1): Owner A.
-- Verifier (Zone 3): Owner C (different human owner, REQ-ORG-001).
+- Verifier (Zone 3): Owner C.
 - Verifier receives `contracts/`, `spec/`, and public episode data only — never
   `gen/`, provenance, mutation parameters, or truth during discovery
   (REQ-ORG-002, REQ-VER-001, REQ-VER-002).
+
+**What is actually true as of v1.0.0:** this repository was produced by AI agents
+working in one shared session context, not by four separate human owners. The
+*organisational* half of REQ-ORG-001 (two humans, two contexts) therefore **is
+not evidenced** and must not be claimed. The *technical* half **is** evidenced,
+mechanically and continuously, and it is the half that determines whether a
+generator bug can silently become a verifier assumption:
+
+| Independence property | How it is proven | Evidence |
+|---|---|---|
+| `verifier/` cannot import `gen/`, `core/`, `invariants/`, `scoring/`, `env/`, `harness/`, `seal/`, `arena/`, `nlp/` | AST scan over every file, plus a fresh-subprocess import test | `tools/check_import_boundaries.py` (RC-002, release blocker), `tests/verifier/test_boundaries.py` |
+| `verifier/` never reads a sealed file at runtime | `io.open`/`Path.open` spy over an episode that *has* sibling `sealed/truth.json` | `tests/verifier/test_boundaries.py` |
+| Verifier does not share detection logic with the generator | independent `verifier/money_time.py` (`Fraction` FX, `zoneinfo` periods) and independent detectors; no import of `core/money.py` or `invariants/checks.py` | `docs/INDEPENDENCE.md` §"Shared dependencies" |
+| Stage-1 output is committed before truth is visible | canonical SHA-256 `report_digest` committed first, verified by Stage 2, which rejects post-hoc tampering | `scoring/crosscheck.py`, `tests/verifier/` |
+| Independence holds under ablation, not just inspection | every truth finding must survive evidence deletion and be reachable through public tools | `verifier/minimal_sets.py`, `EXIT GATE 8` |
+
+So the correct statement is: **zero-common-mode independence is enforced and
+tested between the generator and the verifier as software; it is not evidenced
+as an organisational separation of different people.** A judge should treat the
+former as a property they can verify themselves by running `make lint` and
+`tests/verifier/test_boundaries.py`, and the latter as an unmet process
+requirement recorded in `docs/QUESTIONS.md`.
 - Phase 8 specification (`spec/verifier_algorithm.md`, v1.0.0) and
   implementation (`verifier/`) were authored strictly from frozen contracts
   (`contracts/`), normative specifications (`spec/`), and Master TZ v3.0.0

@@ -96,13 +96,18 @@ and a syscall filter → `profile_id = linux-kernel-ns-seccomp-v1`
 - `Fraction`-exact arithmetic end to end; no float ever touches a reward.
 - `return = clip([-1, 1], 2 * F1 - 1 - 0.2 * inspection_steps / 100)`.
   Clean book with no findings yields `f1 = 1`, `precision = recall = 0`.
-- Step penalty coefficient (`eta`) and weights are **provisional**
-  (`configs/scoring/default.json`, `provisional: true`) and are never presented
-  as an organiser score (`official_score_claimed: false`).
+- The step penalty is the organisers' fixed `0.2 * inspection_steps / 100`,
+  implemented once (`scoring/official_scorer.compute_official_metrics`) after
+  `D-18-01` collapsed two competing implementations into one. The frozen
+  `configs/scoring/default.json` retains `eta: 0.05, provisional: true` as a
+  historical record only; it no longer influences the reward. The *result* is
+  never presented as an organiser score (`official_score_claimed: false`).
 
 ## 6. Evidence and verification design
 
-- One command reproduces all evidence: `make verify` → 12 gates, 21 artifacts.
+- One command reproduces all evidence: `make verify` → 12 gates, and the complete
+  artifact set indexed by `report_index.json` (the live count is published in the
+  README generated block, never typed here).
 - Every JSON report carries the TZ §23.5 envelope (code version, config hash,
   timestamp, platform, Python version, command); a violation is exit 2.
 - Exit codes are contractual: `0` pass, `1` test fail, `2` config/contract,

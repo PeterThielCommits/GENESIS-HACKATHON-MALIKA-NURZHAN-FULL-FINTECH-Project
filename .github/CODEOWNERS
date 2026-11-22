@@ -1,4 +1,17 @@
-# TwinLedger zone ownership (TZ 4). One owner per zone; cross-zone changes need approval.
+# TwinLedger zone ownership (TZ 4).
+#
+# HONEST STATUS: the TZ zone model defines four owners (A generator, B
+# env/evaluator, C verifier/red-team, D docs/QA/judge). No such accounts exist,
+# and this repository was produced by AI agents in one shared session context.
+# The entries below are the *intended* ownership per zone, kept so that a future
+# team can adopt them without re-deriving the model. They are NOT a claim that
+# four independent humans reviewed this code, and a judge must not read them as
+# one -- see docs/INDEPENDENCE.md ("Ownership -- and an honest correction") and
+# docs/QUESTIONS.md Q-ORG-01.
+#
+# Technical separation between the generator and the verifier IS enforced and
+# tested (AST import boundaries + runtime file-open spy); only the
+# organisational separation is unevidenced.
 gen/            @twinledger-owner-a
 episodes/       @twinledger-owner-a
 verifier/       @twinledger-owner-c

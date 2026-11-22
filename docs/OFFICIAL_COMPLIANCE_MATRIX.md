@@ -6,10 +6,10 @@ Authoritative reference: `spec/official_fintech_checks_2026-11-20.md` (100 point
 
 | Requirement | Implementation | Verification |
 |---|---|---|
-| `generate_episode(seed, config, output_dir)` | `judge_adapter.py::generate_episode` -> `gen/pipeline.py::build_episode_from_config` | `tests/official/test_block1_contracts.py`, `test_block2_episodes.py` |
+| `generate_episode(seed, config, output_dir)` | `judge_adapter.py::generate_episode` -> `gen/pipeline.py::build_episode_from_config` | `tests/official/test_block1_contracts.py`, `tests/official/test_block2_episodes.py` |
 | `make_env()` with `reset(seed, config)` & `step(action)` | `judge_adapter.py::make_env` -> `adapter/official_env.py::OfficialJudgeEnv` | `tests/official/test_block1_contracts.py` (`C01..C20`) |
 | `score_episode(episode_dir, findings, inspection_steps)` | `judge_adapter.py::score_episode` -> `scoring/official_scorer.py` | `tests/official/test_block3_scorer.py` (`#1..20`, `M01..M12`) |
-| Process isolation for public policies | `harness/isolated_runner.py` + `arena/policies/worker.py` (OS subprocess, sanitized env, stdin/stdout JSONL) | `tests/official/test_block1_contracts.py::test_C20`, `test_block5_baselines.py`, `tools/check_import_boundaries.py` |
+| Process isolation for public policies | `harness/isolated_runner.py` + `arena/policies/worker.py` (OS subprocess, sanitized env, stdin/stdout JSONL) | `tests/official/test_block1_contracts.py::test_C20`, `tests/official/test_block5_baselines.py`, `tools/check_import_boundaries.py` |
 | Judge-side Oracle separation | `judge/oracle_policy.py` (never imported by `arena/policies/`) | `tools/check_import_boundaries.py`, `tests/official/test_block4_paired.py` |
 
 ## Block 1: 20 Contract Tests (25 pts)

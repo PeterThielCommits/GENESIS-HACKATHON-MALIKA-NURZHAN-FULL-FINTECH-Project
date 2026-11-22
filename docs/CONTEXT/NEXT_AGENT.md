@@ -1,87 +1,81 @@
-# Next agent — handoff after the post-release mandatory-target audit
+# Next agent — handoff after the Phase 15 structural audit
 
-Read `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/PHASE_REPORTS/PHASE-16.md` / `.json`, `docs/RELEASE_NOTES.md`, and decisions `D-15-01`, `D-15-02`, `D-15-03`, `D-16-01` before changing anything.
+Read `AGENTS.md`, `docs/CURRENT_STATE.md`,
+`docs/PHASE_REPORTS/PHASE-15-STRUCTURAL-AUDIT.md`, and decisions `D-15-04`,
+`D-15-05`, `D-15-06` before changing anything. Then read `docs/INDEPENDENCE.md`
+("Ownership — and an honest correction"), which is the most important paragraph in
+the repository right now.
 
 ## Where the project stands
-Phase 16 is **DONE** and EXIT GATE 16 is met: the release candidate is frozen,
-verified on a clean machine, replayed end to end, audited, and its official
-entrypoint is proven by execution.
+
+Phase 15 is `DONE` on a stricter reading of its exit gate than before. The
+documentation is now checked on two axes: **numbers** (unchanged, still generated and
+byte-compared) and **shapes** (new). Everything below was measured in one session on
+this branch:
 
 ```
-make verify        -> 12/12 PASS, 490 tests, 20 evidence artifacts (docs gate runs inside)
-make docs-verify   -> 22 measured facts, 11 checks PASS
-make replay-all    -> 80/80 published runs, 567 steps byte-identical
-make release-audit -> 6/6 PASS (secrets, file list, size, deps, entrypoint, submission)
-make rc-check      -> verify + docs-verify + replay-all + release-audit, fail-closed
-make demo-backup   -> verify + docs + replay 5/5 + freeze 30 files
+make verify        -> 12/12 PASS, 528 tests, 20 evidence artifacts, from an EMPTY evidence dir
+make docs-verify   -> 22 measured facts, 17/17 checks PASS
+make verify-core   -> 6/6 PASS
+make replay-all    -> 80/80 runs, 567 steps byte-identical
+make release-audit -> 6/6 PASS
+make rc-check      -> PASS
+19-target sweep    -> 19/19 exit 0
 ```
-
-`make rc-check` has been run PASS in three trees: a Git checkout, a clean clone
-with an emptied evidence dir, and a `git archive` tarball with **no `.git`**.
 
 ## Rules this project established (do not break them)
-- **Never hand-edit the README generated block.** It sits between
-  `<!-- BEGIN GENERATED:measured-facts -->` and `<!-- END GENERATED:measured-facts -->`
-  and is rendered by `tools/verify_doc_claims.py`. Regenerate with `--write` after
-  the artifacts change; a manual edit fails `make docs-verify`.
-- **The doc-claim gate is NOT a plain RC-001 test.** Inside RC-001 no artifact
-  exists yet, so `tests/judge/test_doc_claims.py` can only prove the checker's
-  mechanisms there and skips explicitly. The authoritative run is
-  `judge/verify.py::_run_doc_claims()`, executed after every artifact is written.
-- **Never gate a test on a gitignored output.** `artifacts/reports/release/` and
-  `artifacts/reports/doc_claims/` are generated. Gate on the *input* (the
-  evidence set, the committed trajectory log) or drive the real CLI into a temp
-  directory. Violating this turned RC-001 into SKIPPED → exit 5 on clean clones —
-  twice (`D-15-01`, then again in Phase 16).
-- **Every gate must be shown to fail.** Each detector has a negative test with an
-  injected violation. The secrets audit once flagged its own fixtures; the
-  fixtures were fixed, not the audit.
-- **Never assert a value produced by the run that is performing the check** (e.g.
-  the gate pass-ratio, the test count of the same suite). Circular, and it
-  deadlocks the gate.
-- **Never put a sampled value in the generated block.** Latency, RSS and
-  wall-clock change every run. Budgets, verdicts, counts and contract enums only.
-- **Never write reports into `artifacts/reports/latest/`.** That is the frozen
-  20-file Judge Kit evidence set; extra files make counts order-dependent
-  (`D-15-03`).
-- **Never cite a decision ID that is not in `docs/DECISIONS.md`** — a
-  referential-integrity check fails the gate.
-- **`calc` vs `calculator` is intentional** (`D-15-02`). Core protocol = `calc`;
-  official adapter = `calculator`. Do not "fix" either one.
-- **Checked-in `episodes/dev/*` have no `sealed/truth.json`** by design
-  (`D-01-04`). Any scoring demo must build an episode in a temp dir first.
-- **Gates must run where the artifact runs.** The Docker image has no `.git`
-  (`.dockerignore`), and the container runs `LC_ALL=C` (ASCII stdout). Both were
-  real failures; `tools/release_audit.py` and `_say()` handle them.
 
-## Post-release audit (2026-11-22) — read this first
-Tag `v1.0.0` (`8da0af2`) is released, but a post-release audit against the
-Universal Phase Execution Prompt found that **nine TZ §23.2 targets had never
-been executed** by any phase. Running them found four real defects, now fixed on
-this branch (`D-16-02`):
+### Carried over, still binding
+- **Never hand-edit the README generated block.** Regenerate with
+  `python3 tools/verify_doc_claims.py --write`.
+- **Never gate a test on a gitignored or generated output**, and **never read an
+  artifact that does not exist yet in RC-001's bootstrap position**. Use
+  `@unittest.skipUnless(ARTIFACTS_READY, NOT_READY_REASON)`. This has now bitten the
+  project **four** times.
+- **Never assert a value produced by the run that is performing the check.**
+- **Never put a sampled value in the generated block.**
+- **Never write reports into `artifacts/reports/latest/`.**
+- **Never cite a decision ID that is not in `docs/DECISIONS.md`.**
+- **`calc` vs `calculator` is intentional** (`D-15-02`).
+- **Checked-in `episodes/dev/*` have no `sealed/truth.json`** (`D-01-04`).
+- **Every gate must be shown to fail.** Six new detectors each have an injected-fault
+  test; keep that standard.
+- Do not run `make official-eval` casually — it rewrites the committed
+  `artifacts/trajectories/trajectories.jsonl`. If a sweep runs it, restore with
+  `git checkout -- artifacts/trajectories/trajectories.jsonl` (verified: only
+  `duration_s` changes across all 80 rows).
 
-1. **`v1.0.0` contains a release blocker:** `.dockerignore` used
-   `episodes/*/sealed/`, which does not match the real depth-2 layout, so the
-   image built from that tag would include `sealed/truth.json`. Fixed on `main`
-   after this branch merges; `v1.0.0` itself is still affected.
-2. `make verify-core` used to fail after `make build-episodes`.
-3. `make official-eval` used to add a 21st file to the frozen evidence dir.
-4. The published gate count followed the last run, not the frozen rubric map.
+### New in this session
+- **A published fact must not depend on which target ran last** (`D-15-06`).
+  Test counts come from `unittest` **discovery** over `tests/` and `tests/official/`,
+  never from `verify_summary.json`. If you add a fact, ask: *would this value change
+  between a `--core` run and a full run?* If yes, it cannot be published this way.
+- **Pin a sentence to a source, not to a second copy.** The demo clock lives in
+  `tools/demo_walkthrough.py::SEGMENTS`; the program prints it and `C-DEMO` compares
+  `docs/DEMO.md` to the same tuple. Two copies of a clock is one copy too many.
+- **Absence must be documentable.** `C-PATHS` exempts lines with a negation cue
+  (`does not exist`, `forbidden`, `renamed`) so incident reports can say what is not
+  there. Do not remove that exemption; do not widen it to whole documents.
+- **A documented table that cannot be verified is worse than a failing one.** If you
+  add a bullet to `docs/DATA_DICTIONARY.md`, add the file to
+  `_DATADICT_TABLES` too, or `C-DATADICT` raises `UNRESOLVED_TABLE` by design.
+- **Do not "fix" the honest ownership disclosure.** `Q-ORG-01` and `Q-ORG-02` are
+  OPEN on purpose. The technical zero-common-mode separation is proven; the
+  organisational separation is not, and saying otherwise would be the single most
+  damaging claim in the repository.
 
-**All 19 mandatory targets now pass in one sequence on a dirty tree.** If you
-change anything, re-run the whole list, not just `make verify` — that is exactly
-how these four were missed.
+## Known open items
+
+| ID | Item | Owner |
+|---|---|---|
+| `Q-ORG-01` | Verifier was not built by a separate human/agent context. Re-derive, or accept and disclose. | Human owner |
+| `Q-REL-01` | Cut `v1.0.1`? Tag `v1.0.0` still contains the `.dockerignore` defect (`D-16-02`). | Release authority |
+| — | Narrative claims about *behaviour* are only partly mechanical. `C-DATADICT`/`C-DEMO`/`C-WORKBENCH-API` cover three shapes; prose about how something behaves still needs review. | Next agent |
 
 ## Single next action
-**Phase 17 (post-release evidence freeze).** `v1.0.0` is released on commit
-`8da0af2`; nothing is pending from Phase 16.
 
-Phase 17 must make the release reconstructable from the repository alone:
-archive the code and config hashes, the verify and replay reports, the final
-rubric map and the decisions; create the final tag; write final status and known
-limitations; and prove that a reader with only the repo can rebuild the context
-without any oral explanation.
-
-Do not move the `v1.0.0` tag, and do not re-run `make official-eval` casually:
-it rewrites the committed `artifacts/trajectories/trajectories.jsonl`, which the
-documented baseline numbers are measured from.
+Get a human answer to `Q-ORG-01`. If the answer is "accept and disclose", record it
+in `docs/DECISIONS.md` as a new `D-xx-xx` and close the questions. If the answer is
+"re-derive", scope a fresh `verifier/` authored from `spec/` and `contracts/` only,
+with `tests/verifier/test_boundaries.py` proving the import and file-open boundaries
+still hold against the old one. Do not attempt both.

@@ -102,7 +102,15 @@ _OPTIONAL_SKIP_RE = re.compile(
     # produces its own outputs). The authoritative TZ 16.4 check is
     # `make replay-all`, which reads the log where it exists.
     r"hypothesis|extra not installed|optional|"
-    r"evidence artifacts not generated yet|trajectories not generated yet",
+    r"evidence artifacts not generated yet|trajectories not generated yet|"
+    # "verify_summary.json is from a --core run" comes from
+    # tests/judge/test_doc_claims.py::TestCheckerEndToEnd. A --core run writes a
+    # six-gate summary into the same directory the twelve-gate full run uses, so
+    # the documentation gate inside RC-001 legitimately cannot evaluate itself
+    # there. This is a positional skip, not a weakened check: `make verify` reruns
+    # the same test against a full summary, and judge/verify.py runs the
+    # authoritative documentation check after every artifact exists.
+    r"verify_summary\.json is from a --core run",
     re.IGNORECASE,
 )
 _SKIP_LINE_RE = re.compile(r"\.\.\.\s*skipped\s+'([^']*)'")

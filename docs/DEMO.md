@@ -16,17 +16,21 @@ Both are deterministic and offline. Neither requires `pip install`.
 
 ## 1. Primary demo — `tools/demo_walkthrough.py` (3 minutes)
 
-`master_seed=2025`, five segments, printed with a `[mm:ss–mm:ss]` timing guide you
+`master_seed=2025`, six segments, printed with a `[mm:ss–mm:ss]` timing guide you
 can read aloud while the terminal scrolls.
+
+This table is not free text: `tools/demo_walkthrough.py::SEGMENTS` is the single
+source for both the printed headers and the rows below, and
+`tools/verify_doc_claims.py::C-DEMO` fails the build if they disagree.
 
 | Segment | Time | What the audience sees |
 |---|---|---|
-| 1. Clean twin generation | 0:00–0:30 | a synthetic company built deterministically from the seed; the clean book is *correct by construction* |
-| 2. Counterfactual twin | 0:30–1:00 | exactly one accounting lie injected; the diff shows *what changed*, the invariants show *why it is wrong* |
-| 3. Independent verifier | 1:00–1:25 | a Stage-1 verifier that never imports the generator finds the finding and emits a minimal public ProofGraph certificate |
-| 4. Sealed evaluation | 1:25–1:55 | 3-process isolation, commit-reveal, Merkle receipt and a fresh-process replay matching byte-for-byte |
-| 5. Reward stress test | 1:55–2:30 | honest policy vs `flag_all` / `duplicate_spam` / `silent` — the reward resists each shortcut |
-| 6. Honest limitations | 2:30–3:00 | what is *not* claimed (provisional score, Linux-only kernel sandbox, bounded side-channel checks) |
+| 1. Architecture & Contract Overview | 0:00–0:25 | the layering, the frozen contracts, and the AST-enforced zone boundaries |
+| 2. Counterfactual Twins (Clean Distractor Twin vs Mutated Twin) | 0:25–0:55 | a synthetic company built deterministically from the seed; the clean book is *correct by construction*, then exactly one accounting lie is injected; the diff shows *what changed*, the invariants show *why it is wrong* |
+| 3. Independent Public-Only Verifier & ProofGraph | 0:55–1:25 | a Stage-1 verifier that never imports the generator finds the finding and emits a minimal public ProofGraph certificate |
+| 4. CLOSED_EVAL 3-Process Isolation, Commit-Reveal & Fresh Replay | 1:25–1:55 | 3-process isolation, commit-reveal, Merkle receipt and a fresh-process replay matching byte-for-byte |
+| 5. Reward Stress Test (Official Formula, Internal Step Penalty) | 1:55–2:30 | honest policy vs `flag_all` / `duplicate_spam` / `silent` — the official formula resists each shortcut |
+| 6. Honest Limitations & Scope | 2:30–3:00 | what is *not* claimed (internal verification is not a jury score, Linux-only kernel sandbox, bounded side-channel checks) |
 
 ```bash
 python3 tools/demo_walkthrough.py

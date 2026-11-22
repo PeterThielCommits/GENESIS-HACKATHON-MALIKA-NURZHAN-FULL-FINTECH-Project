@@ -16,7 +16,7 @@ results**, never a jury score (Master TZ §23.6).
 ## Verify it yourself (two commands, no network)
 
 ```bash
-make verify        # lint + 12-gate Judge Kit + 490 tests  -> artifacts/reports/latest/
+make verify        # lint + 12-gate Judge Kit + full test suite -> artifacts/reports/latest/
 make rc-check      # verify + docs-verify + replay-all + release-audit
 ```
 
@@ -31,7 +31,7 @@ make docker-check  # --network=none --read-only --cap-drop ALL, non-root
 
 | Claim | Command | Result |
 |---|---|---|
-| Verification suite | `make verify` | **12/12 gates PASS**, 490 tests, 20 evidence artefacts |
+| Verification suite | `make verify` | **12/12 gates PASS**, full suite, 20 evidence artefacts |
 | Clean machine | fresh `git clone`, empty evidence dir | **12/12 PASS** |
 | Determinism, all runs | `make replay-all` | **80/80 runs, 567 steps byte-identical** |
 | Determinism, sealed replay | `make replay` | 5/5 byte-identical, Merkle root `d949fae3…` |
@@ -39,10 +39,13 @@ make docker-check  # --network=none --read-only --cap-drop ALL, non-root
 | Release audit | `make release-audit` | 6/6 PASS |
 | Frozen contract surface | `freeze_release --verify` | 30 files, `0747baf0…` |
 
-Release audit detail: 0 credentials in 494 files, 0 forbidden paths, 5 449 805
-bytes (budget 50 MB), 109 runtime modules with **0** external dependencies, and
-the official entrypoint imported from a foreign working directory with 5/5 tool
-names accepted.
+Release audit detail, re-measured on the v1.0.1 tree: 0 credentials in 521
+tracked files, 0 forbidden paths, 5 643 787 bytes (budget 50 MB), 109 runtime
+modules with **0** external dependencies, and the official entrypoint imported
+from cwd=`/` with 5/5 tool names accepted. (The v1.0.0 note said 494 files /
+5 449 805 bytes; both were true of that tag's tree and are preserved as history
+in `docs/PHASE_REPORTS/PHASE-16.md`. Live values are asserted by
+`make release-audit`, never transcribed.)
 
 Baseline policies over D01..D20 (seed 2026, 20 scenarios each) — published in
 the README generated block and re-measured by `make docs-verify`:
@@ -73,7 +76,10 @@ never silently omitted (`REQ-JUDGE-003`).
 
 1. The official rubric weights are not published; internal verification is never
    presented as a score.
-2. `eta = 0.05` is provisional (TZ §18).
+2. The reward *formula* is official (`D-18-01`); what is internal is the claim,
+   never the arithmetic. `configs/scoring/default.json` still records
+   `eta: 0.05, provisional: true` as a frozen historical artifact and no longer
+   influences any computed reward.
 3. `replay-all` replays recorded actions; it does not re-run the baseline
    policies, so policy-side changes are covered by `make official-eval` instead.
 4. Baseline numbers derive from the committed `trajectories.jsonl`; regenerating
@@ -102,7 +108,7 @@ in `docs/DECISIONS.md`.
 
 ```bash
 git clone <repo> && cd <repo>
-python3.11 -m make verify      # or `make verify`
+make verify                    # requires Python 3.11 on PATH
 ```
 
 Expected: `verify: PASS`, exit 0, with `artifacts/reports/latest/verify_summary.json`
