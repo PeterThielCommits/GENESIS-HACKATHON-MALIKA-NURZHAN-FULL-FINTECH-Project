@@ -873,6 +873,230 @@ tracked package has a *real* recorded version, and reject the literal
 
 ---
 
+## BUG-TL-0015 — A masked CI failure: an unusable namespace was a FAIL, and the step hid it
+
+| Field | Value |
+|---|---|
+| Severity | P1 |
+| Component | `tools/container_local_check.py`, `.github/workflows/ci.yml` |
+| Status | VERIFIED FIXED |
+| Discovered by | Phase 18 close-out: reading the check-run annotations of the *successful* `docker-offline` job |
+
+### Symptom
+
+The CI job `docker-offline` reported **success** while one of its steps had
+failed with exit code 1. GitHub recorded the raw exit code as a stray
+`Process completed with exit code 1` annotation attached to a green job, so the
+only trace of the failure was an annotation nobody reads.
+
+Two constructs hid it:
+
+* the container-equivalent step carried `continue-on-error: true`, and
+* the tool it ran reported a host that *forbids* unprivileged user namespaces
+  as a generic **FAIL** (exit 1) instead of an explicit *skip*.
+
+On the GitHub-hosted runner (Ubuntu 24.04) the AppArmor policy
+`kernel.apparmor_restrict_unprivileged_userns=1` refuses
+`unshare --map-root-user --mount --net` with `Operation not permitted`, so the
+step could never do its work there. Measured evidence: the step's start and
+completion timestamps are **identical** (zero seconds) in every successful job,
+while a genuine run of the same tool takes 87-154 seconds. Injecting the
+refusal locally reproduces the failure in 1.2 seconds.
+
+### Impact
+
+A real, reproducible failure was invisible: the CI summary said green, the
+release evidence said green, and the only signal was an error annotation on a
+successful job. The namespace-equivalent validation never ran in CI, and the
+report said nothing about it. Any *future* failure of that step would have
+been hidden the same way.
+
+### Fix
+
+* `tools/container_local_check.py` now **probes** the host first, with the same
+  namespace recipe the run uses (unprivileged user namespace + mount + network
+  namespace + the uid/gid mapping). A refusal that is environmental (EPERM,
+  EACCES, ENOSYS, an AppArmor policy, a util-linux that is too old for
+  `--map-user`) is reported as **UNSUPPORTED** — an explicit skip with a
+  reason and exit code **2** — never a FAIL and never a PASS. A failure the
+  probe cannot explain stays a FAIL (exit code 1).
+* The CI step handles the three outcomes explicitly: `0` = PASS,
+  `2` = SKIPPED (a `::notice::` annotation and a job-summary line), anything
+  else = `::error::` **and the step fails**. `continue-on-error` is gone.
+* The workflow now tries to enable unprivileged user namespaces on the runner
+  (`sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0`) so the real
+  validation runs where the environment permits it, and reports whether that
+  worked.
+* The evidence artifact records the probe result and the reason, so a skipped
+  check can never be read as a passed one (`REQ-JUDGE-003`).
+
+### Regression evidence
+
+| Test | Fails on old code | Passes on new code |
+|---|---|---|
+| `tests/judge/test_ci_masking.py::test_eperm_is_an_environmental_refusal` | yes (the refusal was not classified) | yes |
+| `tests/judge/test_ci_masking.py::test_a_refused_namespace_is_a_skip_not_a_failure` | yes (the run reported FAIL) | yes |
+| `tests/judge/test_ci_masking.py::test_unsupported_exits_two` | yes (exit 1) | yes (exit 2) |
+| `tests/judge/test_ci_masking.py::test_a_workload_failure_is_a_real_failure` | yes | yes (still a FAIL) |
+| `tests/judge/test_ci_masking.py::test_the_container_local_step_is_not_masked` | yes (`continue-on-error` present) | yes |
+| `python3 tools/container_local_check.py` with `unshare` refused | `FAIL`, exit 1 | `UNSUPPORTED`, exit 2 |
+
+---
+
+## BUG-TL-0016 — The `publish` subcommand was unreachable dead code
+
+| Field | Value |
+|---|---|
+| Severity | P1 |
+| Component | `tools/docker_build_info.py` (`main`) |
+| Status | VERIFIED FIXED |
+| Discovered by | Phase 18 close-out: auditing what the CI provenance step actually executes |
+
+### Symptom
+
+In `tools/docker_build_info.py main()`, the `publish` branch was indented
+*inside* the `verify` branch, **after** that branch's `return`:
+
+```python
+    if args.command == "verify":
+        ...
+        return 0 if result["status"] == "PASS" else 1
+
+        if args.command == "publish":      # <- unreachable
+            ...
+```
+
+`python3 tools/docker_build_info.py publish` therefore never reached its own
+handler. It fell through to `result = resolve()` and then died on the next
+line with an unhandled exception:
+
+```
+AttributeError: 'Namespace' object has no attribute 'report_status'
+```
+
+(exit code 1).
+
+### Impact
+
+The CI step named *"Publish the image build provenance (base digest, Python
+patch version, package versions)"* has never published anything: it crashed.
+The image's own provenance record was therefore never compared with the
+committed `docs/EVIDENCE/docker-build-info.json` in CI, so the drift check
+that was supposed to protect the pinned base image never ran. The crash was
+invisible because the step ended in `|| true` (see BUG-TL-0017).
+
+### Fix
+
+The `publish` branch is now at the same level as the other subcommand
+branches, so `publish` runs the publisher. The dead code, the misleading
+step name and the `|| true` are gone.
+
+### Regression evidence
+
+| Test | Fails on old code | Passes on new code |
+|---|---|---|
+| `tests/judge/test_ci_masking.py::test_publish_calls_publish_and_not_resolve` | yes (`resolve` was called) | yes |
+| `tests/judge/test_ci_masking.py::test_publish_does_not_raise` | yes (`AttributeError`) | yes |
+| `python3 tools/docker_build_info.py publish --json` | `AttributeError`, exit 1 | `{"status": "UNAVAILABLE", ...}`, exit 0 |
+
+---
+
+## BUG-TL-0017 — The workflow masked exit statuses, and nothing prevented it
+
+| Field | Value |
+|---|---|
+| Severity | P1 |
+| Component | `.github/workflows/ci.yml`, `tools/check_workflows.py` |
+| Status | VERIFIED FIXED |
+| Discovered by | Phase 18 close-out: the audit of the masked failure (BUG-TL-0015, BUG-TL-0016) |
+
+### Symptom
+
+Two constructs in the workflow hid a non-zero exit status:
+
+* `continue-on-error: true` on the container-equivalent step, and
+* `|| true` on the provenance-publish step.
+
+`tools/check_workflows.py` — the static guard that `make lint` runs over the
+repository's own workflows — had no policy against either. It only checked
+that the YAML parses.
+
+### Impact
+
+Any step that failed was reported as successful, and the static guard that
+should have caught it had no rule to catch it with. This is the mechanism
+that let BUG-TL-0015 and BUG-TL-0016 stay invisible for a whole release
+cycle.
+
+### Fix
+
+* The workflow no longer masks anything: the publish step's `|| true` is
+  removed (a genuine base-image/digest drift now fails the authoritative
+  `docker-offline` job), and `continue-on-error` is gone.
+* `tools/check_workflows.py` gained `scan_masking()` and a **masking policy**:
+  `continue-on-error: true` and a `|| true` / `|| :` / `|| exit 0` tail on a
+  command are refused, with the reason spelled out. `make lint` runs it over
+  the repository's own workflows, so a regression cannot reach a push.
+
+### Regression evidence
+
+| Test | Fails on old code | Passes on new code |
+|---|---|---|
+| `tests/judge/test_ci_masking.py::test_continue_on_error_is_flagged` | yes (no rule existed) | yes |
+| `tests/judge/test_ci_masking.py::test_a_masked_command_is_flagged` | yes (no rule existed) | yes |
+| `tests/judge/test_ci_masking.py::test_the_repository_workflows_pass_the_policy` | yes (the old workflow masked two steps) | yes |
+| `python3 tools/check_workflows.py` | PASS (the masked workflow passed) | PASS (the clean workflow passes; the masked one does not) |
+
+---
+
+## BUG-TL-0018 — The new regression test could not run inside the hardened container
+
+| Field | Value |
+|---|---|
+| Severity | P1 |
+| Component | `tests/judge/test_ci_masking.py` |
+| Status | VERIFIED FIXED |
+| Discovered by | The CI job `docker-offline` itself, once the masking was removed |
+
+### Symptom
+
+The first version of the regression suite for BUG-TL-0015 wrote a fake
+`unshare(1)` script into a temporary directory and executed it, to simulate a
+host that refuses unprivileged user namespaces. Inside the offline container
+`/tmp` is mounted **`noexec`** (`--tmpfs /tmp:rw,noexec,nosuid,...`), so the
+execution raised `PermissionError` instead of running the script.
+
+### Impact
+
+The authoritative container gate failed: `Ran 653 tests | FAILED
+(failures=2, errors=4)`. The CI job went red — **which is the masking fix
+working as designed**: before the fix this failure would have been hidden
+behind a green job. Nothing was wrong with the image or the benchmark; the
+test itself was not portable to the environment it runs in.
+
+### Fix
+
+* The tool exposes `_run_command()` as a seam, and the tests replace the
+  *call* instead of the *binary*. No test writes or executes anything.
+* The tool now treats a non-executable `unshare` (`PermissionError`) the same
+  way as a missing one: an environmental refusal, i.e. an explicit skip.
+* A guard (`test_no_test_makes_a_temporary_file_executable`) keeps the trap
+  closed: no test in `tests/` may make a file executable.
+
+Reproduced and verified locally against the same condition: the full suite
+passes with `TMPDIR` on a `noexec` tmpfs, both directly and inside the
+container-equivalent sandbox (read-only tree, uid 10001, `no_new_privs`).
+
+### Regression evidence
+
+| Test | Fails on old code | Passes on new code |
+|---|---|---|
+| `tests/judge/test_ci_masking.py::test_a_non_executable_unshare_is_an_environmental_refusal` | yes (the `PermissionError` was unhandled) | yes |
+| `tests/judge/test_ci_masking.py::test_no_test_makes_a_temporary_file_executable` | yes (the old test module did) | yes |
+| the suite with `TMPDIR` on a `noexec` tmpfs | `FAILED (failures=2, errors=4)` | **PASS** |
+
+---
+
 ## Summary
 
 | ID | Severity | Component | Status |
@@ -891,6 +1115,10 @@ tracked package has a *real* recorded version, and reject the literal
 | BUG-TL-0012 | P2 | `docker-compose.yml` (no process/file-size limits) | VERIFIED FIXED |
 | BUG-TL-0013 | P2 | `judge/performance_and_deps.py` (substring check) | VERIFIED FIXED |
 | BUG-TL-0014 | P2 | `tools/docker_build_info.py` (package-version drift check) | VERIFIED FIXED |
+| BUG-TL-0015 | P1 | `tools/container_local_check.py` + `.github/workflows/ci.yml` (masked CI failure) | VERIFIED FIXED |
+| BUG-TL-0016 | P1 | `tools/docker_build_info.py` (unreachable `publish` branch) | VERIFIED FIXED |
+| BUG-TL-0017 | P1 | `.github/workflows/ci.yml` + `tools/check_workflows.py` (no masking policy) | VERIFIED FIXED |
+| BUG-TL-0018 | P1 | `tests/judge/test_ci_masking.py` (not portable to the `noexec` container) | VERIFIED FIXED |
 
 No claim is made that no bugs remain. Checks that were executed without
 finding a defect are listed in `FIX_VERIFICATION_MATRIX.md`, and residual

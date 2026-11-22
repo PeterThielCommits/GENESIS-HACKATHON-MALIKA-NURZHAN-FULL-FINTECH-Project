@@ -60,7 +60,7 @@ jobs:
           make docker-check-container 2>&1 | tee docker-check.log
       - name: Publish the image build provenance (base digest, Python patch version, package versions)
         if: always()
-        run: python3 tools/docker_build_info.py publish || true
+        run: python3 tools/docker_build_info.py publish
       - name: Surface offline container failure in annotations
         if: failure()
         run: |
@@ -76,10 +76,35 @@ jobs:
           for line in tail:
               print("::error::" + line[:900])
           PY
-      - name: Container-equivalent local run (informational, needs unprivileged user namespaces)
+      - name: Enable unprivileged user namespaces for the container-equivalent run
+        id: userns
         if: always()
-        continue-on-error: true
-        run: python3 tools/container_local_check.py --out container-local-check.json
+        run: |
+          if sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 2>&1; then
+            echo "unprivileged user namespaces: enabled on this runner"
+            echo "enabled=true" >> "${GITHUB_OUTPUT:-/dev/null}"
+          else
+            echo "unprivileged user namespaces: NOT enabled on this runner (the AppArmor restriction stays in place)"
+            echo "enabled=false" >> "${GITHUB_OUTPUT:-/dev/null}"
+          fi
+      - name: Container-equivalent local run (namespace-equivalent hardening)
+        if: always()
+        run: |
+          set +e
+          python3 tools/container_local_check.py --out container-local-check.json 2>&1 | tee container-local-check.log
+          rc=${PIPESTATUS[0]}
+          set -e
+          if [ "$rc" -eq 0 ]; then
+            echo "container-local-check: PASS"
+            echo "container-local-check: PASS (the namespace-equivalent run completed)" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+          elif [ "$rc" -eq 2 ]; then
+            echo "::notice title=Container-equivalent check SKIPPED::This runner does not permit unprivileged user namespaces, so the namespace-equivalent validation was SKIPPED, not passed. The authoritative image validation is the docker-offline job."
+            echo "container-local-check: SKIPPED (this runner cannot provide unprivileged user namespaces)" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+          else
+            echo "::error title=Container-equivalent check FAILED::The namespace-equivalent run failed with exit code $rc. See container-local-check.log and the uploaded artifact."
+            echo "container-local-check: FAILED (exit $rc)" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+            exit "$rc"
+          fi
       - name: Upload offline container log
         if: always()
         uses: actions/upload-artifact@v4
@@ -88,5 +113,6 @@ jobs:
           path: |
             docker-build.log
             docker-check.log
+            container-local-check.log
             container-local-check.json
           if-no-files-found: warn

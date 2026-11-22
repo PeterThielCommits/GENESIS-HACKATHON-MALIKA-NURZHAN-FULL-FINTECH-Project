@@ -489,17 +489,24 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  ! {warning}")
         return 0 if result["status"] == "PASS" else 1
 
-        if args.command == "publish":
-            result = publish(args.image)
-            if args.json:
-                print(json.dumps(result, indent=2, sort_keys=True))
-            else:
-                print(f"image-build-info: {result['status']}")
-                for warning in result.get("warnings", []):
-                    print(f"  ! {warning}")
-                for problem in result["problems"]:
-                    print(f"  - {problem}")
-            return 0 if result["status"] in {"PASS", "UNAVAILABLE"} else 1
+    # NOTE: this branch used to sit *inside* the ``verify`` branch, after its
+    # ``return`` -- unreachable dead code.  ``publish`` therefore fell through
+    # to ``resolve()`` and died with
+    # ``AttributeError: 'Namespace' object has no attribute 'report_status'``
+    # (exit code 1), which the workflow masked with ``|| true``: the CI step
+    # named "Publish the image build provenance" never published anything.
+    # See docs/QUALITY_AUDIT/BUG_REGISTRY.md (BUG-TL-0016).
+    if args.command == "publish":
+        result = publish(args.image)
+        if args.json:
+            print(json.dumps(result, indent=2, sort_keys=True))
+        else:
+            print(f"image-build-info: {result['status']}")
+            for warning in result.get("warnings", []):
+                print(f"  ! {warning}")
+            for problem in result["problems"]:
+                print(f"  - {problem}")
+        return 0 if result["status"] in {"PASS", "UNAVAILABLE"} else 1
 
     result = resolve()
     if args.report_status:

@@ -143,7 +143,7 @@ an environment fact, not a defect.
 
 | Gate | Result |
 |---|---|
-| `make verify` | **PASS 12/12**, 625 tests, 20 artifacts |
+| `make verify` | **PASS 12/12**, 655 tests, 20 artifacts |
 | `make docs-verify` | **PASS**, 22 measured facts, 22/22 checks |
 | `make replay-all` | **PASS**, 80/80 runs, 567 steps byte-identical |
 | `make release-audit` | **PASS 6/6** (the SUBMISSION check now also verifies the base image pin) |
@@ -157,10 +157,86 @@ an environment fact, not a defect.
 * `D-18-02` — the container environment is a pinned artifact, and the build
   context is computed, not guessed;
 * `D-18-03` — the local container-equivalent run replaces "no local evidence",
-  and says what it is not.
+  and says what it is not;
+* `D-18-04` — a CI step may not mask its exit status, and an environment that
+  cannot provide the isolation is an explicit skip, never a silent pass.
 
 ## 8. Still open (unchanged, human-owned)
 
 `Q-ORG-01` / `Q-ORG-02` (organisational independence) remain open and are
 tracked by issues #13 and #16; `Q-DOC-01` remains a judgement call. No jury
 score is claimed anywhere (`official_score_claimed: false`).
+
+## 9. Close-out — the masked CI failure (`BUG-TL-0015..0017`)
+
+The release close-out audited the **successful** CI runs rather than assuming
+that a green job meant a green run. The check-run annotations of the
+`docker-offline` job carried a `Process completed with exit code 1` annotation
+on a job whose conclusion was `success`. The step timings showed why: the
+container-equivalent step's start and completion timestamps were **identical**
+(zero seconds), while a genuine execution of the same tool takes 87–154
+seconds. The step was failing before it could do any work, and the workflow
+was hiding it.
+
+### What was actually wrong
+
+| # | Defect | Effect |
+|---|---|---|
+| 1 | `tools/container_local_check.py` reported a host that **forbids** unprivileged user namespaces as a generic FAIL (exit 1) | a host that proved nothing about the image was reported as a failure of the image — and the step hid even that |
+| 2 | `.github/workflows/ci.yml` masked the exit status twice: `continue-on-error: true` on that step, `|| true` on the provenance-publish step | the job reported success; the failure existed only as an annotation on a green job |
+| 3 | The `publish` branch of `tools/docker_build_info.py main()` was indented inside the `verify` branch **after** its `return` — unreachable dead code | `publish` fell through to `resolve()` and crashed with `AttributeError: 'Namespace' object has no attribute 'report_status'`; the CI step named "Publish the image build provenance" had never published anything, and the drift comparison it was supposed to perform never ran |
+| 4 | `tools/check_workflows.py` had no policy against masking | nothing stopped defects 1–3 from being invisible |
+
+The trigger is Ubuntu 24.04's AppArmor policy
+`kernel.apparmor_restrict_unprivileged_userns=1`, which refuses
+`unshare --map-root-user --mount --net` with `Operation not permitted`. It was
+confirmed by differential measurement: a genuine run passes in 156.9 s
+(`make verify` inside the sandbox: 153.6 s, 12/12 gates), and injecting the
+refusal reproduces the failure in 1.2 s — the CI step's duration.
+
+### What changed
+
+* the tool **probes** the host with the same namespace recipe the run needs
+  and reports an environmental refusal as `UNSUPPORTED` — an explicit skip
+  with a reason and exit code **2**; a failure the probe cannot explain stays
+  a FAIL with exit code **1**;
+* the CI step handles the three outcomes explicitly (`0` = PASS, `2` =
+  SKIPPED with a `::notice::` and a job-summary line, anything else =
+  `::error::` **and a failed step**); `continue-on-error` and `|| true` are
+  gone;
+* the workflow tries to lift the AppArmor restriction on the runner
+  (`sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0`) and
+  reports whether that worked, so the real namespace-equivalent validation
+  runs where the environment permits it;
+* `publish` is reachable again, and a genuine base-image/digest drift now
+  fails the authoritative `docker-offline` job instead of passing silently;
+* `tools/check_workflows.py` gained a masking policy that `make lint`
+  enforces over the repository's own workflows;
+* `tests/judge/test_ci_masking.py` (30 tests) locks all of it, each with a
+  failing-on-old-code counterpart.
+
+The evidence artifact `docs/EVIDENCE/container-local-2026-11-22.json` now
+records the probe result and the reason, so a skipped check can never be
+read as a passed one (`REQ-JUDGE-003`).
+
+### What the first CI run of the fix found
+
+With the masking removed, the CI job `docker-offline` went **red** — which is
+the fix working: the failure is now visible instead of hidden. It was not the
+image: the new regression suite wrote a fake `unshare` script into a
+temporary directory and executed it, and the container's `/tmp` is mounted
+`noexec`, so the execution raised `PermissionError`
+(`Ran 653 tests | FAILED (failures=2, errors=4)`).
+
+Fixed by replacing the *binary* with a seam on the tool's command runner
+(`tools/container_local_check.py::_run_command`), by treating a
+non-executable `unshare` as an environmental refusal, and by adding a guard
+(`test_no_test_makes_a_temporary_file_executable`) that keeps any test from
+making a temporary file executable (`BUG-TL-0018`). Verified locally against
+the same condition: the full suite passes with `TMPDIR` on a `noexec` tmpfs,
+directly and inside the container-equivalent sandbox.
+
+The same run also confirmed the positive half of the fix: with
+`kernel.apparmor_restrict_unprivileged_userns=0` applied to the runner, the
+container-equivalent step **executed the real 70-second namespace run and
+passed** — the validation that used to be impossible in CI now runs there.

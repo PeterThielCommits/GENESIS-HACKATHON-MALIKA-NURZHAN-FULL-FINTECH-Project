@@ -1,5 +1,56 @@
 # TwinLedger — Changelog
 
+## Unreleased — the masked CI failure (post-`v1.0.3`)
+
+- **A green CI run no longer hides a failed step (`BUG-TL-0015`, `BUG-TL-0017`,
+  `D-18-04`).** The CI job `docker-offline` reported **success** while one of
+  its steps had failed with exit code 1; the only trace was a
+  `Process completed with exit code 1` annotation attached to a *successful*
+  job. Two constructs hid it — `continue-on-error: true` on the
+  container-equivalent step and `|| true` on the provenance-publish step — and
+  the static guard had no rule against either. The workflow no longer masks
+  anything: a step that fails now fails the job, and
+  `tools/check_workflows.py` gained a **masking policy** (`scan_masking()`)
+  that refuses `continue-on-error: true` and a `|| true` / `|| :` /
+  `|| exit 0` tail. `make lint` runs it over the repository's own workflows.
+- **An environment that cannot provide the isolation is now an explicit SKIP
+  (`BUG-TL-0015`, `D-18-04`).** `tools/container_local_check.py` probes the
+  host first, using the same namespace recipe the run needs (unprivileged user
+  namespace + mount + network namespace + the uid/gid mapping). A refusal that
+  is environmental — Ubuntu 24.04's AppArmor policy
+  `kernel.apparmor_restrict_unprivileged_userns=1` is the canonical case —
+  is reported as `UNSUPPORTED` with a reason and exit code **2**, never as a
+  FAIL and never as a PASS. A failure the probe cannot explain stays a FAIL
+  (exit code 1). The CI step turns exit code 2 into a `::notice::` annotation
+  and a job-summary line, and every other non-zero code into a `::error::`
+  annotation **and** a failed step. The workflow also tries to lift the
+  restriction on the runner so the real namespace-equivalent validation runs
+  where the environment permits it.
+- **The provenance publisher actually publishes (`BUG-TL-0016`).** The
+  `publish` branch of `tools/docker_build_info.py main()` was indented inside
+  the `verify` branch *after* its `return` — unreachable dead code. The
+  command therefore fell through to `resolve()` and died with
+  `AttributeError: 'Namespace' object has no attribute 'report_status'`; the
+  `|| true` hid it. The CI step named "Publish the image build provenance"
+  had never published anything, so the image's own record was never compared
+  with the committed `docs/EVIDENCE/docker-build-info.json`. The branch is
+  reachable now, the mask is gone, and a genuine base-image/digest drift
+  fails the authoritative `docker-offline` job instead of passing silently.
+- **Regression coverage:** `tests/judge/test_ci_masking.py` (30 tests) locks
+  the probe's classification, the three exit codes, the evidence's honesty
+  about a skip, the workflow's masking policy and the publisher's
+  reachability.
+- **The suite is portable to the hardened container (`BUG-TL-0018`).** The
+  first version of that suite wrote a fake `unshare` script into a temporary
+  directory and executed it — impossible inside the offline container, whose
+  `/tmp` is mounted `noexec`. The CI job went red, which is the masking fix
+  working as intended: before it, that failure would have been hidden behind
+  a green job. The tests now replace the tool's command *seam* instead of the
+  *binary*, the tool treats a non-executable `unshare` as an environmental
+  refusal, and a guard keeps any test from making a temporary file
+  executable. Verified locally with `TMPDIR` on a `noexec` tmpfs, both
+  directly and inside the container-equivalent sandbox.
+
 ## 1.0.3 — Phase 18: container hardening, pinned base image, real local container-equivalent run (2026-11-22)
 
 - **The base image is pinned by digest (TZ §22.4, `BUG-TL-0011`).** The Dockerfile

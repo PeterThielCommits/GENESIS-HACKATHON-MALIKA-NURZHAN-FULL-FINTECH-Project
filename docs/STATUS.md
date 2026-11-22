@@ -1,4 +1,4 @@
-# Project Status Matrix (Release v1.0.2)
+# Project Status Matrix (Release v1.0.3)
 
 | Phase / Track | Title | Status | Gate / Primary Evidence |
 | --- | --- | --- | --- |
@@ -19,7 +19,7 @@
 | Phase 15 | Complete Documentation & Demo (re-audit 2026-11-21) | DONE | `tools/verify_doc_claims.py`, `docs/API_USAGE.md`, `docs/POLICY_PROTOCOL.md`, `docs/DEMO.md`, `tests/judge/test_doc_claims.py`, `docs/PHASE_REPORTS/PHASE-15.md` |
 | Phase 16 | Hardened Offline Docker, Compose & CI Gate Verification | DONE (re-verified 2026-11-22, `v1.0.1`) | `Dockerfile`, `docker-compose.yml`, `.github/workflows/ci.yml`, `docs/PHASE_REPORTS/PHASE-16.md` (incl. v1.0.1 addendum); tag **`v1.0.1`** supersedes `v1.0.0` (`D-16-03`) |
 | Phase 17 | Post-Release Evidence Freeze (contract + release surface + verdicts) | DONE (deep execution 2026-11-22) | `tools/freeze_release.py`, `configs/release_freeze.json` (0747baf0…, D-12-02), `tools/evidence_freeze.py`, `tools/release_evidence.py`, `tools/check_workflows.py`, `docs/EVIDENCE/`, `docs/PHASE_REPORTS/PHASE-17.md` (D-17-02, D-17-03) |
-| Phase 18 | Container Hardening: Pinned Base Image, Computed Build Context, Local Container-Equivalent Run | DONE (2026-11-22, `v1.0.3` — tag `eb8355c…` on merge commit `e71c1b1`) | `Dockerfile` (base image pinned by digest), `.dockerignore` (Docker-anchored rules), `docker-compose.yml` (process/file-size limits), `tools/docker_context.py`, `tools/docker_build_info.py`, `tools/container_local_check.py`, `tools/check_compose_profile.py`, `tests/judge/test_docker_hardening.py`, `docs/EVIDENCE/container-local-2026-11-22.json`, `docs/EVIDENCE/docker-build-info.json`, `docs/PHASE_REPORTS/PHASE-18.md` (D-18-02, D-18-03) |
+| Phase 18 | Container Hardening: Pinned Base Image, Computed Build Context, Local Container-Equivalent Run | DONE (2026-11-22, `v1.0.3` — tag `eb8355c…` on merge commit `e71c1b1`) | **Close-out DONE (2026-11-22): the masked CI failure is fixed (`BUG-TL-0015..0017`, `D-18-04`) — no step may hide its exit status, an unusable namespace is an explicit skip, and `tools/check_workflows.py` enforces both.** | `Dockerfile` (base image pinned by digest), `.dockerignore` (Docker-anchored rules), `docker-compose.yml` (process/file-size limits), `tools/docker_context.py`, `tools/docker_build_info.py`, `tools/container_local_check.py`, `tools/check_compose_profile.py`, `tests/judge/test_docker_hardening.py`, `docs/EVIDENCE/container-local-2026-11-22.json`, `docs/EVIDENCE/docker-build-info.json`, `docs/PHASE_REPORTS/PHASE-18.md` (D-18-02, D-18-03) |
 | Official 2026-11-20 | FinTech Checks (`C01..C20`, `D01..D20`, `Block 3`, `P01..P20`, `Baselines`) | DONE | `judge_adapter.py`, `adapter/official_env.py`, `scoring/official_scorer.py`, `tests/official/` |
 
 ## Phase 11 re-audit (2026-11-21)

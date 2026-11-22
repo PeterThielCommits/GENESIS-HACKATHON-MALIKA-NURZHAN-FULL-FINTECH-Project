@@ -3,7 +3,7 @@
 Read `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/PHASE_REPORTS/PHASE-18.md`,
 `docs/PHASE_REPORTS/PHASE-17.md`, `docs/HANDOFF/phase-17-evidence-freeze.md`,
 `docs/QUESTIONS.md` (the process questions), and decisions `D-18-02`,
-`D-18-03`, `D-17-02`, `D-17-03`, `D-16-02`, `D-16-03`, `D-18-01`,
+`D-18-03`, `D-18-04`, `D-17-02`, `D-17-03`, `D-16-02`, `D-16-03`, `D-18-01`,
 `D-15-04..D-15-07` first. Then read `docs/INDEPENDENCE.md`
 ("Ownership — and an honest correction"), which is the most important
 paragraph in the repository.
@@ -24,7 +24,7 @@ v1.0.3   -> annotated tag on the merge commit of the Phase 18 PR; the recommende
 v1.0.2   -> retained for history (adds the Phase 17 evidence archive); tag unmoved
 v1.0.1   -> retained for history (image no longer ships sealed truth, D-16-02); tag unmoved
 v1.0.0   -> retained for history; superseded for submission; tag unmoved
-make verify                                          -> 12/12 gates, 625 tests, 20 artifacts
+make verify                                          -> 12/12 gates, 655 tests, 20 artifacts
 make docs-verify                                     -> 22 measured facts, 22 checks
 make replay-all                                      -> 80/80 runs, 567 steps byte-identical
 make release-audit                                   -> 6/6 PASS
@@ -35,7 +35,36 @@ python3 tools/freeze_release.py --verify             -> 30 frozen files intact, 
 python3 tools/evidence_freeze.py --verify            -> release surface intact (one aggregate digest)
 python3 tools/evidence_freeze.py --verify --require-reports -> + archived gate verdicts (CI gate)
 python3 tools/release_evidence.py --verify           -> release archive honest and self-consistent
+python3 tools/check_workflows.py                    -> every workflow parses AND masks nothing (no continue-on-error, no `|| true`)
 ```
+
+### The CI close-out (read this before trusting a green CI run)
+
+A green CI run used to be able to hide a failed step. The `docker-offline` job
+reported **success** while the container-equivalent step had failed with exit
+code 1; the only trace was a `Process completed with exit code 1` annotation on
+a *successful* job. Three defects were behind it (`BUG-TL-0015..0017`,
+`D-18-04`):
+
+* the workflow masked the exit status twice (`continue-on-error: true` and
+  `|| true`), and `tools/check_workflows.py` had no rule against either;
+* `tools/container_local_check.py` reported a host that *forbids* unprivileged
+  user namespaces (Ubuntu 24.04 AppArmor) as a generic FAIL;
+* the `publish` subcommand of `tools/docker_build_info.py` was unreachable
+  dead code, so the CI step named "Publish the image build provenance" had
+  never published anything.
+
+All three are fixed: a failing step now fails the job, an environment that
+cannot provide the isolation is an explicit **skip** (exit code 2, with a
+reason), and the static guard enforces both. If you add a workflow step,
+**do not** hide a failure — handle it explicitly and report it.
+
+One more trap, found by that very CI run: the suite also runs inside the
+hardened image, whose `/tmp` is mounted **`noexec`**. A test that writes a
+fake executable into a temporary directory and runs it fails there
+(`BUG-TL-0018`). Replace the *call* (the tools expose `_run_command()` as a
+seam) rather than the *binary*; `test_no_test_makes_a_temporary_file_executable`
+guards this.
 
 ### What is still not provable here (read this before claiming anything)
 

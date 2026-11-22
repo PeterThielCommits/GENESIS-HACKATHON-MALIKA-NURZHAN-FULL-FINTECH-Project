@@ -1,21 +1,18 @@
 {
   "artifact": "container-local-check",
   "build_context": {
-    "bytes": 3835905,
-    "copied_files": 556,
-    "digest_sha256": "c306345b7c4d564c723955c4e5fdd215b19e22f9a504d4d723dc9b21db8bd434",
-    "files": 556,
+    "bytes": 3931139,
+    "copied_files": 559,
+    "digest_sha256": "a742a958850c1464ac772eddac9534927873713103ce1eebab5b692491d576ba",
+    "files": 559,
     "forbidden_paths": [],
+    "materialised": true,
     "missing_required_paths": []
   },
   "container_run": {
-    "capabilities_effective": "0 (all dropped)",
     "exit_code": 0,
-    "gid": 10001,
-    "network": "isolated network namespace (no route out)",
-    "no_new_privs": true,
-    "output_sha256": "fb3fdd989b80d7de16e6aca71cc67a6767e79b5a703ba2568f81f7dd6299e75c",
-    "output_tail": "--- container preflight\nuid=10001 gid=10001\nCapInh:\t0000000000000000\nCapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapAmb:\t0000000000000000\nNoNewPrivs:\t1\nimage tree: read-only (ok)\nreport dir: writable (ok)\nnetwork: no route out (ok)\n--- container command\nimport boundary scan: CLEAN (REQ-ARC-001..007)\nworkflow check: PASS (every workflow file is well formed)\ncompose profile: PASS (verify, policy-sandbox, env-sandbox)\n[PASS] RC-001 (REQ-CONTRACT-001) (54.95s) -> artifacts/reports/latest/verify_summary.json\n[PASS] RC-002 (REQ-ARC-001) (0.59s) -> artifacts/reports/latest/verify_summary.json\n[PASS] RC-003 (REQ-CONTRACT-010) (0.22s) -> artifacts/reports/latest/verify_summary.json\n[PASS] RC-004 (OFFICIAL-2026-11-20) (6.54s) -> artifacts/reports/latest/verify_summary.json\n[PASS] RC-005 (REQ-SEAL-030) (7.47s) -> artifacts/reports/latest/replay_report.json\n[PASS] RC-006 (REQ-NLP-004) (4.45s) -> artifacts/reports/latest/robustness_report.json\n[PASS] RC-007 (REQ-ARENA-001) (2.93s) -> artifacts/reports/latest/reward_strategy_report.json\n[PASS] RC-008 (REQ-SHORTCUT-001) (4.47s) -> artifacts/reports/latest/shortcut_audit.json\n[PASS] RC-009 (REQ-LEAK-001) (0.94s) -> artifacts/reports/latest/canary_fuzz_report.json\n[PASS] RC-010 (REQ-TEST-002) (0.17s) -> artifacts/reports/latest/mutation_test_report.json\n[PASS] RC-011 (REQ-TEST-004) (3.41s) -> artifacts/reports/latest/metamorphic_report.json\n[PASS] RC-012 (REQ-OPS-001) (0.56s) -> artifacts/reports/latest/performance_report.json\nverify: artifacts pending synthesis before report step: verify_summary.json, verify_summary.txt\nreport: synthesized report.html + report_index.json (20 artifacts)\nverify: documentation claims PASS (docs match measured artifacts)\nverify: PASS (86.696s) - artifacts/reports/latest/verify_summary.json",
+    "output_sha256": "60ab8c0a1d44f9bdcad7b531d923991b6700684707dbb21e6cc4e7e0f3b8ad33",
+    "output_tail": "--- container preflight\nuid=10001 gid=10001\nCapInh:\t0000000000000000\nCapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapAmb:\t0000000000000000\nNoNewPrivs:\t1\nimage tree: read-only (ok)\nreport dir: writable (ok)\nnetwork: no route out (ok)\n--- container command\nimport boundary scan: CLEAN (REQ-ARC-001..007)\nworkflow check: PASS (every workflow file is well formed)\ncompose profile: PASS (verify, policy-sandbox, env-sandbox)\n[PASS] RC-001 (REQ-CONTRACT-001) (90.67s) -> artifacts/reports/latest/verify_summary.json\n[PASS] RC-002 (REQ-ARC-001) (0.84s) -> artifacts/reports/latest/verify_summary.json\n[PASS] RC-003 (REQ-CONTRACT-010) (0.34s) -> artifacts/reports/latest/verify_summary.json\n[PASS] RC-004 (OFFICIAL-2026-11-20) (10.53s) -> artifacts/reports/latest/verify_summary.json\n[PASS] RC-005 (REQ-SEAL-030) (9.62s) -> artifacts/reports/latest/replay_report.json\n[PASS] RC-006 (REQ-NLP-004) (5.08s) -> artifacts/reports/latest/robustness_report.json\n[PASS] RC-007 (REQ-ARENA-001) (3.60s) -> artifacts/reports/latest/reward_strategy_report.json\n[PASS] RC-008 (REQ-SHORTCUT-001) (9.90s) -> artifacts/reports/latest/shortcut_audit.json\n[PASS] RC-009 (REQ-LEAK-001) (1.16s) -> artifacts/reports/latest/canary_fuzz_report.json\n[PASS] RC-010 (REQ-TEST-002) (0.35s) -> artifacts/reports/latest/mutation_test_report.json\n[PASS] RC-011 (REQ-TEST-004) (5.76s) -> artifacts/reports/latest/metamorphic_report.json\n[PASS] RC-012 (REQ-OPS-001) (1.00s) -> artifacts/reports/latest/performance_report.json\nverify: artifacts pending synthesis before report step: verify_summary.json, verify_summary.txt\nreport: synthesized report.html + report_index.json (20 artifacts)\nverify: documentation claims PASS (docs match measured artifacts)\nverify: PASS (138.864s) - artifacts/reports/latest/verify_summary.json",
     "produced_artifact_count": 20,
     "produced_artifacts": [
       "canary_fuzz_report.json",
@@ -39,18 +36,12 @@
       "verify_summary.json",
       "verify_summary.txt"
     ],
-    "read_only_image_tree": true,
-    "status": "PASS",
-    "uid": 10001,
-    "writable_paths": [
-      "artifacts/reports/latest",
-      "artifacts/reports/doc_claims",
-      "artifacts/trajectories"
-    ]
+    "status": "PASS"
   },
   "container_runtime_available_locally": false,
-  "generated_at_utc": "2026-11-22T16:42:07Z",
-  "git_sha": "7ba87b1e79e55aece9719220b664dbfc1b948b4e",
+  "finished_at_utc": "2026-11-22T17:51:39Z",
+  "generated_at_utc": "2026-11-22T17:49:17Z",
+  "git_sha": "0bdbf62d22451813a90a7852bb61f6e8868586d8",
   "image_build_steps": {
     "compileall": "ok",
     "report_dirs": [
@@ -59,9 +50,22 @@
       "artifacts/trajectories"
     ]
   },
-  "method": "tools/container_local_check.py: the image is materialised from the build context (.dockerignore rules applied with Docker's own path semantics) and the Dockerfile's offline build steps, then the container command runs in an unprivileged user+mount+network namespace as uid 10001 with no capabilities, no_new_privs, a read-only image tree and tmpfs over the writable paths.",
-  "official_score_claimed": false,
-  "purpose": "Local evidence that the *image* the submission ships behaves like the CI container: the build context is materialised with Docker's own ignore semantics, the image's offline build steps run, and the container command (`make verify`) executes as uid 10001 with no capabilities, no_new_privs, a read-only image tree and tmpfs over the writable paths.",
-  "schema_version": "1.0.0",
-  "scope_statement": "This artifact does NOT prove that `docker build` succeeds: the execution host has no container runtime and no registry access (docker, podman, buildah, nerdctl, ctr, runc, containerd absent; registry-1.docker.io, ghcr.io, quay.io unreachable - probed 2026-11-22), so the base image cannot be pulled. The Docker image build and the real `docker run --network=none --read-only --cap-drop ALL` remain CI-authoritative (job docker-offline). What this artifact proves is (a) the effective build context is free of sealed truth, key material, VCS metadata and stale bytecode, (b) the image's offline build steps succeed, and (c) the container's command passes with the CI hardening applied through unprivileged user, mount and network namespaces."
+  "method": "tools/container_local_check.py: a namespace capability probe first checks that the host can provide the isolation (unprivileged user namespace + mount + network namespace + the uid/gid mapping); the image is then materialised from the build context (.dockerignore rules applied with Docker's own path semantics) and the Dockerfile's offline build steps, and the container command runs in an unprivileged user+mount+network namespace as uid 10001 with no capabilities, no_new_privs, a read-only image tree and tmpfs over the writable paths.",
+  "namespace_support": {
+    "detail": "",
+    "environmental": false,
+    "probe_command": [
+      "unshare",
+      "--map-root-user",
+      "--mount",
+      "--net",
+      "sh",
+      "-c",
+      "unshare --map-root-user --mount --net sh -c 'unshare --map-user=10001 --map-group=10001 -- true'"
+    ],
+    "reason": "",
+    "supported": true
+  },
+  "scope": "This is a CONTAINER-EQUIVALENT local run, NOT a Docker build: no container runtime and no registry access are available on this host, so the base image cannot be pulled and `docker build` cannot run. The Docker gate (make docker-build + make docker-check-container, CI job docker-offline) remains authoritative for the image.",
+  "status": "PASS"
 }

@@ -26,6 +26,13 @@ What this tool checks
    regex can catch reliably, and the tool must work with the standard
    library alone (the hardened offline container has no third-party
    packages).
+3. **Masking policy**: a workflow step must never hide a non-zero exit
+   status. Two constructs do that -- ``continue-on-error: true`` and a
+   ``|| true`` / ``|| :`` / ``|| exit 0`` tail on a command. Both make a
+   failing step report success, which is how a real defect (an
+   unusable namespace, a crashing provenance publisher) stayed invisible
+   behind a green CI run. A step that must tolerate a failure has to
+   handle it explicitly and *report* it.
 
 Exit codes (TZ 23.3 style):
   0  every workflow file is well formed
@@ -106,6 +113,53 @@ def parse_with_pyyaml(path: Path, text: str) -> list[str]:
 #: A top-level ``jobs:`` mapping. A workflow without one runs nothing.
 _JOBS_KEY = re.compile(r"^jobs:\s*(?:#.*)?$", re.MULTILINE)
 
+# --------------------------------------------------------------------------- #
+# masking policy
+# --------------------------------------------------------------------------- #
+#: ``continue-on-error: true`` makes a failing step report success. The
+#: value may be a literal or an expression; neither can be verified
+#: statically, so both are reported.
+_CONTINUE_ON_ERROR = re.compile(
+    r"^(?P<indent>[ \t]*)continue-on-error:[ \t]*(?P<value>.+?)[ \t]*$", re.MULTILINE
+)
+
+#: Literal values that enable the masking.
+_TRUTHY = {"true", "yes", "on", "1"}
+
+#: A command tail that swallows a non-zero exit status. ``|| true`` is the
+#: classic; ``|| :`` and ``|| exit 0`` do the same thing.
+_MASKED_STATUS = re.compile(r"\|\|[ \t]*(?:true\b|:|exit[ \t]+0\b)")
+
+
+def scan_masking(path: Path, text: str) -> list[str]:
+    """Return the masking constructs found in ``text``.
+
+    A masked failure is worse than a red build: the job is green, the
+    evidence looks clean, and the defect is only visible as a stray error
+    annotation in the UI. Both masking constructs are therefore refused.
+    """
+    problems: list[str] = []
+    for number, line in enumerate(text.splitlines(), start=1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        match = _CONTINUE_ON_ERROR.match(line)
+        if match:
+            value = match.group("value").strip().strip("'\"")
+            if value.lower() in _TRUTHY or value.startswith("${{"):
+                problems.append(
+                    f"{path.name}:{number}: 'continue-on-error: {match.group('value').strip()}' "
+                    "hides the step's exit status - a failing step would report success"
+                )
+            continue
+        if _MASKED_STATUS.search(line):
+            problems.append(
+                f"{path.name}:{number}: the command masks a non-zero exit status "
+                f"({stripped[:70]!r}) - handle the failure explicitly and report it "
+                "instead of hiding it"
+            )
+    return problems
+
 
 def check_workflows(workflow_dir: Path = WORKFLOW_DIR, optional: bool = False) -> list[str]:
     """Check every workflow file; return the list of problems (empty = OK).
@@ -128,6 +182,7 @@ def check_workflows(workflow_dir: Path = WORKFLOW_DIR, optional: bool = False) -
         text = path.read_text(encoding="utf-8")
         problems.extend(parse_with_pyyaml(path, text))
         problems.extend(scan_text(path, text))
+        problems.extend(scan_masking(path, text))
         if not _JOBS_KEY.search(text):
             problems.append(f"{path.name}: no top-level 'jobs:' mapping - the workflow would run nothing")
     return problems
