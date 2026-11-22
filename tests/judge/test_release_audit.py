@@ -125,6 +125,57 @@ class TestForbiddenPaths(unittest.TestCase):
         self.assertEqual(ra.audit_forbidden_files(allowed)["status"], "PASS")
 
 
+class TestFileListWithoutGit(unittest.TestCase):
+    """The offline image excludes .git, so the audit must work without it.
+
+    Found by running `make verify` from a release tarball: the audit returned an
+    ERROR report with no `official_score_claimed` key, which failed the report
+    contract. The image is a submission artefact, so this is not an edge case.
+    """
+
+    def test_filesystem_walk_finds_files_without_git(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "pkg").mkdir()
+            (root / "pkg" / "mod.py").write_text("x = 1\n", encoding="utf-8")
+            saved = ra.REPO_ROOT
+            ra.REPO_ROOT = root
+            try:
+                files = ra._walk_fallback()
+            finally:
+                ra.REPO_ROOT = saved
+        self.assertEqual(files, ["pkg/mod.py"])
+
+    def test_walk_excludes_ignored_directories_and_bytecode(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            for rel in ("__pycache__/x.pyc", ".git/config", "build/out.bin", "keep.json"):
+                path = root / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("{}", encoding="utf-8")
+            saved = ra.REPO_ROOT
+            ra.REPO_ROOT = root
+            try:
+                files = ra._walk_fallback()
+            finally:
+                ra.REPO_ROOT = saved
+        self.assertEqual(files, ["keep.json"])
+
+    def test_error_report_still_carries_the_envelope(self):
+        with tempfile.TemporaryDirectory() as td:
+            saved = ra.REPO_ROOT
+            ra.REPO_ROOT = Path(td)
+            try:
+                report = ra.run_audit()
+            finally:
+                ra.REPO_ROOT = saved
+        self.assertEqual(report["status"], "ERROR")
+        self.assertEqual(report["exit_code"], 2)
+        self.assertIn("official_score_claimed", report)
+        self.assertFalse(report["official_score_claimed"])
+        self.assertIn("schema_version", report)
+
+
 class TestSizeBudget(unittest.TestCase):
     def test_budget_constants_are_sane(self):
         self.assertLessEqual(ra.MAX_SINGLE_FILE_BYTES, ra.MAX_PACKAGE_BYTES)

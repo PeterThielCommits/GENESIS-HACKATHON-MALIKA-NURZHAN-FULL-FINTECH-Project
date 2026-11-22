@@ -19,7 +19,7 @@ Working directory inside the container: `/app`. Zero external `pip` packages or
 network access are required.
 
 ```bash
-make verify            # lint + full 12-gate Judge Kit (RC-001..RC-012) + 474 tests + 20 evidence artifacts
+make verify            # lint + full 12-gate Judge Kit (RC-001..RC-012) + 477 tests + 20 evidence artifacts
 make verify-core       # fast critical core & release-blocker gates (RC-001..005, RC-009)
 make test-official     # official Genesis FinTech 2026-11-20 mirror suite (Blocks 1..5: C01..C20, D01..D20, Block 3 #1..20 + M01..M12, P01..P20, Baselines) — 55 official mirror tests
 make replay            # fresh-process CLOSED_EVAL trajectory & Merkle receipt replay + paired P01..P20
@@ -143,7 +143,7 @@ python3 tools/verify_doc_claims.py   # re-measures and diffs this documentation
 ```
 
 Current measured state of this release (see the generated block for the full set):
-**12/12 PASS** verification gates, **474 tests**, **5/5 byte-identical replays**,
+**12/12 PASS** verification gates, **477 tests**, **5/5 byte-identical replays**,
 **0 canary hits**, `official_score_claimed: false`.
 
 <!-- BEGIN GENERATED:measured-facts -->
@@ -156,7 +156,7 @@ Current measured state of this release (see the generated block for the full set
 |---|---|---|
 | Verification gates defined (RC-001..RC-012) | **12** | `verify_summary.json` |
 | Official organiser score claimed | **false** | `verify_summary.json` |
-| Total tests in the verification suite | **474** | `verify_summary.json → RC-001` |
+| Total tests in the verification suite | **477** | `verify_summary.json → RC-001` |
 | Official mirror tests (Blocks 1–5) | **55** | `verify_summary.json → RC-004` |
 | Evidence artifacts indexed | **20** | `report_index.json` |
 | Required artifacts missing | **0** | `report_index.json` |

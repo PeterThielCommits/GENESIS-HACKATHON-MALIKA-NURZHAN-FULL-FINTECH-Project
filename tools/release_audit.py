@@ -114,12 +114,47 @@ def _say(message: str) -> None:
         print(text.encode("ascii", "replace").decode("ascii"))
 
 
-def tracked_files() -> list[str]:
-    """Return the release file list as Git sees it.
+# Directories that are never part of the shipped tree. Mirrors .dockerignore:
+# the offline image is built from this tree with .git excluded, so the image is
+# itself a submission artefact and must be auditable.
+NOT_SHIPPED_DIRS = {
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "node_modules",
+    "build",
+    "dist",
+}
+NOT_SHIPPED_SUFFIXES = (".pyc", ".pyo")
 
-    Using Git (not a directory walk) is the point: the submission package is the
-    tracked tree, so untracked scratch files must not influence the audit.
+
+def _walk_fallback() -> list[str]:
+    """File list for a tree with no Git metadata (tarball, Docker image).
+
+    `git ls-files` is preferred because it is exactly the submission package.
+    But the offline image is built with `.dockerignore` excluding `.git`, and a
+    release tarball has none either, so an audit that only worked in a checkout
+    would be unusable precisely where it matters most.
     """
+    out: list[str] = []
+    for path in sorted(REPO_ROOT.rglob("*")):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(REPO_ROOT)
+        if any(part in NOT_SHIPPED_DIRS for part in rel.parts):
+            continue
+        if path.suffix in NOT_SHIPPED_SUFFIXES:
+            continue
+        out.append(str(rel).replace(os.sep, "/"))
+    return out
+
+
+def tracked_files() -> list[str]:
+    """Return the release file list, from Git when available."""
     result = subprocess.run(
         ["git", "ls-files", "-z"],
         cwd=str(REPO_ROOT),
@@ -127,8 +162,9 @@ def tracked_files() -> list[str]:
         check=False,
     )
     if result.returncode != 0:
-        return []
-    return [p for p in result.stdout.decode("utf-8", "replace").split("\0") if p]
+        return _walk_fallback()
+    files = [p for p in result.stdout.decode("utf-8", "replace").split("\0") if p]
+    return files if files else _walk_fallback()
 
 
 # ---------------------------------------------------------------------------
@@ -467,10 +503,16 @@ def run_audit() -> dict[str, Any]:
     files = tracked_files()
     if not files:
         return {
+            "schema_version": "1.0.0",
+            "report_type": "release_audit",
+            "code_version": "twinledger@1.0.0",
+            "phase": "16",
             "status": "ERROR",
             "checks": [],
-            "error": "release_audit must run inside a Git checkout (git ls-files returned nothing)",
+            "error": "no files found: neither a Git checkout nor a readable tree",
+            "failed": ["FILELIST"],
             "exit_code": 2,
+            "official_score_claimed": False,
         }
     checks = [
         audit_secrets(files),
