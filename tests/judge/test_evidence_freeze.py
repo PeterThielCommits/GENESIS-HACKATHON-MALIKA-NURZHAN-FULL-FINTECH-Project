@@ -150,7 +150,8 @@ class TestEvidenceFreezeVerdicts(unittest.TestCase):
         )
         self.assertNotEqual(good, bad)
 
-    def test_required_report_missing_is_an_error(self) -> None:
+    def test_required_report_missing_is_an_error_in_the_release_gate(self) -> None:
+        """The release gate (CI) requires the archived reports to be present."""
         with tempfile.TemporaryDirectory() as td:
             repo, manifest = _make_tree(Path(td))
             doc = evidence_freeze.compute_manifest(repo)
@@ -163,9 +164,34 @@ class TestEvidenceFreezeVerdicts(unittest.TestCase):
                 "verdict": {"status": "PASS"},
             }
             manifest.write_text(json.dumps(doc, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-            ok, errs = evidence_freeze.verify_manifest(manifest, repo)
+            ok, errs = evidence_freeze.verify_manifest(manifest, repo, require_reports=True)
             self.assertFalse(ok)
             self.assertTrue(any("report missing" in e for e in errs))
+
+    def test_bare_checkout_verifies_the_release_surface(self) -> None:
+        """Without the generated reports the release surface must still verify.
+
+        The archived digest identifies the tracked release files only, so a
+        fresh clone can prove "this is the released tree" before any artifact
+        has been produced.
+        """
+        with tempfile.TemporaryDirectory() as td:
+            repo, manifest = _make_tree(Path(td))
+            doc = evidence_freeze.compute_manifest(repo)
+            manifest.write_text(json.dumps(doc, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            ok, errs = evidence_freeze.verify_manifest(manifest, repo)
+            self.assertTrue(ok, errs)
+
+    def test_aggregate_digest_ignores_report_presence(self) -> None:
+        """The digest covers the release surface, not the generated artifacts."""
+        with tempfile.TemporaryDirectory() as td:
+            repo, _ = _make_tree(Path(td))
+            before = evidence_freeze.compute_manifest(repo)["aggregate_sha256"]
+            report = repo / evidence_freeze.REQUIRED_REPORTS["verify_summary"]
+            report.parent.mkdir(parents=True, exist_ok=True)
+            report.write_text(json.dumps({"status": "PASS"}) + "\n", encoding="utf-8")
+            after = evidence_freeze.compute_manifest(repo)["aggregate_sha256"]
+            self.assertEqual(before, after)
 
     def test_optional_report_absent_is_not_an_error(self) -> None:
         with tempfile.TemporaryDirectory() as td:

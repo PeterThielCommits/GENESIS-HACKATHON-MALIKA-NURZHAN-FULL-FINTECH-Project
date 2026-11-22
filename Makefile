@@ -99,7 +99,7 @@ evidence-write: ## Phase 17: archive the release surface (code+config hashes) an
 	@$(PYTHON) tools/evidence_freeze.py --write
 
 evidence-verify: ## Phase 17: verify the committed evidence freeze against the working tree (TZ 17.1-17.3)
-	@$(PYTHON) tools/evidence_freeze.py --verify
+	@$(PYTHON) tools/evidence_freeze.py --verify --require-reports
 
 rc-check: ## Release candidate gate (TZ 16.2/16.4/16.5/16.6, 17.1-17.3): verify + docs + replay + audit + evidence
 	@$(MAKE) --no-print-directory verify

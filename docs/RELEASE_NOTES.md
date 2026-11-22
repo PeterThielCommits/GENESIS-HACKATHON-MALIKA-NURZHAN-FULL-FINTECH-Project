@@ -43,7 +43,7 @@ results**, never a jury score (Master TZ §23.6).
    commands whose scripts exist. The contract freeze became a **test**
    (`tests/judge/test_release_freeze.py`): a frozen file cannot move without a
    failing suite and an approved CR.
-4. **Three defects in published evidence fixed (`D-17-03`)** — all non-frozen,
+4. **Four defects in published evidence fixed (`D-17-03`) — all non-frozen,
    each with a regression test that fails on the old code:
    - **BUG-TL-0005 (P1):** the reward-property matrix published the *superseded
      provisional formula* and `provisional: true`, although every number in it
@@ -58,6 +58,12 @@ results**, never a jury score (Master TZ §23.6).
    - **BUG-TL-0007 (P3):** stale "provisional / pending Q-005" wording in
      `scoring/matcher.py` and in a property-test comment, although `Q-005` was
      resolved on 2026-11-20.
+   - **BUG-TL-0008 (P2):** the documentation gate's artifact contract named
+     `replay_all_report.json` — a file that **does not exist** (the real one is
+     `trajectory_replay.json`) — and omitted `reward_property_matrix.json`,
+     which is part of the published 20-file evidence set. A *correct* citation
+     was therefore reported as a phantom path. The contract is now derived from
+     the producers.
 5. **Documentation.** The Phase 17 report was rewritten;
    `docs/HANDOFF/phase-17-evidence-freeze.md` was added; `docs/STATUS.md`,
    `docs/CURRENT_STATE.md`, `docs/CONTEXT/NEXT_AGENT.md`, `docs/LIMITATIONS.md`
@@ -80,9 +86,14 @@ The **Phase 17** layer adds three more, all offline and stdlib-only:
 
 ```bash
 python3 tools/freeze_release.py --verify     # 30 frozen contract surfaces
-python3 tools/evidence_freeze.py --verify    # the whole release surface + verdicts
+python3 tools/evidence_freeze.py --verify    # the whole release surface
 python3 tools/release_evidence.py --verify   # the reconstructable release archive
 ```
+
+`tools/evidence_freeze.py --verify` works on a bare clone: the archived digest
+covers the tracked release files only. Add `--require-reports` (the CI and
+`make rc-check` gate) to also compare the archived gate verdicts against a
+fresh `make verify` run.
 
 ---
 
@@ -91,7 +102,7 @@ python3 tools/release_evidence.py --verify   # the reconstructable release archi
 | Measurement | Value | Where |
 |---|---|---|
 | Judge Kit gates | **12/12 PASS** | `artifacts/reports/latest/verify_summary.json` |
-| Test suite | **582 tests** (1 optional skip) | unittest discovery over `tests/` |
+| Test suite | **584 tests** (1 optional skip) | unittest discovery over `tests/` |
 | Trajectory replay | **80/80 runs, 567 steps byte-identical** | `make replay-all` |
 | Release audit | **6/6 PASS** | `make release-audit` |
 | Documentation claims | **22 measured facts, 22/22 checks PASS** | `make docs-verify` |

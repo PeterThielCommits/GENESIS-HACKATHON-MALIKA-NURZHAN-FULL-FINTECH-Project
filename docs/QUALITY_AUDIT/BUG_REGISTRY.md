@@ -445,6 +445,78 @@ this class is `C-REWARD` (prose) plus the artifact sweep in
 
 ---
 
+## BUG-TL-0008 — The documentation gate's artifact contract named a file nobody produces
+
+| Field | Value |
+|---|---|
+| Severity | **P2** (the documentation gate could not tell truth from fiction) |
+| Category | Verification gate / phantom path |
+| Status | **VERIFIED FIXED** |
+| Discovered by | Phase 17 deep audit: reading `tools/verify_doc_claims.py` `C-PATHS` against the actual producers |
+| Files affected | `tools/verify_doc_claims.py`, `tests/judge/test_doc_claims.py` |
+
+### Symptom
+
+`C-PATHS` compares the file paths published in the documentation with the
+filesystem. Its contract for the generated directories was a hand-written
+list:
+
+```python
+extra = {
+    "doc_claims_report.json",
+    "release_audit.json",
+    "replay_all_report.json",   # no producer writes this file
+    "official_eval_summary.json",
+    "performance_report.json",
+}
+```
+
+Two consequences:
+
+1. `replay_all_report.json` **does not exist** — `make replay-all` writes
+   `artifacts/reports/release/trajectory_replay.json`. A document citing the
+   real file would have been reported as a *phantom path*, and the contract
+   advertised a file that is never produced.
+2. `reward_property_matrix.json` was **missing** from the contract, although
+   it is part of the published evidence set (20 artifacts, `D-15-03`) and is
+   written by `scoring.diagnostics.build_reward_property_matrix`. A document
+   citing it was falsely reported as a phantom path as well — the gate was
+   wrong in both directions.
+
+### Impact
+
+The documentation gate either blocked a correct document or accepted a
+document naming a file that does not exist. It made `make docs-verify`
+unreliable exactly where it claims to be a gate: the set of published
+artifacts.
+
+### Root cause
+
+The contract was a second literal, maintained by hand, while the producers
+were code. Nothing compared the two.
+
+### Fix
+
+The contract is now **derived from the producers**:
+
+- the `artifacts/reports/latest/` set is read out of
+  `judge/verify.py::REQUIRED_FULL_ARTIFACTS` (unchanged) and explicitly
+  extended with `reward_property_matrix.json`, whose producer is the
+  reward-property suite, not `judge/verify.py`;
+- the other directories name exactly what their producers write:
+  `doc_claims_report.json`, `release_audit.json` **and**
+  `trajectory_replay.json` (not `replay_all_report.json`),
+  `official_eval_summary.json`, `trajectories.jsonl`.
+
+### Regression evidence
+
+`tests/judge/test_doc_claims.py::test_generated_artifact_contract_matches_the_producers`
+builds the contract and compares it with the file names the producers
+actually write; it fails on the old contract (`replay_all_report.json`
+missing / `reward_property_matrix.json` absent) and passes on the new one.
+
+---
+
 ## Summary
 
 | ID | Severity | Component | Status |
@@ -456,6 +528,7 @@ this class is `C-REWARD` (prose) plus the artifact sweep in
 | BUG-TL-0005 | P1 | `scoring/diagnostics.py` (published formula) | VERIFIED FIXED |
 | BUG-TL-0006 | P2 | `judge/robustness_audit.py` (score contract) | VERIFIED FIXED |
 | BUG-TL-0007 | P3 | `scoring/matcher.py` (docstring) | VERIFIED FIXED |
+| BUG-TL-0008 | P2 | `tools/verify_doc_claims.py` (artifact contract) | VERIFIED FIXED |
 
 No claim is made that no bugs remain. Checks that were executed without
 finding a defect are listed in `FIX_VERIFICATION_MATRIX.md`, and residual

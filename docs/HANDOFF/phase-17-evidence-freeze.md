@@ -32,12 +32,12 @@ From a clean checkout of the release tag:
 
 ```bash
 python3 tools/freeze_release.py --verify      # 30 frozen contract surfaces
-python3 tools/evidence_freeze.py --verify     # whole release surface + verdicts
-python3 tools/release_evidence.py --verify    # the release-evidence archive
 make verify                                   # 12/12 Judge Kit gates
 make docs-verify                              # 22 measured facts, 22 checks
 make replay-all                               # 80/80 runs, 567 steps
 make release-audit                            # secrets/size/deps/entrypoint
+python3 tools/evidence_freeze.py --verify --require-reports   # surface + verdicts
+python3 tools/release_evidence.py --verify --strict           # the release-evidence archive
 python3 -m unittest discover -s tests -t .    # the full suite
 ```
 
@@ -45,6 +45,16 @@ Everything is offline, stdlib-only and deterministic. The same list, with the
 measured outcome of each command, is archived in
 `docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json`
 (`reconstruct.commands` + `gates`).
+
+**Bare checkout vs. full gate.** `python3 tools/evidence_freeze.py --verify`
+(produced by `make evidence-verify`) checks the **release surface** — every
+tracked file's SHA-256 and the aggregate digest — and needs nothing but the
+repository, so a fresh clone can prove "this is the released tree" before any
+artifact exists. The archived gate **verdicts** are compared additionally only
+when the reports are present; `--require-reports` (used by CI and
+`make rc-check`, where `make verify` has just run) turns a missing report into
+an error. This split keeps the archive checkable on a bare clone without
+weakening the release gate.
 
 ## 3. What is archived, and where
 

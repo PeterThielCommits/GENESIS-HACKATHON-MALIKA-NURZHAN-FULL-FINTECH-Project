@@ -233,7 +233,7 @@ were not archived anywhere.
   `docs/HANDOFF/phase-17-evidence-freeze.md` + `docs/CONTEXT/NEXT_AGENT.md` +
   the machine-checked `reconstruct.commands` list in the archive.
 
-**Three real defects were found and fixed while auditing the published
+**Four real defects were found and fixed while auditing the published
 evidence** (all non-frozen; each with a regression test that fails on the old
 code):
 
@@ -242,6 +242,7 @@ code):
 | BUG-TL-0005 | P1 | `reward_property_matrix.json` published the **superseded provisional formula** and `provisional: true` although every number in it had been computed by the official implementation since `D-18-01` |
 | BUG-TL-0006 | P2 | `robustness_report.json` published `score_contract: "scoring.reward (internal provisional; not official_scorer)"` — false since `D-18-01` made `scoring.official_scorer` the single implementation |
 | BUG-TL-0007 | P3 | stale "provisional / pending Q-005" wording in `scoring/matcher.py` and in a property-test comment, although `Q-005` was resolved on 2026-11-20 |
+| BUG-TL-0008 | P2 | the documentation gate's artifact contract named `replay_all_report.json` (a file that does not exist; the real file is `trajectory_replay.json`) and omitted `reward_property_matrix.json`, so a correct citation was reported as a phantom path |
 
 The published reward contract is now **derived, never re-typed**
 (`scoring/official_scorer.official_formula_text()` → `scoring.reward.FORMULA`

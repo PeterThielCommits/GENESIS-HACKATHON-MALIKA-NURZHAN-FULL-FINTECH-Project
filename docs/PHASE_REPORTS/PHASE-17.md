@@ -95,12 +95,12 @@ rubric map and the decision register — and states:
 
 ```
 python3 tools/freeze_release.py --verify
-python3 tools/evidence_freeze.py --verify
-python3 tools/release_evidence.py --verify
 make verify
 make docs-verify
 make replay-all
 make release-audit
+python3 tools/evidence_freeze.py --verify --require-reports
+python3 tools/release_evidence.py --verify --strict
 python3 -m unittest discover -s tests -t .
 ```
 
@@ -127,7 +127,7 @@ procedure is in `docs/HANDOFF/phase-17-evidence-freeze.md` §4.
 ## 3. Defects found while auditing the published evidence
 
 The Phase 17 sweep read every **published** artifact and doc against the
-decisions the repository had already taken. It found three places where the
+decisions the repository had already taken. It found four places where the
 published text contradicted the live implementation — the same failure mode as
 BUG-TL-0001 (a second copy of the reward formula), one level up: the *numbers*
 were migrated, the *label* was not.
@@ -137,6 +137,7 @@ were migrated, the *label* was not.
 | BUG-TL-0005 | P1 | `reward_property_matrix.json` published `"formula": "R = max(0, F1 - eta * steps_used / max_steps)"` and `"provisional": true`, although every number in it had been computed by the official implementation since `D-18-01` (a clean honest run at 20 steps reads `24/25`, which is `clip([-1,1], 2*F1-1-0.2*steps/100)`; the superseded formula would have read `0.99`) | the published formula is now **derived** from the live constants: `scoring/official_scorer.official_formula_text()` → `scoring.reward.FORMULA` → the matrix; the matrix publishes `provisional: false` |
 | BUG-TL-0006 | P2 | `robustness_report.json` published `score_contract: "scoring.reward (internal provisional; not official_scorer)"` — false since `D-18-01` made `scoring.official_scorer` the single reward implementation | `judge/robustness_audit.SCORE_CONTRACT` names the single implementation and carries the live formula; a note keeps the "internal measurement, not a jury score" meaning explicit |
 | BUG-TL-0007 | P3 | stale "provisional / pending Q-005" wording in `scoring/matcher.py` and in a property-test comment, although `Q-005` was resolved on 2026-11-20 | docstring and comment corrected |
+| BUG-TL-0008 | P2 | the `C-PATHS` artifact contract of the documentation gate named `replay_all_report.json` — a file that **does not exist** (the real one is `trajectory_replay.json`) — and omitted `reward_property_matrix.json`, which is part of the published 20-file evidence set; a correct citation was reported as a phantom path | the contract is now derived from the producers; `tests/judge/test_doc_claims.py::test_generated_artifact_contract_matches_the_producers` fails on the old list |
 
 Each fix carries a regression test that **fails on the old code**:
 `tests/scoring/test_formula_provenance.py` (6 tests) and the artifact
@@ -154,12 +155,13 @@ rewritten: it is a dated snapshot, and it now says so.
 | Gate | Command | Result | Artifact |
 |---|---|---|---|
 | Contract freeze | `python3 tools/freeze_release.py --verify` | **PASS** — 30 files, `0747baf0…` | `configs/release_freeze.json` |
-| Full Judge Kit | `make verify` | **PASS 12/12**, 582 tests (1 optional skip), 20 artifacts | `artifacts/reports/latest/verify_summary.json` |
+| Full Judge Kit | `make verify` | **PASS 12/12**, 584 tests (1 optional skip), 20 artifacts | `artifacts/reports/latest/verify_summary.json` |
 | Documentation claims | `make docs-verify` | **PASS** — 22 measured facts, **22/22** checks | `artifacts/reports/doc_claims/doc_claims_report.json` |
 | All trajectories | `make replay-all` | **PASS** — 80/80 runs, 567 steps byte-identical | `artifacts/reports/release/trajectory_replay.json` |
 | Release audit | `make release-audit` | **PASS 6/6** — secrets, file list, size, deps, entrypoint, submission | `artifacts/reports/release/release_audit.json` |
 | Import boundaries | `python3 tools/check_import_boundaries.py` | **CLEAN** (REQ-ARC-001..007) | stdout |
 | Release archive | `python3 tools/evidence_freeze.py --verify` | **PASS** — release surface intact | `docs/EVIDENCE/evidence_freeze.json` |
+| Release gate | `python3 tools/evidence_freeze.py --verify --require-reports` | **PASS** — surface + archived gate verdicts | `docs/EVIDENCE/evidence_freeze.json` |
 | Evidence archive | `python3 tools/release_evidence.py --verify` | **PASS** — honest and self-consistent | `docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json` |
 
 ### Failed or skipped checks
@@ -253,7 +255,7 @@ REQUIREMENTS: REQ-CONTRACT-001, REQ-CONTRACT-003, REQ-JUDGE-004 (carried),
 TESTS RUN: python3 tools/freeze_release.py --verify; make verify;
   make docs-verify; make replay-all; make release-audit; make evidence-verify;
   python3 tools/release_evidence.py --verify; python3 -m unittest discover -s tests -t .
-TEST RESULTS: PASS — 12/12 gates, 582 tests (1 optional skip), 22/22 doc checks,
+TEST RESULTS: PASS — 12/12 gates, 584 tests (1 optional skip), 22/22 doc checks,
   80/80 replays (567 steps), 6/6 audit checks, 30/30 frozen files, release
   surface + archive verified. SKIPPED: Docker offline build (no container
   runtime on this host; CI-authoritative, recorded UNVERIFIED, not PASS).

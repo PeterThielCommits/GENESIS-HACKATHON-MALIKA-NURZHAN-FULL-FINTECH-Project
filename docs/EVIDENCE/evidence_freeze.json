@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "5f03e58ba1aa5c4b381bb6658e6d87141302d9ea7cc029ad081efe97883e5fe7",
+  "aggregate_sha256": "199c055a081b9fd6f4f097c751212ad7cdd27549ff7827cea04bdebb73df7912",
   "anchor_note": "aggregate_sha256 identifies the archived tree and is commit-independent; source_commit is the HEAD the working tree was based on when the archive was generated (the archive is written before the commit that carries it).",
   "code_version": "twinledger@1.0.0",
   "files": [
@@ -59,14 +59,14 @@
       "sha256": "c7c1f2ecaf9e45f1882601030ce946f40803e5f30ca13c160ee198f260f0ba79"
     },
     {
-      "bytes": 8077,
+      "bytes": 8095,
       "path": "Makefile",
-      "sha256": "ff7513c9e020ee913676f991b8e2c61cb6ad794d261968d7ebf8a16aaea54d32"
+      "sha256": "969fed3b7ba1801771ffc444f8f719e90ba10f3e7761b475c9034733f838e7c9"
     },
     {
-      "bytes": 15554,
+      "bytes": 16406,
       "path": "README.md",
-      "sha256": "9938d0c460ab13a811bc0cf4db12a0530afa75f9c1f2e4ead20f47512094a1fe"
+      "sha256": "005782c714cd36f1b4ab7c866922746bc841f073cbfa27be059150d599ef09dd"
     },
     {
       "bytes": 274,
@@ -409,9 +409,9 @@
       "sha256": "dfea179322b43aae7b23ffce24f080ddce9ea56a46802f320b101c321c47aa83"
     },
     {
-      "bytes": 9910,
+      "bytes": 10140,
       "path": "docs/CHANGELOG.md",
-      "sha256": "761a0b0745849515e045c2cb35225c231909a5047098a5019eaf0a5ca332d576"
+      "sha256": "9a5a2f33bcb7d1fbb8abfa518de3dc3500e8c7c5278bf0b0fb0b081ceda78e74"
     },
     {
       "bytes": 8340,
@@ -419,9 +419,9 @@
       "sha256": "175b4709b45293d3cb783993bd7725f8574e292614b6137f11ce8d23e487e3b0"
     },
     {
-      "bytes": 7013,
+      "bytes": 7138,
       "path": "docs/CONTEXT/NEXT_AGENT.md",
-      "sha256": "b0acbf71638f987adf530326da820bc613bfaa1f746d8cddfaa6500eb3279364"
+      "sha256": "796ad307aa6164e18e3c4f22fd7141400af25e517d3a46deb17706bec625b7c1"
     },
     {
       "bytes": 0,
@@ -434,9 +434,9 @@
       "sha256": "eb845da4b600524d4155dc5ccccf000b69bfa7a55aaf8a9500c4422ad74cf4b5"
     },
     {
-      "bytes": 5573,
+      "bytes": 5626,
       "path": "docs/CURRENT_STATE.md",
-      "sha256": "0d843f7b8767b4076816976dd5c0e2e859c1e639daef7b9ce9f9ae9f3257875e"
+      "sha256": "6c4d10829803bc9107043d42269ade2ac2dc0ccefafd05c19dc6a2384a84c751"
     },
     {
       "bytes": 5422,
@@ -444,14 +444,14 @@
       "sha256": "5aed37bb33f04c8efc8be82099bc33077b667ff7a3909111df39ded7e7462a23"
     },
     {
-      "bytes": 58186,
+      "bytes": 58949,
       "path": "docs/DECISIONS.md",
-      "sha256": "ce8d263d3db1132d785a5a4877e640dc06f658594784ac8e18ec7f6538aa3916"
+      "sha256": "fcfc076d4aa91ca8c4cd5325035bd64b316745159b76bea55259ed9d33da7225"
     },
     {
       "bytes": 7783,
       "path": "docs/DEMO.md",
-      "sha256": "6e3ac3bce7e0adde671e4e0bb62bd39f8a76ce99cf68969e10a6f568d1fa088f"
+      "sha256": "8bf9b017c8fb1e850ccffce7466977a7743f51fc82906202fdd1eb2830ebac69"
     },
     {
       "bytes": 6509,
@@ -469,9 +469,9 @@
       "sha256": "b43dfd8e2260b543635a1df5dcac1dc3d98a9b7b196c76740acb94a4d08add8a"
     },
     {
-      "bytes": 12289,
+      "bytes": 12334,
       "path": "docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json",
-      "sha256": "c65ae4df821879f7164f0f2035f98cd1b8fb2014cd448f3eee9d83db789b882a"
+      "sha256": "25172619344f0491a4a492d1e7fd63094cb0894ba82368eb4aa40b5fc804844a"
     },
     {
       "bytes": 5530,
@@ -514,9 +514,9 @@
       "sha256": "9bf24572d6fb284f724dcdcaf31812a483c0384aa71dcbbfbaa4fb36c6b9ea89"
     },
     {
-      "bytes": 5854,
+      "bytes": 6509,
       "path": "docs/HANDOFF/phase-17-evidence-freeze.md",
-      "sha256": "7433aa818754b46d46cc43b77ffaad1cd02006e60ff4e8f988eda733ee8360e8"
+      "sha256": "b87a01e69e341a89791151411a521f6144508785887d10351a8e65b4a8305737"
     },
     {
       "bytes": 9317,
@@ -664,14 +664,14 @@
       "sha256": "538450e650e6750071504aaff755a827bb7847679a2045fea5b1304b377cabdd"
     },
     {
-      "bytes": 4498,
+      "bytes": 4806,
       "path": "docs/PHASE_REPORTS/PHASE-17.json",
-      "sha256": "f7db0fdab8c2c3d27bacc94c759b60944c3353095c6b02da42c4cccfb7480fd0"
+      "sha256": "e482c2df81314974c2a0650fe4dac255752ad2cdf36d682e99fad3bcf28b3065"
     },
     {
-      "bytes": 15154,
+      "bytes": 15849,
       "path": "docs/PHASE_REPORTS/PHASE-17.md",
-      "sha256": "5f0bb9f3047b5363d3352e79351c7b697b9db0e27e05e36ea7492c0f692734f2"
+      "sha256": "e56c8f958de4421efd5d0d17441fccf5e32410cd58c68f4d506379f6f57c5271"
     },
     {
       "bytes": 1235,
@@ -699,9 +699,9 @@
       "sha256": "aa4dbe0caff6c6018fb09da4e933fc4a613d9a17bf480a20110ea3bd333e04d1"
     },
     {
-      "bytes": 18253,
+      "bytes": 21076,
       "path": "docs/QUALITY_AUDIT/BUG_REGISTRY.md",
-      "sha256": "8ed09c0fc9f50c811e91f0a23fc243585478c4611bdfb5eba26851388c8cf62f"
+      "sha256": "c1f9799989070140e3e28fb82f4e43366f34d017532cb61fd426ce2e8a356c6a"
     },
     {
       "bytes": 2921,
@@ -809,9 +809,9 @@
       "sha256": "0e736341f985c2d358375fdee26e100063a8397432c4a25f9d0e49ec4effafa6"
     },
     {
-      "bytes": 19825,
+      "bytes": 20481,
       "path": "docs/RELEASE_NOTES.md",
-      "sha256": "4ab9f8b9aa06b33235d9b393c28acc5541c7bfd446ff28a50c2bfd0b2acc8d8f"
+      "sha256": "545654efbf9a0fbe2d9729058bedc2062d0ddc7eee53dbdaec1d6a7b255ce315"
     },
     {
       "bytes": 1699,
@@ -819,9 +819,9 @@
       "sha256": "3fb0c5afc535532ec883c788e6a5c76e09ecd666ad5d6056da2391e59cba8c5a"
     },
     {
-      "bytes": 25335,
+      "bytes": 25599,
       "path": "docs/STATUS.md",
-      "sha256": "2089dac6aaffb8e4d46ac2b26a69bf65f2846bff1e59838d0d0aa31f5a8b871d"
+      "sha256": "f3c58362e76a76349c6eccdad009bf0da54cdb62ace01271ef341e271b696461"
     },
     {
       "bytes": 607,
@@ -2334,9 +2334,9 @@
       "sha256": "58a4bdc855abefe6a518ee703837205b5aa21d3896d9e4810b45e5155d6beda8"
     },
     {
-      "bytes": 8476,
+      "bytes": 9986,
       "path": "tests/judge/test_evidence_freeze.py",
-      "sha256": "de8cb6cd7dad4483e715e4bd7427e22fb2171493044170a388bf561412aba8ed"
+      "sha256": "b6602b3c7b22d031784a4967cd072eae3bb514310dc454f1977efe8d2168eee8"
     },
     {
       "bytes": 24523,
@@ -2609,9 +2609,9 @@
       "sha256": "5429eb7ca03c71e27f7e1ea923e74309f526267a311441d169f8540dbbe04152"
     },
     {
-      "bytes": 17422,
+      "bytes": 18831,
       "path": "tools/evidence_freeze.py",
-      "sha256": "85ec0e6d67dce57ef8f119d846c5c1eede3e40f1e432c200d0ed8f54149f45d0"
+      "sha256": "bfbd4f3ed5bedee02d41316d3de5bf5bde1fb24782c2c46c1bda9affafe4cdd1"
     },
     {
       "bytes": 7528,
@@ -2644,9 +2644,9 @@
       "sha256": "d5e43425622e9d0da2f61f0af90585e541dcad30d41736078058e87180cd0e5b"
     },
     {
-      "bytes": 19512,
+      "bytes": 19557,
       "path": "tools/release_evidence.py",
-      "sha256": "64fe46ff38dd8e377557ab0ad4892a75c9413c1402aef983259ab80aa4e686b3"
+      "sha256": "3452eb65c89d0ddfc7c2b65d79aaf98991d486235f7b91b31026b2af7fe11ca8"
     },
     {
       "bytes": 9826,
@@ -2745,7 +2745,7 @@
     }
   ],
   "frozen_file_count": 548,
-  "generated_at_utc": "2026-11-22T13:52:43Z",
+  "generated_at_utc": "2026-11-22T14:49:35Z",
   "official_score_claimed": false,
   "phase": 17,
   "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
@@ -2755,7 +2755,7 @@
       "path": "artifacts/reports/doc_claims/doc_claims_report.json",
       "present": true,
       "required": false,
-      "sha256": "d839f1e83761cb7ec54f2bb7536fc97f0feb995339d7fe3d13780bfce8826d19",
+      "sha256": "c5bb300dfd453051573eb86e42ebc32412a28bc689732f20a39e307940dc46f5",
       "verdict": {
         "checks": [
           {
@@ -2858,7 +2858,7 @@
       "path": "artifacts/reports/release/release_audit.json",
       "present": true,
       "required": false,
-      "sha256": "b6ef65a475df34c36f24c0ca6d060d230f74162afaa8bed4063503940f1932e6",
+      "sha256": "a8131e6582179b7d227b6d42bc397cb0dbe147f6c71879f264fc52422db85093",
       "verdict": {
         "checks": [
           {
@@ -2895,7 +2895,7 @@
       "path": "artifacts/reports/latest/replay_report.json",
       "present": true,
       "required": true,
-      "sha256": "72bd6112701c48873af75d0f305a2fdc8586fed1223439c3c9fd2c02da781ae4",
+      "sha256": "96bebfbec9224d0049167edbea89a7647a30b12116bda5db08616a1f5727adce",
       "verdict": {
         "all_byte_identical": true,
         "all_hashes_identical": true,
@@ -2912,7 +2912,7 @@
       "path": "artifacts/reports/latest/report_index.json",
       "present": true,
       "required": true,
-      "sha256": "8768ffaeeff7779a15719cdbe451b46ded98c5b5d1655306015d0bc33561280d",
+      "sha256": "0033829386a8b047b76e0a77de93250d534e851d01f2d89ae4c66b37b59de961",
       "verdict": {
         "artifact_count": 20,
         "missing_optional_or_full_mode_artifacts": [],
@@ -2924,7 +2924,7 @@
       "path": "artifacts/reports/release/trajectory_replay.json",
       "present": true,
       "required": false,
-      "sha256": "1313bca65e9c064574602d6c8e7e55dde35faeb1c0be313887350757618301a9",
+      "sha256": "1db5a3e6f6f053ef7680b62ae60a780a99af6fea8062a4a11dfbb99a91109532",
       "verdict": {
         "failure_count": 0,
         "runs_matched": 80,
@@ -2937,7 +2937,7 @@
       "path": "artifacts/reports/latest/verify_summary.json",
       "present": true,
       "required": true,
-      "sha256": "8ef97c581730df816da730e7c60c44060770c153a90dbeb83f08f4ac2ebba9d1",
+      "sha256": "e65037a50af2e12e75c5e131a2f8b885518f1a1044fe2a61925609a9c11dd7d8",
       "verdict": {
         "gates": [
           {
@@ -3033,5 +3033,5 @@
     }
   },
   "schema_version": "1.0.0",
-  "source_commit": "99a0ddd41240313d42242cbe01572514c56a8935"
+  "source_commit": "68ded6e12f035a080b85092b5a96ab87d1960b7a"
 }

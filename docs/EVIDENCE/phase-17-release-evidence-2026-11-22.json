@@ -312,7 +312,7 @@
   "evidence_freeze": {
     "manifest": "docs/EVIDENCE/evidence_freeze.json",
     "tool": "tools/evidence_freeze.py",
-    "verify_command": "python3 tools/evidence_freeze.py --verify"
+    "verify_command": "python3 tools/evidence_freeze.py --verify --require-reports"
   },
   "exit_gate_17": "PASS",
   "exit_gate_note": "The release is reconstructible and verifiable from the repository alone: the frozen contract surface, the archived release surface, the measured gate verdicts, the rubric map and the decision register are all in the tree, and `reconstruct.commands` lists the exact steps.",
@@ -351,8 +351,8 @@
       "status": "PASS"
     }
   },
-  "generated_at_utc": "2026-11-22T13:52:43Z",
-  "git_sha": "99a0ddd41240313d42242cbe01572514c56a8935",
+  "generated_at_utc": "2026-11-22T14:49:35Z",
+  "git_sha": "68ded6e12f035a080b85092b5a96ab87d1960b7a",
   "git_sha_note": "the commit the working tree was based on when the archive was generated (the archive is written before the commit that carries it); the frozen digest is the commit-independent anchor.",
   "limitations": {
     "note": "The archive records internal verification results only. It is not a jury score and never claims one (official_score_claimed: false).",
@@ -365,12 +365,12 @@
   "reconstruct": {
     "commands": [
       "python3 tools/freeze_release.py --verify",
-      "python3 tools/evidence_freeze.py --verify",
-      "python3 tools/release_evidence.py --verify",
       "make verify",
       "make docs-verify",
       "make replay-all",
       "make release-audit",
+      "python3 tools/evidence_freeze.py --verify --require-reports",
+      "python3 tools/release_evidence.py --verify --strict",
       "python3 -m unittest discover -s tests -t ."
     ],
     "note": "Run in this order from a clean checkout of the release tag; every command is offline, stdlib-only and deterministic."

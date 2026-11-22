@@ -811,10 +811,21 @@ Decision:
 5. Regression-locked by `tests/scoring/test_formula_provenance.py` (fails on
    the old code) and by the artifact assertions in
    `tests/scoring/test_reward_properties.py`.
+6. **The same rule applies to the artifact contract of the documentation
+   gate itself.** `C-PATHS` used a hand-written list of generated file
+   names: it named `replay_all_report.json`, a file that **does not exist**
+   (the real file is `trajectory_replay.json`), and it omitted
+   `reward_property_matrix.json`, which is part of the published 20-file
+   evidence set. The gate therefore reported *correct* citations as phantom
+   paths (BUG-TL-0008). The contract is now derived from the producers —
+   `judge/verify.py::REQUIRED_FULL_ARTIFACTS` for the Judge Kit set, the
+   producing tool for every other directory — and
+   `tests/judge/test_doc_claims.py::test_generated_artifact_contract_matches_the_producers`
+   fails on the old list.
 
 The frozen `configs/scoring/default.json` is **not** edited (D-14-02,
 D-18-01 item 4): it still carries `eta: 0.05` and `provisional: true` as a
 historical record that no longer influences the reward.
 
-Refs: `docs/QUALITY_AUDIT/BUG_REGISTRY.md` (BUG-TL-0005, BUG-TL-0006),
-`docs/PHASE_REPORTS/PHASE-17.md`.
+Refs: `docs/QUALITY_AUDIT/BUG_REGISTRY.md` (BUG-TL-0005, BUG-TL-0006,
+BUG-TL-0008), `docs/PHASE_REPORTS/PHASE-17.md`.

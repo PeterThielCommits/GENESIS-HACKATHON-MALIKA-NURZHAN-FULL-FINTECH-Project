@@ -63,12 +63,12 @@ REPORT_SOURCES = {
 #: ``C-COMMANDS`` in ``tools/verify_doc_claims.py``).
 RECONSTRUCT_COMMANDS: tuple[str, ...] = (
     "python3 tools/freeze_release.py --verify",
-    "python3 tools/evidence_freeze.py --verify",
-    "python3 tools/release_evidence.py --verify",
     "make verify",
     "make docs-verify",
     "make replay-all",
     "make release-audit",
+    "python3 tools/evidence_freeze.py --verify --require-reports",
+    "python3 tools/release_evidence.py --verify --strict",
     "python3 -m unittest discover -s tests -t .",
 )
 
@@ -287,7 +287,7 @@ def build_archive() -> dict[str, Any]:
         "evidence_freeze": {
             "manifest": EVIDENCE_FREEZE.relative_to(REPO_ROOT).as_posix(),
             "tool": "tools/evidence_freeze.py",
-            "verify_command": "python3 tools/evidence_freeze.py --verify",
+            "verify_command": "python3 tools/evidence_freeze.py --verify --require-reports",
         },
         "gates": gates,
         "rubric_map": rubric,

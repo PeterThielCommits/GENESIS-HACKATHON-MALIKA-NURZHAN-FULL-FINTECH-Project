@@ -18,12 +18,13 @@ this handoff authorises new features.
 v1.0.2   -> annotated tag on the merge commit of the Phase 17 PR; release published 2026-11-22 (D-17-02)
 v1.0.1   -> recommended submission artifact (image no longer ships sealed truth, D-16-02); tag unmoved
 v1.0.0   -> retained for history; superseded for submission; tag unmoved
-make verify                                          -> 12/12 gates, 582 tests, 20 artifacts
+make verify                                          -> 12/12 gates, 584 tests, 20 artifacts
 make docs-verify                                     -> 22 measured facts, 22 checks
 make replay-all                                      -> 80/80 runs, 567 steps byte-identical
 make release-audit                                   -> 6/6 PASS
 python3 tools/freeze_release.py --verify             -> 30 frozen files intact, 0747baf0…
 python3 tools/evidence_freeze.py --verify            -> release surface intact (one aggregate digest)
+python3 tools/evidence_freeze.py --verify --require-reports -> + archived gate verdicts (CI gate)
 python3 tools/release_evidence.py --verify           -> release archive honest and self-consistent
 ```
 
@@ -34,9 +35,9 @@ release tag:
 
 ```bash
 python3 tools/freeze_release.py --verify
-python3 tools/evidence_freeze.py --verify
-python3 tools/release_evidence.py --verify
 make verify && make docs-verify && make replay-all && make release-audit
+python3 tools/evidence_freeze.py --verify --require-reports
+python3 tools/release_evidence.py --verify --strict
 ```
 
 The same list, with the measured outcome of each command, is archived in
