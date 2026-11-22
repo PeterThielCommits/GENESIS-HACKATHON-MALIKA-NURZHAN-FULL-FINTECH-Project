@@ -1,4 +1,4 @@
-# Architecture Snapshot — as built (v1.0.0)
+# Architecture Snapshot — as built (v1.0.1)
 
 Rewritten 2026-11-22 from the real module tree. The previous version of this
 page was written as a *plan* and never reconciled with the code: it named seven

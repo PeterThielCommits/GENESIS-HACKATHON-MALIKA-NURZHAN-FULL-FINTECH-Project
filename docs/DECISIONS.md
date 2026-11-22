@@ -620,3 +620,38 @@ Follow-up to `D-15-06`, under REQ-DOC-001/002 and Phase 15 Task 15.6.
 
 No frozen contract, release tag, scoring formula, ownership assertion, or
 organiser-score claim changed. Organisational independence remains unevidenced.
+
+
+## D-16-03 (2026-11-22) — Cut `v1.0.1`; tag `v1.0.0` is superseded for submission
+
+Under Phase 16 (Tasks 16.7/16.8) and the documented recommendation in `docs/QUESTIONS.md`
+(`Q-REL-01`), the release authority (repository owner) directed that the Phase 16
+release candidate be executed fully, which includes the tag and the GitHub release.
+
+Finding that makes this necessary rather than cosmetic: tag `v1.0.0` (`8da0af2`)
+contains the `.dockerignore` defect documented in `D-16-02` — the default
+`make docker-check` image would have included `episodes/dev/*/sealed/truth.json`
+(a `REQ-ARENA-005` violation). The fix, the forensic audit (PR #24), the
+mandatory-target audit (PR #23) and the Phase 15 structural hardening (PR #25)
+were all merged after the tag. Cutting `v1.0.1` from the reviewed merge commit is
+the documented remedy; the alternative (re-tagging `v1.0.0`) was rejected because
+moving a published tag rewrites history for everyone who fetched it.
+
+Scope and constraints honoured:
+- `v1.0.0` remains published and unchanged; `v1.0.1` is additive.
+- The tag is annotated and is placed **after** re-verification of the merge
+  commit, not before; `make rc-check` PASS from clean-clone conditions is the
+  precondition, matching the precedent set for `v1.0.0`.
+- No frozen file changes: the frozen surface remains 30 files,
+  `aggregate_sha256 = 0747baf0…`; `schema_version` stays `1.0.0` (`D-01-01`);
+  `code_version` stays `twinledger@1.0.0` (it names the frozen contract line, not
+  the release tag).
+- `pyproject.toml`'s unreferenced `version` field is aligned to `1.0.1` (it was
+  stale at `0.1.0` and is read by nothing in the tree).
+- `official_score_claimed: false` (TZ §23.6). No jury-score claim is made.
+- `Q-ORG-01` / `Q-ORG-02` remain OPEN: this decision does not, and cannot, fix
+  the organisational-independence disclosure.
+
+Supersedes: the recommendation recorded in `Q-REL-01` (now RESOLVED by this
+decision). Refs: `D-16-02`, `D-15-07`, Phase 16 (`docs/PHASE_REPORTS/PHASE-16.md`,
+v1.0.1 addendum), release notes `docs/RELEASE_NOTES.md`.

@@ -158,5 +158,49 @@
     "pr": 21,
     "release_url": "https://github.com/PeterThielCommits/GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project/releases/tag/v1.0.0",
     "verified_on_merge_commit": "make rc-check PASS from clean-clone conditions (verify 12/12, replay-all 80/80, release-audit 6/6)"
+  },
+  "v1_0_1_reverification": {
+    "date": "2026-11-22",
+    "branch": "arena/3af502e1-genesis-hackathon-malika-nurzh",
+    "base_commit": "97379617368ab70633581691e911b5a0cd0b6688",
+    "decision": "D-16-03 (Q-REL-01 RESOLVED): v1.0.1 cut; v1.0.0 retained for history, superseded for submission",
+    "reason": "v1.0.0 ships the .dockerignore sealed/truth.json defect (D-16-02, REQ-ARENA-005); fix merged in PR #23",
+    "exit_gate_16": "PASS (re-confirmed)",
+    "commands": [
+      {
+        "command": "make rc-check  # clean clone, emptied evidence dir",
+        "exit_code": 0,
+        "result": "verify 12/12 (82.2s); docs 22 facts/18 checks; replay-all 80/80 runs/567 steps; release-audit 6/6"
+      },
+      {
+        "command": "make rc-check  # working tree",
+        "exit_code": 0,
+        "result": "verify 12/12 (87.8s); docs 22/18; replay-all 80/80; release-audit 6/6"
+      },
+      {
+        "command": "make release-audit  # git archive tarball, no .git",
+        "exit_code": 0,
+        "result": "6/6 PASS (submission-image case); ENTRYPOINT PASS from cwd=/"
+      },
+      {
+        "command": "python3 tools/freeze_release.py --verify",
+        "exit_code": 0,
+        "result": "30 frozen files intact, aggregate 0747baf0..."
+      },
+      {
+        "command": "CI run 45009197767 (core + docker-offline, 9737961)",
+        "exit_code": 0,
+        "result": "both jobs success; --network=none --read-only --cap-drop ALL, PIP_NO_INDEX=1, non-root"
+      }
+    ],
+    "fixes": [
+      "pyproject.toml version 0.1.0 -> 1.0.1 (unreferenced package metadata; nothing frozen changed)"
+    ],
+    "release": {
+      "tag": "v1.0.1",
+      "commit": "merge commit of the v1.0.1 PR (tagged after rc-check PASS from clean-clone conditions)",
+      "release_url": "https://github.com/PeterThielCommits/GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project/releases/tag/v1.0.1",
+      "official_score_claimed": false
+    }
   }
 }

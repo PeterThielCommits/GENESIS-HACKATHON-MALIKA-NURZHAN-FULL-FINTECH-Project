@@ -1,4 +1,4 @@
-# Known Limitations (Release v1.0.0 — Phases 0–17 Complete)
+# Known Limitations (Release v1.0.1 — Phases 0–17 Complete)
 
 Honest engineering disclosure per Master TZ Principle `P-012` ("Честность сильнее декоративной сложности") and Section 27 (`R-01..R-24`).
 
