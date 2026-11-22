@@ -592,3 +592,31 @@ Decision:
 
 Proven order-independent by running three sequences, all green: `verify-core` →
 `docs-verify`; `report` → `docs-verify`; `docs-verify` twice.
+
+
+## D-15-07 (2026-11-22) — Locale-safe verdicts and discovery-backed prose totals
+
+Follow-up to `D-15-06`, under REQ-DOC-001/002 and Phase 15 Task 15.6.
+
+1. A clean full verifier run under `LC_ALL=C PYTHONIOENCODING=ascii` completed
+   its gates but crashed while printing a Unicode success message. All console
+   writes in `judge/verify.py::main` now use `_say`: readable transliteration of
+   known glyphs, then ASCII replacement for arbitrary interpolated diagnostics
+   when a narrow stream cannot encode them. JSON verdicts are unchanged. Three
+   state-independent regression tests guard the output path, including narrow
+   stdout and explicit streams. Mutation checks reject reverting the helper or
+   restoring a raw Unicode print.
+2. README's prose still claimed **522-test** coverage and DEMO claimed **490
+   tests**, despite a current generated facts block. Add `C-COUNTS`, comparing
+   recognised prose totals with unittest discovery; `--write` repairs only the
+   numeric spans. Official/mirror counts are measured separately. Tests exercise
+   positive/negative cases, adjacent clauses, subset exemptions, preservation,
+   and idempotence. The detector caught the real stale claims before repair.
+3. This is a bounded recogniser, not a natural-language verifier: it scans the
+   existing jury-facing `DOC_SCAN`, recognises integer + test/tests with optional
+   official/mirror qualifiers, and excludes named-file counts and unqualified
+   counts below 100 unless explicitly introduced as full/total/suite. Historical
+   phase reports are not current-claim inputs. Other phrasing still needs review.
+
+No frozen contract, release tag, scoring formula, ownership assertion, or
+organiser-score claim changed. Organisational independence remains unevidenced.

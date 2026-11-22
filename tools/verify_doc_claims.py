@@ -18,10 +18,10 @@ Numeric mechanisms
    freshly rendered text byte-for-byte, so a stale number fails the gate.
    ``--write`` refreshes it (the only documented way to update those values).
 2. **Prose assertions.** Counts that appear in hand-written sentences
-   ("410 tests", "12/12 PASS", "5/5 byte-identical replays", …) must be present
+   ("12/12 PASS", "5/5 byte-identical replays", …) must be present
    with the *current* measured value.
 3. **Stale-literal denylist.** Values that were once published and are now
-   known-wrong (e.g. ``317 tests``, ``9 encoding transforms (exact``, the
+   known-wrong (e.g. ``9 encoding transforms (exact``, the
    ``Replay Suite: 0/0`` bug) must never reappear anywhere in the docs.
 4. **Referential integrity of decision IDs.** Every ``D-XX-YY`` cited in a doc
    must be defined in ``docs/DECISIONS.md``.
@@ -48,13 +48,16 @@ Structural mechanisms
 10. **Reward provenance (``C-REWARD``).** The formula quoted in the docs must be
     the formula the single live implementation computes (``D-18-01``), and no
     doc may present it as provisional.
+11. **Suite totals (``C-COUNTS``).** Recognised suite-total phrases in the
+    jury-facing scan set must match unittest discovery. Explicit official totals
+    are measured separately; small unqualified subset counts are not inferred.
 
 Stdlib only, offline, deterministic (no timings or wall-clock values are
 asserted; durations are rendered with an explicit "sample" caveat).
 
 Usage:
   python3 tools/verify_doc_claims.py            # check (exit 0 = all claims hold)
-  python3 tools/verify_doc_claims.py --write    # refresh the generated block
+  python3 tools/verify_doc_claims.py --write    # refresh the generated block and recognised prose totals
   python3 tools/verify_doc_claims.py --json     # machine-readable report
   python3 tools/verify_doc_claims.py --list     # list measured facts
 """
@@ -62,6 +65,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import re
 import statistics
@@ -536,12 +540,13 @@ def prose_assertions() -> list[dict[str, str]]:
         # second hand-written copy in prose is exactly the drift trap that made
         # this check fail on its own author: adding tests to this very file
         # changed the count, and the prose needle then required a manual edit that
-        # no reviewer would remember. One copy, generated, is strictly better.
+        # no reviewer would remember. C-COUNTS now checks recognised prose copies
+        # against discovery and --write refreshes them alongside the block.
         {
             "id": "P-TESTS-BLOCK",
             "doc": "README.md",
             "needle": "Total tests in the verification suite",
-            "why": "the test count is published once, in the generated block",
+            "why": "the authoritative count is in the generated block; C-COUNTS checks prose copies",
         },
         {
             "id": "P-REPLAY",
@@ -1297,6 +1302,167 @@ def command_executability_check() -> list[dict[str, str]]:
     return failures
 
 
+# ``C-COUNTS``: an integer immediately followed by "test"/"tests".
+# Deliberately narrow. A looser pattern over bare integers would fire on port
+# numbers, durations, step budgets and episode counts, and a check that cries
+# wolf gets switched off.
+_TEST_COUNT_PROSE_RE = re.compile(
+    r"\b(?P<count>\d+)(?P<sep>-|[ \t]+)"
+    r"(?P<qualifier>(?:(?:official|mirror|organiser|organizer)[ \t]+)*)tests?\b",
+    re.IGNORECASE,
+)
+
+# A published *suite* total is three digits in this project, and has been since
+# before the first freeze (>300 tests). Smaller unqualified prose counts are
+# treated as subset counts, unless explicitly introduced as full/total/suite: "tests/verifier/test_boundaries.py -> 5 tests PASS", "1 test skips
+# as optional". Both were false positives on this check's first run -- which is
+# recorded here rather than hidden, because the floor is a heuristic and a
+# reviewer deserves to see what it is tuned against. A stale three-digit total
+# is still caught. Official/mirror qualifiers use their own discovery count.
+_MIN_SUITE_TOTAL = 100
+
+
+# Clause terminators. A published count is qualified by the words in *its own*
+# clause -- "490 tests, 55 official mirror tests" publishes two different totals
+# side by side, so a fixed-width lookahead would read the second one's adjective
+# into the first one's scope. Learned on this check's second run: a 160-char
+# window reported the suite count as 55 (the official mirror subset).
+_CLAUSE_END_RE = re.compile(r"[,;|.\n]")
+
+
+def _mention_context(text: str, match: re.Match[str]) -> str:
+    """The words that scope a published count: its own clause, plus a lead-in."""
+    before = _CLAUSE_END_RE.split(text[max(0, match.start() - 60) : match.start()])[-1]
+    tail = text[match.end() : match.end() + 120]
+    stop = _CLAUSE_END_RE.search(tail)
+    after = tail[: stop.start()] if stop else tail
+    return before + " " + match.group(0) + " " + after
+
+
+def _live_test_count_for(context: str) -> tuple[int, str]:
+    """Return (live count, basis) for a prose mention of a test count.
+
+    The basis is recorded so a reader can tell which measurement the published
+    number tracks.
+    """
+    if re.search(r"official|mirror|organiser|organizer", context, re.IGNORECASE):
+        return _discovered_test_count("tests/official"), "tests/official discovery"
+    return _discovered_test_count("tests"), "tests/ discovery"
+
+
+def _is_subset_count(text: str, match: re.Match[str]) -> bool:
+    """True when the number counts a *file* or a *behaviour*, not the suite.
+
+    Checked structurally rather than by wording: a count that sits next to a
+    named test module is scoped to that module, whatever the sentence says.
+    """
+    preceding = text[text.rfind("\n", 0, match.start()) + 1 : match.start()]
+    explicit_suite = bool(re.search(r"\b(?:full|total|suite)\b", _CLAUSE_END_RE.split(preceding)[-1], re.IGNORECASE))
+    if int(match.group(1)) < _MIN_SUITE_TOTAL and not (match.group("qualifier") or explicit_suite):
+        return True
+    return bool(re.search(r"[\w/.-]*\btest_\w+\.py\b", preceding))
+
+
+def _stale_counts_in(doc_path: Path, rel: str, autofix: bool = False) -> list[dict[str, str]]:
+    """Return one failure dict per superseded suite total in a single document.
+
+    Split out from :func:`stale_count_check` so the detector can be exercised on
+    a temporary document. A check that can only be tested by corrupting the real
+    repository is a check nobody tests.
+    """
+    text = doc_path.read_text(encoding="utf-8")
+    pieces: list[str] = []
+    cursor = 0
+    changed = False
+    failures: list[dict[str, str]] = []
+    for match in _TEST_COUNT_PROSE_RE.finditer(text):
+        if _is_subset_count(text, match):
+            continue
+        live, basis = _live_test_count_for(_mention_context(text, match))
+        if int(match.group(1)) == live:
+            continue
+        line = text[: match.start()].count("\n") + 1
+        failures.append(
+            {
+                "id": "C-COUNTS",
+                "status": "STALE_COUNT",
+                "doc": rel,
+                "detail": (
+                    f"{rel}:{line} publishes {match.group(1)} but {basis} is {live}; "
+                    "the suite total must be derived, never remembered"
+                ),
+            }
+        )
+        pieces.append(text[cursor : match.start()])
+        # Replace only the digits, preserving qualifiers, spacing, case and plurality.
+        pieces.append(str(live) + match.group(0)[len(match.group(1)):])
+        cursor = match.end()
+        changed = True
+    if autofix and changed:
+        pieces.append(text[cursor:])
+        doc_path.write_text("".join(pieces), encoding="utf-8")
+    return failures
+
+
+def stale_count_check(autofix: bool = False) -> list[dict[str, str]]:
+    """``C-COUNTS``: no prose document may publish a superseded test count.
+
+    ``P-TESTS-BLOCK`` only checks that the generated label exists; it never
+    prohibited a second hand-written count elsewhere. The Phase-15 audit refreshed the generated block to the measured
+    value and left "the full **522-test** suite" two paragraphs above it, and
+    ``docs/DEMO.md`` still claimed "490 tests" against a suite of 531. Neither
+    was caught by any gate, because the stale-literal denylist is a
+    hand-maintained list of literals somebody had *already* noticed -- it can
+    only ever catch a mistake that has already happened once.
+
+    Recognised prose totals are compared with discovery rather than a denylist
+    (REQ-DOC-002, TZ §24 Task 15.6). Scope is deliberately bounded: DOC_SCAN,
+    integer + test/tests (optionally official/mirror qualifiers), and a heuristic
+    floor for unqualified subset counts. This is not a general natural-language
+    claim verifier; smaller unqualified counts and other phrasings need review.
+
+    With ``autofix`` (i.e. ``--write``) the number is corrected in place by match
+    position -- never by substring replacement, which would corrupt whichever
+    copy happens to appear first.
+    """
+    failures: list[dict[str, str]] = []
+    repaired: list[str] = []
+    for rel in DOC_SCAN:
+        doc_path = REPO_ROOT / rel
+        if not doc_path.is_file():
+            continue  # the denylist pass reports missing docs; do not double-count
+        doc_failures = _stale_counts_in(doc_path, rel, autofix=autofix)
+        failures.extend(doc_failures)
+        if autofix:
+            repaired.extend(item["detail"] for item in doc_failures)
+    if failures:
+        if autofix:
+            return [
+                {
+                    "id": "C-COUNTS",
+                    "status": "PASS",
+                    "detail": "superseded test counts rewritten in place: " + "; ".join(repaired),
+                }
+            ]
+        return [
+            {
+                "id": "C-COUNTS",
+                "status": "STALE_COUNT",
+                "detail": (
+                    "; ".join(item["detail"] for item in failures)
+                    + " -- run --write to repair"
+                ),
+            }
+        ]
+    return [
+        {
+            "id": "C-COUNTS",
+            "status": "PASS",
+            "detail": "all recognised prose suite totals match discovery",
+        }
+    ]
+
+
 def reward_provenance_check() -> list[dict[str, str]]:
     """``C-REWARD``: the quoted reward formula is the one the code computes.
 
@@ -1393,7 +1559,11 @@ def reward_provenance_check() -> list[dict[str, str]]:
 
 # Values that were published once and proven wrong or misleading.
 STALE_LITERALS: tuple[tuple[str, str], ...] = (
-    ("317 tests", "superseded test count (measured value is in the facts block)"),
+    # NOTE: superseded test counts are no longer enumerated here. Enumerating
+    # them was the defect: the list only ever held totals somebody had already
+    # caught by eye, so it could never catch the next one (README published a
+    # stale 522 for a whole phase). ``C-COUNTS`` now derives every prose total
+    # from unittest discovery, for recognised test-count phrases.
     ("317 unit/official/security", "superseded test count"),
     ("9 encoding transforms (`exact`", "transform list did not match the 9 real transforms"),
     ("Replay Suite: 0/0", "replay metrics bug — real value is 5/5"),
@@ -1408,7 +1578,7 @@ STALE_LITERALS: tuple[tuple[str, str], ...] = (
 # --------------------------------------------------------------------------- #
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Verify documentation claims against measured artifacts")
-    parser.add_argument("--write", action="store_true", help="refresh the generated facts block in README.md")
+    parser.add_argument("--write", action="store_true", help="refresh README facts and recognised prose suite totals")
     parser.add_argument("--json", action="store_true", help="emit the full report to stdout")
     parser.add_argument("--list", action="store_true", help="list measured facts without checking")
     args = parser.parse_args(argv)
@@ -1531,6 +1701,7 @@ def main(argv: list[str] | None = None) -> int:
         ("C-WORKBENCH-API", workbench_api_check),
         ("C-COMMANDS", command_executability_check),
         ("C-REWARD", reward_provenance_check),
+        ("C-COUNTS", functools.partial(stale_count_check, autofix=bool(args.write))),
     )
     structural_skipped: list[str] = []
     for _check_id, probe in structural:

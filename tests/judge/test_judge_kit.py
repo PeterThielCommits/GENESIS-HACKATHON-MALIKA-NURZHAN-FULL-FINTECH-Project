@@ -469,6 +469,97 @@ class TestSchemas(unittest.TestCase):
         self.assertTrue(schemas_mod.validate_rubric_map(data))
 
 
+class TestGateRunnerLocaleSafety(unittest.TestCase):
+    """`judge/verify.py` must survive an ASCII stdout (the hardened container).
+
+    Regression for a latent defect found in Phase 15 by *simulating* the
+    container (`LC_ALL=C PYTHONIOENCODING=ascii`): the runner executed every
+    gate, reached the correct PASS verdict, printed it, and then died with
+    ``UnicodeEncodeError`` on a literal em dash / section sign. CI only passed
+    because its job happened to export a UTF-8 locale.
+
+    These checks are source-level on purpose: they are state-independent, so
+    they also guard the bootstrap path where no artifacts exist yet.
+    """
+
+    def test_say_transliterates_every_non_ascii_glyph_it_claims_to(self):
+        import contextlib
+        import io
+
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            verify_mod._say("a \u2014 b \u2013 c \u2192 d \u00a7 23.5 \u2264 \u2265")
+        output = buffer.getvalue()
+        output.encode("ascii")  # must not raise
+        for glyph in ("\u2014", "\u2013", "\u2192", "\u00a7", "\u2264", "\u2265"):
+            self.assertNotIn(glyph, output)
+        self.assertIn("->", output)
+        self.assertIn("<=", output)
+        self.assertIn(">=", output)
+
+        # Arbitrary subprocess diagnostics need the replacement fallback too;
+        # the fixed transliteration table cannot enumerate every Unicode glyph.
+        for destination in ("stdout", "explicit"):
+            raw = io.BytesIO()
+            narrow = io.TextIOWrapper(raw, encoding="ascii", write_through=True)
+            if destination == "stdout":
+                with contextlib.redirect_stdout(narrow):
+                    verify_mod._say("diagnostic: \u03a9 \u2014 \u4e2d")
+            else:
+                verify_mod._say("diagnostic: \u03a9 \u2014 \u4e2d", stream=narrow)
+            self.assertEqual(raw.getvalue(), b"diagnostic: ? - ?\n")
+            narrow.detach()
+
+    def test_no_raw_print_in_main(self):
+        """Every console write in ``main`` goes through ``_say``.
+
+        A raw ``print`` of a non-ASCII literal is exactly the defect; the
+        helper is the single output path.
+        """
+        import ast
+
+        source = (REPO_ROOT / "judge" / "verify.py").read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        main_fn = next(
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef) and node.name == "main"
+        )
+        raw_prints = [
+            f"line {node.lineno}"
+            for node in ast.walk(main_fn)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "print"
+        ]
+        self.assertEqual(raw_prints, [], f"raw print() calls bypass _say: {raw_prints}")
+
+    def test_no_console_message_contains_non_ascii(self):
+        """Nothing *printed* may be non-ASCII; only the transliteration table may be.
+
+        The precise invariant, and the one that actually caused the defect: the
+        glyphs in `_say`'s search table are supposed to be non-ASCII -- they are
+        the things being replaced. What must never be non-ASCII is the text
+        handed to a console call, because that is what reaches the stream.
+        """
+        import ast
+
+        source = (REPO_ROOT / "judge" / "verify.py").read_text(encoding="utf-8")
+        offenders = []
+        for node in ast.walk(ast.parse(source)):
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
+                continue
+            if node.func.id not in ("print", "_say"):
+                continue
+            for arg in node.args:
+                for sub in ast.walk(arg):
+                    if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
+                        bad = sorted({ch for ch in sub.value if ord(ch) > 127})
+                        if bad:
+                            offenders.append((node.lineno, bad))
+        self.assertEqual(offenders, [], f"non-ASCII console messages: {offenders}")
+
+
 class TestPerformanceGuards(unittest.TestCase):
     def test_invariant_catalog_matches_tz_12_1(self):
         from judge.performance_and_deps import INVARIANT_IDS

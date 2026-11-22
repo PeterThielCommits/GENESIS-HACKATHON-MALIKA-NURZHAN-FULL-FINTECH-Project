@@ -4,25 +4,33 @@
   (`main`, merge of PR #24).
 - **Phase 15 structural audit DONE, EXIT GATE 15 PASS** on the stricter reading of
   the gate text. Report: `docs/PHASE_REPORTS/PHASE-15-STRUCTURAL-AUDIT.md`;
-  decisions `D-15-04`, `D-15-05`, `D-15-06`.
+  decisions `D-15-04`, `D-15-05`, `D-15-06`, `D-15-07`.
 - **What changed and why:** the documentation gate verified only that published
   *numbers* match artifacts. It now also verifies that published *shapes* match the
-  repository — 6 new detectors (`C-PATHS`, `C-DATADICT`, `C-DEMO`,
-  `C-WORKBENCH-API`, `C-COMMANDS`, `C-REWARD`), each proven to fail by an injected
-  fault. 19 defects were fixed; every one had correct numbers and wrong prose.
+  repository — 7 new detectors (`C-PATHS`, `C-DATADICT`, `C-DEMO`,
+  `C-WORKBENCH-API`, `C-COMMANDS`, `C-REWARD`, `C-COUNTS`), with negative tests.
+  The initial 19 structural defects are fixed. Follow-up fixed an ASCII-console
+  crash and two stale prose totals missed by the old denylist (`D-15-07`).
 
-## Measured in this session
+## Latest measurements (historical commands labelled)
 
 | Command | Result |
 |---|---|
-| `make verify` (empty evidence dir) | **12/12 PASS**, 49.8 s, 20 artifacts, **528 tests**, `critical_skipped=0` |
-| `make verify-core` | 6/6 PASS, 41 s |
-| `make docs-verify` | **22 measured facts, 17/17 checks**, PASS |
+| `make verify` (empty evidence dir) | **12/12 PASS**, 47.416 s, 20 artifacts, **540 tests**, `critical_skipped=0` |
+| ASCII-only `make verify` (empty evidence + trajectories) | **12/12 PASS**, 45.443 s, zero non-ASCII bytes, zero critical skips |
+| `make verify-core` (initial audit) | 6/6 PASS, 41 s |
+| `make docs-verify` | **22 measured facts, 18/18 checks**, PASS |
 | `make lint` | `import boundary scan: CLEAN (REQ-ARC-001..007)` |
 | `python3 tools/freeze_release.py --verify` | **30 frozen files intact**, `0747baf0…` |
-| `python3 -m unittest tests.judge.test_doc_claims` | **51 tests OK** (was 25) |
+| `python3 -m unittest tests.judge.test_doc_claims` | **60 tests OK** (was 25) |
 | `python3 tools/demo_walkthrough.py` | 6 segments, `full_os_sandbox=True` |
 | order-independence (`verify-core`→`docs`, `report`→`docs`, `docs`×2) | all exit 0 |
+
+RC-001 in the clean normal run records 19 bootstrap/optional test skips; the
+overall summary records 20 optional skips (including non-test checks). The ASCII
+run without trajectories records 25 test skips / 26 overall optional skips.
+These are explicit positional skips; neither run has a critical skip.
+The populated-evidence regression suite passes 540 tests with one optional skip.
 
 No frozen file changed (`contracts/*`, `configs/*`, `judge/rubric_map.json`,
 Master TZ untouched). `official_score_claimed: false`.

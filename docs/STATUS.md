@@ -104,3 +104,24 @@ correct and the prose around it described something that does not exist**.
   17/17 checks**; lint CLEAN; freeze **30 files intact** (`0747baf0…`);
   `official_score_claimed: false`. No frozen file changed.
 - Decisions `D-15-04`, `D-15-05`, `D-15-06`. Report `docs/PHASE_REPORTS/PHASE-15-STRUCTURAL-AUDIT.md`.
+
+
+## Phase 15 follow-up hardening (2026-11-22, D-15-07)
+
+Supersedes the earlier audit's test/check totals, not its historical sweep.
+- Fixed `judge/verify.py` crashing on ASCII-only console output after completing
+  its gates; all main-console writes use a locale-safe helper. Regression tests
+  also cover arbitrary Unicode diagnostics and explicit narrow streams.
+- Added seventh detector `C-COUNTS`: README's stale 522 and DEMO's stale 490 were
+  not covered by the old literal denylist. Recognised prose totals now derive
+  from discovery; `--write` repairs numeric spans without changing formatting.
+- Latest clean `make verify`: **12/12 PASS**, **540 tests**, 20 artifacts,
+  47.416 s; RC-001 has 19 optional/bootstrap skips, summary 20 optional skips,
+  **zero critical skips**, no missing artifacts or schema errors.
+- Empty evidence + trajectories under `LC_ALL=C PYTHONIOENCODING=ascii`:
+  **12/12 PASS**, 45.443 s, zero non-ASCII bytes; 26 summary optional skips,
+  **zero critical skips**. Populated-evidence suite: 540 tests OK, one optional skip.
+- `make docs-verify`: **22 facts / 18 checks PASS**. Lint CLEAN. Freeze still
+  **30 files intact**, `0747baf0…`. No scoring, tag, or frozen-contract changes.
+- Count recognition is intentionally bounded (see D-15-07); organisational
+  independence remains unevidenced. Q-ORG-01/02, Q-REL-01, Q-DOC-01 remain OPEN.

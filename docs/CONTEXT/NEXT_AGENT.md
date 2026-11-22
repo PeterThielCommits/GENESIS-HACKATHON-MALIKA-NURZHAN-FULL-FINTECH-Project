@@ -2,7 +2,7 @@
 
 Read `AGENTS.md`, `docs/CURRENT_STATE.md`,
 `docs/PHASE_REPORTS/PHASE-15-STRUCTURAL-AUDIT.md`, and decisions `D-15-04`,
-`D-15-05`, `D-15-06` before changing anything. Then read `docs/INDEPENDENCE.md`
+`D-15-05`, `D-15-06`, `D-15-07` before changing anything. Then read `docs/INDEPENDENCE.md`
 ("Ownership — and an honest correction"), which is the most important paragraph in
 the repository right now.
 
@@ -11,11 +11,13 @@ the repository right now.
 Phase 15 is `DONE` on a stricter reading of its exit gate than before. The
 documentation is now checked on two axes: **numbers** (unchanged, still generated and
 byte-compared) and **shapes** (new). Everything below was measured in one session on
-this branch:
+this branch (the sweep, core, replay and rc-check rows are initial-audit
+measurements; the full/docs/ASCII rows are the latest follow-up):
 
 ```
-make verify        -> 12/12 PASS, 528 tests, 20 evidence artifacts, from an EMPTY evidence dir
-make docs-verify   -> 22 measured facts, 17/17 checks PASS
+make verify        -> 12/12 PASS, 540 tests, 20 evidence artifacts, from an EMPTY evidence dir
+make docs-verify   -> 22 measured facts, 18/18 checks PASS
+ASCII clean verify -> 12/12 PASS, empty evidence + trajectories, zero non-ASCII bytes
 make verify-core   -> 6/6 PASS
 make replay-all    -> 80/80 runs, 567 steps byte-identical
 make release-audit -> 6/6 PASS
@@ -38,7 +40,7 @@ make rc-check      -> PASS
 - **Never cite a decision ID that is not in `docs/DECISIONS.md`.**
 - **`calc` vs `calculator` is intentional** (`D-15-02`).
 - **Checked-in `episodes/dev/*` have no `sealed/truth.json`** (`D-01-04`).
-- **Every gate must be shown to fail.** Six new detectors each have an injected-fault
+- **Every gate must be shown to fail.** Seven new detectors have an injected-fault
   test; keep that standard.
 - Do not run `make official-eval` casually — it rewrites the committed
   `artifacts/trajectories/trajectories.jsonl`. If a sweep runs it, restore with
@@ -46,6 +48,12 @@ make rc-check      -> PASS
   `duration_s` changes across all 80 rows).
 
 ### New in this session
+- **Console verdicts must survive an ASCII-only locale** (`D-15-07`). Use `_say`
+  for every console write in `judge/verify.py::main`, including failure output.
+- **Recognised prose totals track discovery** through `C-COUNTS`. Adding a test
+  requires `python3 tools/verify_doc_claims.py --write` to update the facts block
+  and recognised prose copies. The recogniser is bounded; narrative claims and
+  historical reports still need review.
 - **A published fact must not depend on which target ran last** (`D-15-06`).
   Test counts come from `unittest` **discovery** over `tests/` and `tests/official/`,
   never from `verify_summary.json`. If you add a fact, ask: *would this value change

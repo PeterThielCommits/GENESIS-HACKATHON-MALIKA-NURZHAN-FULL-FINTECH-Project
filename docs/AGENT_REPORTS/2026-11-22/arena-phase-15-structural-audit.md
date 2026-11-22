@@ -115,3 +115,34 @@ Recorded because they are the point of the exercise:
 
 Answers `Q-ORG-01` — a human decides whether the verifier gets re-derived under a
 separate owner/context or the disclosed gap is accepted.
+
+## 9. Follow-up findings and corrected guarantees (`D-15-07`)
+
+The earlier “one published copy” claim in §5 was wrong: README still had 522 in
+prose, and DEMO had 490. Both now track unittest discovery through `C-COUNTS`, the
+seventh structural detector. `--write` repairs recognised prose totals as well as
+the generated block; nine added tests cover detection, scoping, and exact numeric
+repair. The detector is explicitly bounded by its scan set and phrase grammar;
+it is not a guarantee about arbitrary narrative claims.
+
+An ASCII-only clean run exposed a separate crash after the correct gate verdict.
+All `judge/verify.py::main` console writes now use `_say`, including stderr and
+failure annotations. Three tests guard transliteration, narrow-stream replacement,
+and the absence of bypassing print calls. The original helper/raw-print mutations
+were shown to fail tests before restoration.
+
+Follow-up measurements: 540 tests pass with populated evidence (one optional skip).
+With evidence and trajectories both empty, the ASCII full run passes 12/12,
+produces 20 artifacts in 45.443 s, emits zero non-ASCII bytes, and reports 26
+optional / zero critical skips. These supersede §6's suite/check totals; the
+19-target sweep there remains a historical measurement of the earlier commit.
+The documentation gate is now 22 facts / 18 checks. Freeze and tag untouched;
+Q-ORG-01/02, Q-REL-01, Q-DOC-01 remain OPEN.
+
+
+Latest normal empty-evidence verification (trajectories retained): **12/12 PASS**,
+**540 tests**, **20 artifacts**, **47.416 s**, zero critical skips, no missing
+artifacts or schema errors. RC-001 has 19 optional/bootstrap test skips; the
+summary has 20 optional skips including non-test checks. Documentation is
+**22 facts / 18 checks PASS**, lint CLEAN, and the 30-file freeze remains intact
+(`0747baf0…`). These are the final follow-up measurements.

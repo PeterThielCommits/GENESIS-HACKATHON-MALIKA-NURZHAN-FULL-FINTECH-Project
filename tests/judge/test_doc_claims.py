@@ -451,6 +451,101 @@ class TestStructuralChecks(unittest.TestCase):
         self.assertEqual(float(OFFICIAL_STEP_PENALTY_WEIGHT), 0.2)
         self.assertEqual(OFFICIAL_STEP_BUDGET, 100)
 
+    # ---- C-COUNTS ----------------------------------------------------------
+    def test_stale_suite_total_in_prose_is_caught(self):
+        """The defect that survived the whole Phase-15 audit.
+
+        README published "the full **522-test** suite" two paragraphs above a
+        generated block that said 531, and DEMO.md claimed 490. Both are derived
+        here from the live count so this test cannot itself go stale.
+        """
+        live = vdc._discovered_test_count("tests")
+        stale = live - 9  # any wrong total, not a hard-coded historical one
+        with tempfile.TemporaryDirectory() as td:
+            doc = Path(td) / "DOC.md"
+            doc.write_text(f"the full **{stale}-test** suite\n", encoding="utf-8")
+            outcome = vdc._stale_counts_in(doc, "DOC.md")
+        self.assertEqual(len(outcome), 1, outcome)
+        self.assertEqual(outcome[0]["status"], "STALE_COUNT")
+        self.assertIn(str(stale), outcome[0]["detail"])
+
+    def test_correct_suite_total_is_accepted(self):
+        live = vdc._discovered_test_count("tests")
+        with tempfile.TemporaryDirectory() as td:
+            doc = Path(td) / "DOC.md"
+            doc.write_text(f"the full **{live}-test** suite\n", encoding="utf-8")
+            self.assertEqual(vdc._stale_counts_in(doc, "DOC.md"), [])
+
+    def test_subset_test_counts_are_not_suite_totals(self):
+        """False positives found on this check's own first run.
+
+        "5 tests PASS" scopes to one module and "1 test skips as optional"
+        describes a behaviour; neither is a claim about the suite.
+        """
+        with tempfile.TemporaryDirectory() as td:
+            doc = Path(td) / "DOC.md"
+            doc.write_text(
+                "`tests/verifier/test_boundaries.py` → 5 tests PASS\n"
+                "`hypothesis` extra missing → 1 test skips as *optional*\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(vdc._stale_counts_in(doc, "DOC.md"), [])
+
+    def test_official_mirror_count_is_scoped_to_its_own_clause(self):
+        """Adjacent totals must not borrow each other's adjective.
+
+        "490 tests, 55 official mirror tests" publishes two different totals in
+        one sentence; a fixed-width context window read the second one's
+        qualifier into the first and reported the suite total as 55.
+        """
+        official = vdc._discovered_test_count("tests/official")
+        suite = vdc._discovered_test_count("tests")
+        with tempfile.TemporaryDirectory() as td:
+            doc = Path(td) / "DOC.md"
+            doc.write_text(f"{suite} tests, {official} official mirror tests\n", encoding="utf-8")
+            self.assertEqual(vdc._stale_counts_in(doc, "DOC.md"), [])
+
+    def test_official_stale_count_is_detected_below_suite_floor(self):
+        official = vdc._discovered_test_count("tests/official")
+        with tempfile.TemporaryDirectory() as td:
+            doc = Path(td) / "DOC.md"
+            doc.write_text(f"{official + 1} official mirror tests\n", encoding="utf-8")
+            outcome = vdc._stale_counts_in(doc, "DOC.md")
+            self.assertEqual(len(outcome), 1)
+            self.assertIn(f"tests/official discovery is {official}", outcome[0]["detail"])
+
+    def test_reversed_adjacent_totals_have_independent_scope(self):
+        official = vdc._discovered_test_count("tests/official")
+        suite = vdc._discovered_test_count("tests")
+        with tempfile.TemporaryDirectory() as td:
+            doc = Path(td) / "DOC.md"
+            doc.write_text(f"{official} official mirror tests, {suite} tests\n", encoding="utf-8")
+            self.assertEqual(vdc._stale_counts_in(doc, "DOC.md"), [])
+
+    def test_autofix_only_changes_digits_and_is_idempotent(self):
+        suite = vdc._discovered_test_count("tests")
+        official = vdc._discovered_test_count("tests/official")
+        before = f"full **7-test** suite; 7 TESTS; {official + 1} official mirror tests\n{suite - 1} tests.\n"
+        expected = f"full **{suite}-test** suite; 7 TESTS; {official} official mirror tests\n{suite} tests.\n"
+        with tempfile.TemporaryDirectory() as td:
+            doc = Path(td) / "DOC.md"
+            doc.write_text(before, encoding="utf-8")
+            self.assertEqual(len(vdc._stale_counts_in(doc, "DOC.md", autofix=True)), 3)
+            self.assertEqual(doc.read_text(encoding="utf-8"), expected)
+            self.assertEqual(vdc._stale_counts_in(doc, "DOC.md", autofix=True), [])
+            self.assertEqual(doc.read_text(encoding="utf-8"), expected)
+
+    def test_module_scope_does_not_leak_into_next_line(self):
+        suite = vdc._discovered_test_count("tests")
+        with tempfile.TemporaryDirectory() as td:
+            doc = Path(td) / "DOC.md"
+            doc.write_text(f"`tests/verifier/test_boundaries.py` has 5 tests.\nFull suite: {suite - 1} tests\n", encoding="utf-8")
+            self.assertEqual(len(vdc._stale_counts_in(doc, "DOC.md")), 1)
+
+    def test_real_repository_has_no_stale_suite_totals(self):
+        outcome = vdc.stale_count_check()
+        self.assertEqual([item for item in outcome if item["status"] != "PASS"], [])
+
 
 class TestPublishedFactsAreStateIndependent(unittest.TestCase):
     """A published fact must not depend on which target ran most recently.

@@ -289,3 +289,46 @@ Open items passed forward, none blocking:
 detectors added, each proven to fire, each locked by a test. `make verify` 12/12
 PASS from an empty evidence directory, docs gate PASS 17/17, frozen surface
 untouched.
+
+## 8. Follow-up hardening — locale and duplicated prose counts
+
+Decision `D-15-07` supersedes the earlier sign-off measurements where noted.
+The initial 19 structural findings remain fixed; follow-up found three additional
+issues: the verifier's ASCII-console crash and two stale prose totals.
+
+- **Locale:** an empty-evidence run under `LC_ALL=C PYTHONIOENCODING=ascii`
+  passed its gates but originally raised `UnicodeEncodeError` in the final
+  console message. All console output from `main()` now uses `_say`, with
+  transliteration and a replacement fallback for arbitrary Unicode diagnostics.
+  Three independent tests cover the output path. Reverting the helper or adding
+  a raw Unicode print was shown to fail regression tests.
+- **Duplicated counts:** contrary to §3.2's original account, one prose copy was
+  *not* removed: README retained “522-test” above the refreshed generated block;
+  DEMO retained “490 tests”. The old denylist caught neither. The seventh
+  detector, `C-COUNTS`, now compares recognised prose totals against discovery.
+  `--write` changes only numeric spans and preserves qualifiers and formatting.
+  Nine tests cover stale/correct totals, explicit official subsets, clause scope,
+  file/behaviour subsets, repair preservation, and idempotence. Adding these
+  tests itself triggered the detector until the prose was refreshed.
+- **Negative proof:** injecting a stale `317-test` phrase into LIMITATIONS made
+  the gate exit 1 with `C-COUNTS`; `--write` repaired it, and the original document
+  was restored. The real README/DEMO drift was likewise detected before repair.
+- **Scope, not perfection:** the recogniser covers `DOC_SCAN`, integer +
+  test/tests with optional official/mirror qualifiers, excluding named-module
+  counts and small unqualified counts unless introduced as full/total/suite.
+  Other natural-language phrasings and historical phase reports need review.
+
+The full regression suite now discovers **540 tests**. The clean ASCII run with
+both evidence and trajectory directories empty passed **12/12** in **45.443 s**,
+produced **20 artifacts**, and emitted **zero non-ASCII bytes**. Its summary records
+**26 optional skips, zero critical skips** (including bootstrap and absent-trajectory
+positions); no missing artifacts or schema errors. The populated-evidence suite
+passed 540 tests with one optional skip. No frozen file or release tag changed.
+
+
+Latest normal empty-evidence verification (trajectories retained): **12/12 PASS**,
+**540 tests**, **20 artifacts**, **47.416 s**, zero critical skips, no missing
+artifacts or schema errors. RC-001 has 19 optional/bootstrap test skips; the
+summary has 20 optional skips including non-test checks. Documentation is
+**22 facts / 18 checks PASS**, lint CLEAN, and the 30-file freeze remains intact
+(`0747baf0…`). These are the final follow-up measurements.
