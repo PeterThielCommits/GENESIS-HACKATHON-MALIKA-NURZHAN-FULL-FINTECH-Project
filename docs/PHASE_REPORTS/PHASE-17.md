@@ -155,7 +155,7 @@ rewritten: it is a dated snapshot, and it now says so.
 | Gate | Command | Result | Artifact |
 |---|---|---|---|
 | Contract freeze | `python3 tools/freeze_release.py --verify` | **PASS** — 30 files, `0747baf0…` | `configs/release_freeze.json` |
-| Full Judge Kit | `make verify` | **PASS 12/12**, 584 tests (1 optional skip), 20 artifacts | `artifacts/reports/latest/verify_summary.json` |
+| Full Judge Kit | `make verify` | **PASS 12/12**, 588 tests (1 optional skip), 20 artifacts | `artifacts/reports/latest/verify_summary.json` |
 | Documentation claims | `make docs-verify` | **PASS** — 22 measured facts, **22/22** checks | `artifacts/reports/doc_claims/doc_claims_report.json` |
 | All trajectories | `make replay-all` | **PASS** — 80/80 runs, 567 steps byte-identical | `artifacts/reports/release/trajectory_replay.json` |
 | Release audit | `make release-audit` | **PASS 6/6** — secrets, file list, size, deps, entrypoint, submission | `artifacts/reports/release/release_audit.json` |
@@ -255,7 +255,7 @@ REQUIREMENTS: REQ-CONTRACT-001, REQ-CONTRACT-003, REQ-JUDGE-004 (carried),
 TESTS RUN: python3 tools/freeze_release.py --verify; make verify;
   make docs-verify; make replay-all; make release-audit; make evidence-verify;
   python3 tools/release_evidence.py --verify; python3 -m unittest discover -s tests -t .
-TEST RESULTS: PASS — 12/12 gates, 584 tests (1 optional skip), 22/22 doc checks,
+TEST RESULTS: PASS — 12/12 gates, 588 tests (1 optional skip), 22/22 doc checks,
   80/80 replays (567 steps), 6/6 audit checks, 30/30 frozen files, release
   surface + archive verified. SKIPPED: Docker offline build (no container
   runtime on this host; CI-authoritative, recorded UNVERIFIED, not PASS).

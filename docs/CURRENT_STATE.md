@@ -10,7 +10,7 @@
 > | `python3 tools/freeze_release.py --verify` | **PASS** — 30 frozen contract files intact, `0747baf0…` |
 > | `python3 tools/evidence_freeze.py --verify` | **PASS** — every tracked release file matches `docs/EVIDENCE/evidence_freeze.json` |
 > | `python3 tools/release_evidence.py --verify` | **PASS** — the release archive is honest, self-consistent and current |
-> | `make verify` (full Judge Kit) | **PASS 12/12** gates, 584 tests, 20 evidence artifacts |
+> | `make verify` (full Judge Kit) | **PASS 12/12** gates, 588 tests, 20 evidence artifacts |
 > | `make docs-verify` | **PASS** — 22 measured facts, 22 checks (new: `C-ARCHIVE`) |
 > | `make replay-all` | **PASS** — 80/80 runs, 567 steps byte-identical |
 > | `make release-audit` | **PASS 6/6** — secrets, file list, size, deps, entrypoint, submission |
@@ -46,7 +46,7 @@
 
 | Command / condition | Result |
 |---|---|
-| `make verify` (working tree) | **exit 0** — 12/12 gates, 584 tests (1 optional skip), 20 artifacts |
+| `make verify` (working tree) | **exit 0** — 12/12 gates, 588 tests (1 optional skip), 20 artifacts |
 | `make replay-all` | **80/80** runs, **567** steps byte-identical |
 | `make release-audit` | **6/6** PASS |
 | `python3 tools/verify_doc_claims.py` | **22** measured facts, **22/22** checks PASS |

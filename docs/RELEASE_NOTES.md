@@ -102,7 +102,7 @@ fresh `make verify` run.
 | Measurement | Value | Where |
 |---|---|---|
 | Judge Kit gates | **12/12 PASS** | `artifacts/reports/latest/verify_summary.json` |
-| Test suite | **584 tests** (1 optional skip) | unittest discovery over `tests/` |
+| Test suite | **588 tests** (1 optional skip) | unittest discovery over `tests/` |
 | Trajectory replay | **80/80 runs, 567 steps byte-identical** | `make replay-all` |
 | Release audit | **6/6 PASS** | `make release-audit` |
 | Documentation claims | **22 measured facts, 22/22 checks PASS** | `make docs-verify` |

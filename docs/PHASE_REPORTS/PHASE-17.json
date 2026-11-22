@@ -84,7 +84,7 @@
       "gate": "judge kit",
       "command": "make verify",
       "result": "PASS",
-      "detail": "12/12 RC gates, 584 tests (1 optional skip), 20 artifacts"
+      "detail": "12/12 RC gates, 588 tests (1 optional skip), 20 artifacts"
     },
     {
       "gate": "documentation claims",

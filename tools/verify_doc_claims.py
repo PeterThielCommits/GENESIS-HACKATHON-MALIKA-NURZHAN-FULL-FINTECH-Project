@@ -115,19 +115,24 @@ DOC_SCAN: tuple[str, ...] = (
 # --------------------------------------------------------------------------- #
 # measurement helpers — every value originates in an artifact or frozen contract
 # --------------------------------------------------------------------------- #
-def _first_difference(expected: str, actual: str) -> str:
+def _first_difference(committed: str, measured: str) -> str:
     """Describe the first disagreeing line, so drift is diagnosable.
 
     A bare "the block disagrees" is unusable in CI, where the failing job's log
     is not always retrievable. Naming the line turns a mystery into a fix.
+
+    ``committed`` is what the document currently says, ``measured`` is what
+    the artifacts say now. The labels in the message must not be swapped:
+    a reader who is told "committed 586 != measured 584" would go and edit
+    the wrong number.
     """
-    expected_lines = expected.splitlines()
-    actual_lines = actual.splitlines()
-    for index, (want, got) in enumerate(zip(expected_lines, actual_lines), start=1):
-        if want != got:
-            return f"line {index}: committed {got.strip()[:90]!r} != measured {want.strip()[:90]!r}"
-    if len(expected_lines) != len(actual_lines):
-        return f"line count: committed {len(actual_lines)} != measured {len(expected_lines)}"
+    committed_lines = committed.splitlines()
+    measured_lines = measured.splitlines()
+    for index, (have, want) in enumerate(zip(committed_lines, measured_lines), start=1):
+        if have != want:
+            return f"line {index}: committed {have.strip()[:90]!r} != measured {want.strip()[:90]!r}"
+    if len(committed_lines) != len(measured_lines):
+        return f"line count: committed {len(committed_lines)} != measured {len(measured_lines)}"
     return "whitespace or trailing newline differs"
 
 

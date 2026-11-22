@@ -122,6 +122,23 @@ class TestGeneratedBlockMechanism(unittest.TestCase):
         corrupted = original.replace(f"**{value}**", f"**{int(value) + 1}**", 1)
         self.assertNotEqual(corrupted, original, "corruption did not change the block")
 
+    def test_drift_message_labels_committed_and_measured_correctly(self):
+        """The drift message must not swap the two numbers.
+
+        A reader who is told "committed 586 != measured 584" goes and edits
+        the wrong number: the committed block is what the document says now,
+        the measured value is what the artifacts say.
+        """
+        committed = "| Total tests | **584** | src |\n"
+        measured = "| Total tests | **586** | src |\n"
+        message = vdc._first_difference(committed, measured)
+        self.assertIn("committed '| Total tests | **584** | src |'", message)
+        self.assertIn("measured '| Total tests | **586** | src |'", message)
+
+    def test_drift_message_reports_the_line_count_when_lengths_differ(self):
+        message = vdc._first_difference("a\nb\n", "a\n")
+        self.assertIn("line count: committed 2 != measured 1", message)
+
     def test_verifier_reports_missing_artifacts_loudly(self):
         """Without artifacts the checker must fail loudly, never emit a block."""
         saved = vdc.REPORT_DIR
