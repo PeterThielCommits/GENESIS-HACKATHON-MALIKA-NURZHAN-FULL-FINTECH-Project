@@ -1,0 +1,112 @@
+{
+  "schema_version": "1.0.0",
+  "audit": "TwinLedger v3.0 forensic audit",
+  "branch": "arena/45dc3a73-genesis-hackathon-malika-nurzh",
+  "base_commit": "3a3988e",
+  "head_commit_at_registry_time": "ca04f3f",
+  "date": "2026-11-21",
+  "counts": {
+    "total": 4,
+    "P0": 2,
+    "P1": 2,
+    "fixed": 4
+  },
+  "claim": "All defects found in this audit are handled. Not a claim that no bugs remain.",
+  "bugs": [
+    {
+      "id": "BUG-TL-0001",
+      "severity": "P0",
+      "category": "core_correctness",
+      "component": "scoring/reward.py",
+      "title": "Two competing reward implementations; internal one used the superseded provisional formula",
+      "status": "VERIFIED_FIXED",
+      "discovered_by": "11 published reward vectors run against scoring/reward.py",
+      "root_cause": "Phase 6 provisional reward module never retired after the official scorer landed in RC-004; no test pinned the two together",
+      "fix_commit": "ca04f3f",
+      "files_changed": [
+        "scoring/reward.py",
+        "docs/PROJECT_CONTEXT.md",
+        "docs/DECISIONS.md",
+        "tests/scoring/test_reward_sanity.py",
+        "tests/scoring/test_diagnostics.py",
+        "tests/scoring/test_reward_properties.py",
+        "tests/unit/test_property.py",
+        "judge/mutation_suite.py"
+      ],
+      "regression_tests": [
+        "tests/scoring/test_reward_sanity.py",
+        "tests/unit/test_property.py::test_scoring_stays_in_unit_interval",
+        "tests/scoring/test_reward_properties.py::test_p5_step_penalty_bounded_by_official_weight",
+        "tests/scoring/test_diagnostics.py"
+      ],
+      "verified_fails_on_old_code": true,
+      "impact": "All internal reward-derived artifacts published numbers the jury would not reproduce; negative rewards impossible; empty-truth P/R wrong",
+      "published_baselines_affected": false
+    },
+    {
+      "id": "BUG-TL-0002",
+      "severity": "P0",
+      "category": "core_correctness",
+      "component": "env/cursors.py",
+      "title": "Cursor tokens unusable for ~6.5% of offsets (delimiter byte inside random HMAC signature)",
+      "status": "VERIFIED_FIXED",
+      "discovered_by": "walking official fixture L (214-row ledger) at limit=50",
+      "root_cause": "token = raw || b'.' || sig, split with rsplit(b'.',1); ~6.5% of 16-byte signatures contain 0x2E",
+      "fix_commit": "ca04f3f",
+      "files_changed": [
+        "env/cursors.py",
+        "artifacts/trajectories/trajectories.jsonl",
+        "tests/env/test_cursor_codec.py",
+        "tests/official/test_block1_contracts.py"
+      ],
+      "regression_tests": [
+        "tests/env/test_cursor_codec.py::TestCursorRoundTrip::test_every_offset_round_trips",
+        "tests/env/test_cursor_codec.py::TestCursorRoundTrip::test_offsets_that_broke_the_delimiter_layout"
+      ],
+      "verified_fails_on_old_code": true,
+      "official_check": "C05",
+      "impact": "Rows 200-213 of the L fixture ledger unreachable; official C05 would fail",
+      "artifact_consequence": "trajectories.jsonl regenerated; verified only cursor tokens changed, metrics identical"
+    },
+    {
+      "id": "BUG-TL-0003",
+      "severity": "P1",
+      "category": "security",
+      "component": "env/cursors.py",
+      "title": "Trailing base64 garbage accepted: token + 'x' decoded to original bytes and passed HMAC check",
+      "status": "VERIFIED_FIXED",
+      "discovered_by": "existing tamper test failing once BUG-TL-0002 was fixed",
+      "root_cause": "decode verified the HMAC of decoded bytes but never that the token was their canonical encoding",
+      "fix_commit": "ca04f3f",
+      "files_changed": [
+        "env/cursors.py",
+        "tests/env/test_cursor_codec.py"
+      ],
+      "regression_tests": [
+        "tests/env/test_cursor_codec.py::TestCursorTamperResistance::test_trailing_garbage_rejected",
+        "tests/env/test_cursor_codec.py::TestCursorTamperResistance::test_non_canonical_trailing_bits_rejected"
+      ],
+      "verified_fails_on_old_code": true,
+      "impact": "Tamper evidence was weaker than documented; the old test passed by luck"
+    },
+    {
+      "id": "BUG-TL-0004",
+      "severity": "P1",
+      "category": "test_quality",
+      "component": "tests/official/test_block1_contracts.py",
+      "title": "Official C05 test walked only invoices, missing the table that needs a fourth page",
+      "status": "VERIFIED_FIXED",
+      "discovered_by": "root-cause analysis of BUG-TL-0002",
+      "root_cause": "test mirrored the wording 'three pages' and stopped at the minimum instead of checking every table",
+      "fix_commit": "ca04f3f",
+      "files_changed": [
+        "tests/official/test_block1_contracts.py"
+      ],
+      "regression_tests": [
+        "tests/official/test_block1_contracts.py::TestBlock1ContractsC01ToC20::test_C05_pagination_over_large_fixture_L_three_pages"
+      ],
+      "verified_fails_on_old_code": true,
+      "impact": "A P0 shipping defect was invisible to the official suite"
+    }
+  ]
+}

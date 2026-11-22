@@ -1,0 +1,212 @@
+{
+  "schema_version": "1.0.0",
+  "report_type": "final_quality_report",
+  "audit": "TwinLedger v3.0 full forensic audit",
+  "date": "2026-11-21",
+  "branch": "arena/45dc3a73-genesis-hackathon-malika-nurzh",
+  "base_commit": "3a3988e",
+  "head_commit_at_report": "0afdbd8",
+  "official_score_claimed": false,
+  "claim": "All defects found in this audit are handled, each with a regression test that fails on the old code. This is not a claim that no bugs remain.",
+  "defects": [
+    {
+      "id": "BUG-TL-0001",
+      "severity": "P0",
+      "category": "core_correctness",
+      "component": "scoring/reward.py",
+      "title": "Two competing reward implementations; internal one used the superseded provisional formula",
+      "status": "VERIFIED_FIXED",
+      "discovered_by": "11 published reward vectors run against scoring/reward.py",
+      "root_cause": "Phase 6 provisional reward module never retired after the official scorer landed in RC-004; no test pinned the two together",
+      "fix_commit": "ca04f3f",
+      "files_changed": [
+        "scoring/reward.py",
+        "docs/PROJECT_CONTEXT.md",
+        "docs/DECISIONS.md",
+        "tests/scoring/test_reward_sanity.py",
+        "tests/scoring/test_diagnostics.py",
+        "tests/scoring/test_reward_properties.py",
+        "tests/unit/test_property.py",
+        "judge/mutation_suite.py"
+      ],
+      "regression_tests": [
+        "tests/scoring/test_reward_sanity.py",
+        "tests/unit/test_property.py::test_scoring_stays_in_unit_interval",
+        "tests/scoring/test_reward_properties.py::test_p5_step_penalty_bounded_by_official_weight",
+        "tests/scoring/test_diagnostics.py"
+      ],
+      "verified_fails_on_old_code": true,
+      "impact": "All internal reward-derived artifacts published numbers the jury would not reproduce; negative rewards impossible; empty-truth P/R wrong",
+      "published_baselines_affected": false
+    },
+    {
+      "id": "BUG-TL-0002",
+      "severity": "P0",
+      "category": "core_correctness",
+      "component": "env/cursors.py",
+      "title": "Cursor tokens unusable for ~6.5% of offsets (delimiter byte inside random HMAC signature)",
+      "status": "VERIFIED_FIXED",
+      "discovered_by": "walking official fixture L (214-row ledger) at limit=50",
+      "root_cause": "token = raw || b'.' || sig, split with rsplit(b'.',1); ~6.5% of 16-byte signatures contain 0x2E",
+      "fix_commit": "ca04f3f",
+      "files_changed": [
+        "env/cursors.py",
+        "artifacts/trajectories/trajectories.jsonl",
+        "tests/env/test_cursor_codec.py",
+        "tests/official/test_block1_contracts.py"
+      ],
+      "regression_tests": [
+        "tests/env/test_cursor_codec.py::TestCursorRoundTrip::test_every_offset_round_trips",
+        "tests/env/test_cursor_codec.py::TestCursorRoundTrip::test_offsets_that_broke_the_delimiter_layout"
+      ],
+      "verified_fails_on_old_code": true,
+      "official_check": "C05",
+      "impact": "Rows 200-213 of the L fixture ledger unreachable; official C05 would fail",
+      "artifact_consequence": "trajectories.jsonl regenerated; verified only cursor tokens changed, metrics identical"
+    },
+    {
+      "id": "BUG-TL-0003",
+      "severity": "P1",
+      "category": "security",
+      "component": "env/cursors.py",
+      "title": "Trailing base64 garbage accepted: token + 'x' decoded to original bytes and passed HMAC check",
+      "status": "VERIFIED_FIXED",
+      "discovered_by": "existing tamper test failing once BUG-TL-0002 was fixed",
+      "root_cause": "decode verified the HMAC of decoded bytes but never that the token was their canonical encoding",
+      "fix_commit": "ca04f3f",
+      "files_changed": [
+        "env/cursors.py",
+        "tests/env/test_cursor_codec.py"
+      ],
+      "regression_tests": [
+        "tests/env/test_cursor_codec.py::TestCursorTamperResistance::test_trailing_garbage_rejected",
+        "tests/env/test_cursor_codec.py::TestCursorTamperResistance::test_non_canonical_trailing_bits_rejected"
+      ],
+      "verified_fails_on_old_code": true,
+      "impact": "Tamper evidence was weaker than documented; the old test passed by luck"
+    },
+    {
+      "id": "BUG-TL-0004",
+      "severity": "P1",
+      "category": "test_quality",
+      "component": "tests/official/test_block1_contracts.py",
+      "title": "Official C05 test walked only invoices, missing the table that needs a fourth page",
+      "status": "VERIFIED_FIXED",
+      "discovered_by": "root-cause analysis of BUG-TL-0002",
+      "root_cause": "test mirrored the wording 'three pages' and stopped at the minimum instead of checking every table",
+      "fix_commit": "ca04f3f",
+      "files_changed": [
+        "tests/official/test_block1_contracts.py"
+      ],
+      "regression_tests": [
+        "tests/official/test_block1_contracts.py::TestBlock1ContractsC01ToC20::test_C05_pagination_over_large_fixture_L_three_pages"
+      ],
+      "verified_fails_on_old_code": true,
+      "impact": "A P0 shipping defect was invisible to the official suite"
+    }
+  ],
+  "counts": {
+    "total": 4,
+    "by_severity": {
+      "P0": 2,
+      "P1": 2
+    },
+    "fixed": 4,
+    "open": 0,
+    "process_defects_recorded": 1
+  },
+  "measured_state": {
+    "tests": {
+      "total": 502,
+      "skipped": 18,
+      "status": "OK"
+    },
+    "official_tests": 55,
+    "mutation": {
+      "killed": 26,
+      "total": 26
+    },
+    "metamorphic": {
+      "transforms_passed": 7,
+      "transforms_total": 7,
+      "episode_pairs": 28
+    },
+    "replay": {
+      "runs_matched": 80,
+      "runs_total": 80,
+      "steps": 567
+    },
+    "judge_kit": {
+      "gates_passed": 12,
+      "gates_total": 12,
+      "seconds": 72.4
+    },
+    "clean_extract_verify": {
+      "gates_passed": 12,
+      "gates_total": 12,
+      "seconds": 65.8
+    },
+    "release_audit": {
+      "checks_passed": 6,
+      "checks_total": 6,
+      "tracked_files": 498,
+      "total_bytes": 5530451,
+      "external_imports": 0
+    },
+    "freeze": {
+      "files": 30,
+      "aggregate_sha256": "0747baf087b9509a..."
+    },
+    "performance": {
+      "env_step_p99_ms": 0.1253,
+      "peak_rss_mb": 22.43,
+      "max_episode_disk_mb": 0.0812
+    }
+  },
+  "baselines": {
+    "seed": 2026,
+    "oracle": {
+      "f1": 1.0,
+      "mean_return": 0.992,
+      "mean_steps": 4.0
+    },
+    "simple_reconciliation": {
+      "f1": 1.0,
+      "mean_return": 0.9853,
+      "mean_steps": 7.3
+    },
+    "random": {
+      "f1": 0.25,
+      "mean_return": -0.506,
+      "mean_steps": 12.0
+    },
+    "mass_flagging": {
+      "f1": 0.0,
+      "mean_return": -1.0,
+      "mean_steps": 1.0
+    }
+  },
+  "release_gates": {
+    "A_compliance": "VERIFIED",
+    "B_core_correctness": "PASS",
+    "C_security": "PASS_WITH_RESIDUAL_RISKS",
+    "D_determinism": "PASS",
+    "E_quality": "PASS",
+    "F_performance": "PASS",
+    "G_infrastructure": "PARTIAL_DOCKER_UNVERIFIED",
+    "H_documentation": "PASS",
+    "I_github": "SEE_FINAL_GITHUB_REPORT"
+  },
+  "limitations": [
+    "Docker-based verification not executed (no docker binary in the audit environment)",
+    "Kernel-level isolation strength not measured against a hostile escape attempt",
+    "No penetration test; security attack list is requirement-driven",
+    "canary_fuzz PASS is a measured negative, not a proof across all encodings",
+    "Property tests are seeded, not exhaustive; hypothesis optional and skipped",
+    "Frozen configs/scoring/default.json still carries the unused eta=0.05 key (D-18-01)",
+    "scoring/reward.py remains as a compatibility shim over official_scorer",
+    "tzdata drift across machines not measured",
+    "Jury hardware timing is not ours to measure",
+    "Phase 17 not started (not authorised)"
+  ]
+}

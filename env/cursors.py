@@ -23,13 +23,20 @@ class CursorCodec:
     def _query_hash(self, table: str, filters: dict[str, Any]) -> str:
         return hashlib.sha256(canonical_bytes({"table": table, "filters": filters})).hexdigest()[:16]
 
+    #: Fixed signature width. The token layout is ``sig || raw`` with the
+    #: signature occupying the first :data:`_SIG_LEN` bytes, so no byte value
+    #: is ever significant as a delimiter. A delimiter-based split is
+    #: unsafe here: with 16 random HMAC bytes, ~6% of all tokens contain the
+    #: separator byte inside the signature and then fail verification.
+    _SIG_LEN = 16
+
     def encode(self, table: str, filters: dict[str, Any], offset: int) -> str:
         if type(offset) is not int or offset < 0:
             raise EnvError("BAD_CURSOR", "cursor offset must be a non-negative integer")
         payload = {"t": table, "q": self._query_hash(table, filters), "o": offset}
         raw = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
-        sig = hmac.new(self._key, raw, hashlib.sha256).digest()[:16]
-        return base64.urlsafe_b64encode(raw + b"." + sig).decode("ascii")
+        sig = hmac.new(self._key, raw, hashlib.sha256).digest()[: self._SIG_LEN]
+        return base64.urlsafe_b64encode(sig + raw).decode("ascii")
 
     def decode(self, token: str, table: str, filters: dict[str, Any]) -> int:
         if not isinstance(token, str) or not token or len(token) > 512:
@@ -38,10 +45,17 @@ class CursorCodec:
             decoded = base64.urlsafe_b64decode(token.encode("ascii"))
         except Exception as exc:
             raise EnvError("BAD_CURSOR", "malformed cursor encoding") from exc
-        if b"." not in decoded:
+        # Strict canonical encoding: Python's base64 decoder silently ignores
+        # trailing garbage, so ``token + "x"`` would otherwise decode to the
+        # original bytes and pass every later check. Re-encoding must reproduce
+        # the presented token byte for byte, which also rejects alternate
+        # alphabets, stray padding and non-canonical trailing bits.
+        if base64.urlsafe_b64encode(decoded).decode("ascii") != token:
+            raise EnvError("BAD_CURSOR", "cursor is not canonically encoded")
+        if len(decoded) <= self._SIG_LEN:
             raise EnvError("BAD_CURSOR", "malformed cursor structure")
-        raw, sig = decoded.rsplit(b".", 1)
-        expected = hmac.new(self._key, raw, hashlib.sha256).digest()[:16]
+        sig, raw = decoded[: self._SIG_LEN], decoded[self._SIG_LEN :]
+        expected = hmac.new(self._key, raw, hashlib.sha256).digest()[: self._SIG_LEN]
         if not hmac.compare_digest(sig, expected):
             raise EnvError("BAD_CURSOR", "cursor signature verification failed")
         try:

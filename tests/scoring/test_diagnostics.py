@@ -38,7 +38,7 @@ class TestDiagnostics(unittest.TestCase):
         self.assertEqual(diagnostics["audit_status"], "OK")
         self.assertEqual(diagnostics["counts"]["tp"], 1)
         self.assertEqual(diagnostics["f1"]["exact"], "1")
-        self.assertEqual(diagnostics["reward"]["reward_exact"], "197/200")
+        self.assertEqual(diagnostics["reward"]["reward_exact"], "47/50")
         self.assertEqual(diagnostics["steps_used"], 30)
 
     def test_matches_and_evidence_coverage(self):
@@ -73,10 +73,11 @@ class TestDiagnostics(unittest.TestCase):
             [], [], empty_result, empty_reward,
             run_info={"truncated": True, "no_submit": True},
         )
-        # Example H: F1=1 and R=0.95, but the status must mark
-        # truncation and must not be called a successful audit.
+        # Example H re-based on the official formula (BUG-TL-0001):
+        # F1=1, inspection_steps=100 -> 2*1-1-0.2 = 0.80, and the status
+        # must still mark truncation, never a successful audit.
         self.assertEqual(diagnostics["f1"]["exact"], "1")
-        self.assertEqual(diagnostics["reward"]["reward_exact"], "19/20")
+        self.assertEqual(diagnostics["reward"]["reward_exact"], "4/5")
         self.assertEqual(diagnostics["audit_status"], "TRUNCATED_NO_SUBMIT")
 
     def test_not_available_markers_are_explicit(self):
@@ -113,7 +114,7 @@ class TestDiagnostics(unittest.TestCase):
         self.assertEqual(experimental["experimental_grounded_score"]["exact"], "1")
         self.assertIn("never part of the official reward", experimental["note"])
         # The official reward field is untouched by the experiment.
-        self.assertEqual(diagnostics["reward"]["reward_exact"], "197/200")
+        self.assertEqual(diagnostics["reward"]["reward_exact"], "47/50")
 
     def test_experimental_downgrades_unrequested_evidence(self):
         diagnostics = build_diagnostics(

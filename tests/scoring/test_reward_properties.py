@@ -19,6 +19,7 @@ from pathlib import Path
 
 from contracts.canonical import canonical_json, sha256_hex
 from scoring.diagnostics import build_reward_property_matrix, evaluate_reward_properties
+from scoring.official_scorer import OFFICIAL_STEP_PENALTY_WEIGHT
 from scoring.reward import compute_reward, load_scoring_config
 from tests.scoring import fixtures as fx
 
@@ -172,26 +173,30 @@ class TestRewardProperties(unittest.TestCase):
         self.assertTrue(verdict["checks"][0]["pass"], verdict["checks"][0])
         self.assertTrue(verdict["pass"])
 
-    def test_p5_step_penalty_bounded_by_eta(self):
+    def test_p5_step_penalty_bounded_by_official_weight(self):
+        # BUG-TL-0001: the bound is the official penalty weight 0.2, not the
+        # superseded provisional eta=0.05 (configs/scoring/default.json is a
+        # frozen contract and still carries eta, which no longer drives R).
         verdict = self.verdicts["P5"]
         self.assertTrue(verdict["checks"], "P5 needs a steps sweep")
-        config = load_scoring_config()
         for check in verdict["checks"]:
             self.assertTrue(check["non_increasing"], check)
             self.assertLessEqual(
-                Fraction(check["max_spread"]), config.eta, "total step penalty exceeds eta"
+                Fraction(check["max_spread"]),
+                OFFICIAL_STEP_PENALTY_WEIGHT,
+                "total step penalty exceeds the official weight",
             )
         self.assertTrue(verdict["pass"])
 
-    def test_p5_full_budget_penalty_equals_eta(self):
+    def test_p5_full_budget_penalty_equals_official_weight(self):
         config = load_scoring_config()
         _, _, _, truths = build_corpus()[2]
         findings = [fx.honest_finding(t) for t in truths]
         perfect = compute_reward(findings, truths, 0, config=config)
         full = compute_reward(findings, truths, config.max_steps, config=config)
         self.assertEqual(perfect.penalty, Fraction(0))
-        self.assertEqual(full.penalty, config.eta)
-        self.assertEqual(perfect.reward - full.reward, config.eta)
+        self.assertEqual(full.penalty, OFFICIAL_STEP_PENALTY_WEIGHT)
+        self.assertEqual(perfect.reward - full.reward, OFFICIAL_STEP_PENALTY_WEIGHT)
 
     def test_all_five_properties_pass(self):
         for property_id in ("P1", "P2", "P3", "P4", "P5"):

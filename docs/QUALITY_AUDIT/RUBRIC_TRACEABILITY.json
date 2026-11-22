@@ -1,0 +1,291 @@
+{
+  "schema_version": "1.0.0",
+  "official_score_claimed": false,
+  "source": "spec/official_fintech_checks_2026-11-20.md",
+  "note": "Internal verification of each published check. Not a jury score.",
+  "blocks": {
+    "Block1": {
+      "points": 25,
+      "checks": 20
+    },
+    "Block2": {
+      "points": 25,
+      "checks": 20
+    },
+    "Block3": {
+      "points": 25,
+      "checks": 20
+    },
+    "Block4": {
+      "points": 15,
+      "checks": 20
+    },
+    "Engineering": {
+      "points": 10,
+      "criteria": 5
+    }
+  },
+  "entries": [
+    {
+      "block": "Block1",
+      "check": "C01",
+      "requirement": "reset returns JSON-compatible (observation, info)",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C01",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C02",
+      "requirement": "first observation: task/manifest/policy/remaining_steps, no seed/truth",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C02",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C03",
+      "requirement": "manifest fields present and consistent with actual data",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C03",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C04",
+      "requirement": "one valid list_records returns 5-tuple with bool flags",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C04",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C05",
+      "requirement": "pagination over L: <=50 rows/page, no gaps/dups, all rows reachable",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C05",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C06",
+      "requirement": "same cursor twice returns identical page in identical order",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C06",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C07",
+      "requirement": "get_record existing R1 returns correct record, no truth",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C07",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C08",
+      "requirement": "get_document existing D1 via documented interface, no arbitrary FS",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C08",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C09",
+      "requirement": "calculator 0.1+0.2 -> decimal 0.3",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C09",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C10",
+      "requirement": "non-arithmetic calculator expression -> controlled error, nothing executed",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C10",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C11",
+      "requirement": "get_record missing U -> bounded error, step consumed",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C11",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C12",
+      "requirement": "get_document missing U -> bounded error, step consumed",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C12",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C13",
+      "requirement": "unknown action name -> bounded error, step consumed",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C13",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C14",
+      "requirement": "budget decrements per request; error is not a free action",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C14",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C15",
+      "requirement": "submit -> terminated, findings final, later actions change nothing",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C15",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C16",
+      "requirement": "99 inspection actions then submit as action 100 -> accepted",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C16",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C17",
+      "requirement": "100 inspection actions without submit -> truncated, empty findings",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C17",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C18",
+      "requirement": "reproducible 60s time limit -> truncated, empty findings",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C18",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C19",
+      "requirement": "closed mode rewards are numeric 0; truth only judge-side",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C19",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block1",
+      "check": "C20",
+      "requirement": "no truth/provenance/seed/answer leakage; no shell/SQL/FS/network",
+      "implementation": "adapter/official_env.py",
+      "test": "tests/official/test_block1_contracts.py::test_C20",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block2",
+      "check": "D01-D20",
+      "requirement": "20 closed episodes: clean book consistent, injection creates declared discrepancy, truth matches, evidence reachable, formats kept, no contradictory data",
+      "implementation": "gen/pipeline.py official_d20_recipes",
+      "test": "tests/official/test_block2_episodes.py",
+      "evidence": "artifacts/reports/latest/verify_summary.json",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block3",
+      "check": "1-20",
+      "requirement": "20 matcher/reward vectors: exact TP/FP/FN, P/R/F1, reward incl. 0.98, -1, 47/150, -871/1050, -0.02",
+      "implementation": "scoring/official_scorer.py compute_official_metrics",
+      "test": "tests/official/test_block3_scorer.py",
+      "evidence": "docs/QUALITY_AUDIT/BUG_REGISTRY.md#bug-tl-0001",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block3",
+      "check": "M01-M12",
+      "requirement": "12 worked matcher examples: set normalisation, tau, structural errors, max-cardinality matching, deterministic tie-break",
+      "implementation": "scoring/official_scorer.py match_official_findings",
+      "test": "tests/official/test_block3_scorer.py",
+      "evidence": "docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Block4",
+      "check": "P01-P20",
+      "requirement": "20 paired invariance checks: determinism, inverse ID mapping, equal metrics at equal steps, no new leak",
+      "implementation": "metamorphic/paired_transform.py",
+      "test": "tests/official/test_block4_paired.py",
+      "evidence": "artifacts/reports/latest/metamorphic_report.json",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Engineering",
+      "check": "E1",
+      "requirement": "one documented start command",
+      "implementation": "Makefile",
+      "test": "tests/judge/test_release_audit.py",
+      "evidence": "make help; make verify",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Engineering",
+      "check": "E2",
+      "requirement": "code/dependency/config versions pinned",
+      "implementation": "configs/release_freeze.json",
+      "test": "tests/judge/test_release_audit.py",
+      "evidence": "freeze_release --verify 30 files 0747baf0...",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Engineering",
+      "check": "E3",
+      "requirement": "readable trajectories with section 09 fields, no truth in observations",
+      "implementation": "harness/trajectory.py",
+      "test": "tests/judge/test_release_audit.py",
+      "evidence": "artifacts/trajectories/trajectories.jsonl (80 runs)",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Engineering",
+      "check": "E4",
+      "requirement": "measured failure analysis with cause and re-check",
+      "implementation": "judge/robustness_audit.py",
+      "test": "tests/judge/test_robustness*.py",
+      "evidence": "artifacts/reports/latest/robustness_report.json",
+      "status": "VERIFIED"
+    },
+    {
+      "block": "Engineering",
+      "check": "E5",
+      "requirement": "honest limitations linked to scenarios; no unsupported learning claims",
+      "implementation": "docs/LIMITATIONS.md",
+      "test": "docs_verify",
+      "evidence": "docs/LIMITATIONS.md",
+      "status": "VERIFIED"
+    }
+  ]
+}

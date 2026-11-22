@@ -1,0 +1,30 @@
+block,check,requirement,implementation,test,evidence,status
+Block1,C01,"reset returns JSON-compatible (observation, info)",adapter/official_env.py,tests/official/test_block1_contracts.py::test_C01,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C02,"first observation: task/manifest/policy/remaining_steps, no seed/truth",adapter/official_env.py,tests/official/test_block1_contracts.py::test_C02,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C03,manifest fields present and consistent with actual data,adapter/official_env.py,tests/official/test_block1_contracts.py::test_C03,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C04,one valid list_records returns 5-tuple with bool flags,adapter/official_env.py,tests/official/test_block1_contracts.py::test_C04,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C05,"pagination over L: <=50 rows/page, no gaps/dups, all rows reachable",adapter/official_env.py,tests/official/test_block1_contracts.py::test_C05,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C06,same cursor twice returns identical page in identical order,adapter/official_env.py,tests/official/test_block1_contracts.py::test_C06,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C07,"get_record existing R1 returns correct record, no truth",adapter/official_env.py,tests/official/test_block1_contracts.py::test_C07,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C08,"get_document existing D1 via documented interface, no arbitrary FS",adapter/official_env.py,tests/official/test_block1_contracts.py::test_C08,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C09,calculator 0.1+0.2 -> decimal 0.3,adapter/official_env.py,tests/official/test_block1_contracts.py::test_C09,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C10,"non-arithmetic calculator expression -> controlled error, nothing executed",adapter/official_env.py,tests/official/test_block1_contracts.py::test_C10,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C11,"get_record missing U -> bounded error, step consumed",adapter/official_env.py,tests/official/test_block1_contracts.py::test_C11,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C12,"get_document missing U -> bounded error, step consumed",adapter/official_env.py,tests/official/test_block1_contracts.py::test_C12,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C13,"unknown action name -> bounded error, step consumed",adapter/official_env.py,tests/official/test_block1_contracts.py::test_C13,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C14,budget decrements per request; error is not a free action,adapter/official_env.py,tests/official/test_block1_contracts.py::test_C14,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C15,"submit -> terminated, findings final, later actions change nothing",adapter/official_env.py,tests/official/test_block1_contracts.py::test_C15,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C16,99 inspection actions then submit as action 100 -> accepted,adapter/official_env.py,tests/official/test_block1_contracts.py::test_C16,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C17,"100 inspection actions without submit -> truncated, empty findings",adapter/official_env.py,tests/official/test_block1_contracts.py::test_C17,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C18,"reproducible 60s time limit -> truncated, empty findings",adapter/official_env.py,tests/official/test_block1_contracts.py::test_C18,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C19,closed mode rewards are numeric 0; truth only judge-side,adapter/official_env.py,tests/official/test_block1_contracts.py::test_C19,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block1,C20,no truth/provenance/seed/answer leakage; no shell/SQL/FS/network,adapter/official_env.py,tests/official/test_block1_contracts.py::test_C20,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md#block-1,VERIFIED
+Block2,D01-D20,"20 closed episodes: clean book consistent, injection creates declared discrepancy, truth matches, evidence reachable, formats kept, no contradictory data",gen/pipeline.py official_d20_recipes,tests/official/test_block2_episodes.py,artifacts/reports/latest/verify_summary.json,VERIFIED
+Block3,1-20,"20 matcher/reward vectors: exact TP/FP/FN, P/R/F1, reward incl. 0.98, -1, 47/150, -871/1050, -0.02",scoring/official_scorer.py compute_official_metrics,tests/official/test_block3_scorer.py,docs/QUALITY_AUDIT/BUG_REGISTRY.md#bug-tl-0001,VERIFIED
+Block3,M01-M12,"12 worked matcher examples: set normalisation, tau, structural errors, max-cardinality matching, deterministic tie-break",scoring/official_scorer.py match_official_findings,tests/official/test_block3_scorer.py,docs/QUALITY_AUDIT/RUBRIC_COMPLIANCE.md,VERIFIED
+Block4,P01-P20,"20 paired invariance checks: determinism, inverse ID mapping, equal metrics at equal steps, no new leak",metamorphic/paired_transform.py,tests/official/test_block4_paired.py,artifacts/reports/latest/metamorphic_report.json,VERIFIED
+Engineering,E1,one documented start command,Makefile,tests/judge/test_release_audit.py,make help; make verify,VERIFIED
+Engineering,E2,code/dependency/config versions pinned,configs/release_freeze.json,tests/judge/test_release_audit.py,freeze_release --verify 30 files 0747baf0...,VERIFIED
+Engineering,E3,"readable trajectories with section 09 fields, no truth in observations",harness/trajectory.py,tests/judge/test_release_audit.py,artifacts/trajectories/trajectories.jsonl (80 runs),VERIFIED
+Engineering,E4,measured failure analysis with cause and re-check,judge/robustness_audit.py,tests/judge/test_robustness*.py,artifacts/reports/latest/robustness_report.json,VERIFIED
+Engineering,E5,honest limitations linked to scenarios; no unsupported learning claims,docs/LIMITATIONS.md,docs_verify,docs/LIMITATIONS.md,VERIFIED

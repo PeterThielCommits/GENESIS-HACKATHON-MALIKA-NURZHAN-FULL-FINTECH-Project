@@ -115,27 +115,49 @@ class TestBlock1ContractsC01ToC20(unittest.TestCase):
         json.dumps([obs, reward, terminated, truncated, info])
 
     def test_C05_pagination_over_large_fixture_L_three_pages(self) -> None:
+        # C05 requires that *every* source row is reachable by walking the
+        # issued cursors, with no gaps and no repeats. The check therefore
+        # walks every non-empty canonical table, not just the shortest one:
+        # BUG-TL-0002 made ~6% of cursor offsets unusable, and the old version
+        # of this test only visited offsets 50 and 100 on ``invoices``, so it
+        # passed while ``ledger`` (214 rows -> offsets 50/100/150/200) failed
+        # at offset 200.
         env, obs0, _ = self._reset_closed(self.dir_l)
-        total_expected = obs0["manifest"]["record_counts"]["invoices"]
-        self.assertGreaterEqual(total_expected, 101)
-        pages = 0
-        collected_ids: list[str] = []
-        cursor = None
-        while True:
-            obs, _, _, _, _ = env.step(
-                {"name": "list_records", "args": {"table": "invoices", "cursor": cursor, "limit": 50}}
-            )
-            self.assertIsNone(obs["error"])
-            recs = obs["result"]["records"]
-            self.assertLessEqual(len(recs), 50)
-            collected_ids.extend(r["doc_id"] for r in recs)
-            pages += 1
-            cursor = obs["result"]["next_cursor"]
-            if cursor is None:
-                break
-        self.assertGreaterEqual(pages, 3)
-        self.assertEqual(len(collected_ids), total_expected)
-        self.assertEqual(len(set(collected_ids)), total_expected)
+        counts = obs0["manifest"]["record_counts"]
+        id_field = {"ledger": "je_id", "invoices": "doc_id", "payments": "pay_id", "fx": "fx_id"}
+        walked_tables = 0
+        total_pages = 0
+        for table, field in id_field.items():
+            total_expected = counts.get(table, 0)
+            if total_expected == 0:
+                continue
+            walked_tables += 1
+            pages = 0
+            collected_ids: list[str] = []
+            cursor = None
+            while True:
+                obs, _, _, _, _ = env.step(
+                    {"name": "list_records", "args": {"table": table, "cursor": cursor, "limit": 50}}
+                )
+                self.assertIsNone(obs["error"], msg=f"{table} page {pages}: {obs['error']}")
+                recs = obs["result"]["records"]
+                self.assertLessEqual(len(recs), 50)
+                collected_ids.extend(r[field] for r in recs)
+                pages += 1
+                self.assertLess(pages, 200, "pagination does not terminate")
+                cursor = obs["result"]["next_cursor"]
+                if cursor is None:
+                    break
+            total_pages += pages
+            with self.subTest(table=table):
+                self.assertEqual(
+                    len(collected_ids), total_expected, f"{table}: rows not all reached"
+                )
+                self.assertEqual(
+                    len(set(collected_ids)), total_expected, f"{table}: duplicate rows"
+                )
+        self.assertEqual(walked_tables, len(id_field), "all canonical tables must be walkable")
+        self.assertGreaterEqual(total_pages, 3, "L fixture must need at least three pages")
 
     def test_C06_cursor_replay_same_page_same_order(self) -> None:
         env, _, _ = self._reset_closed(self.dir_l)
