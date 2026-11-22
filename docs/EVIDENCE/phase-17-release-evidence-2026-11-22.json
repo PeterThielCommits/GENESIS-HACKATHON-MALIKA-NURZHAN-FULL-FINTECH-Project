@@ -7,7 +7,7 @@
     "tool": "tools/freeze_release.py"
   },
   "decisions": {
-    "count": 51,
+    "count": 52,
     "ids": [
       "D-00-01",
       "D-01-01",
@@ -59,7 +59,8 @@
       "D-17-02",
       "D-17-03",
       "D-18-02",
-      "D-18-03"
+      "D-18-03",
+      "D-18-04"
     ],
     "index": [
       {
@@ -316,6 +317,11 @@
         "date": "2026-11-22",
         "id": "D-18-03",
         "title": "The local container-equivalent run replaces \"no local evidence\", and says what it is not"
+      },
+      {
+        "date": "2026-11-22",
+        "id": "D-18-04",
+        "title": "A CI step may not mask its exit status; an unavailable environment is an explicit skip"
       }
     ],
     "path": "docs/DECISIONS.md"
@@ -363,8 +369,8 @@
       "status": "PASS"
     }
   },
-  "generated_at_utc": "2026-11-22T17:07:16Z",
-  "git_sha": "a784cf29e3f7ca5b35542c2bfffdef31c4ea85a1",
+  "generated_at_utc": "2026-11-22T17:55:03Z",
+  "git_sha": "0bdbf62d22451813a90a7852bb61f6e8868586d8",
   "git_sha_note": "the commit the working tree was based on when the archive was generated (the archive is written before the commit that carries it); the frozen digest is the commit-independent anchor.",
   "limitations": {
     "note": "The archive records internal verification results only. It is not a jury score and never claims one (official_score_claimed: false).",

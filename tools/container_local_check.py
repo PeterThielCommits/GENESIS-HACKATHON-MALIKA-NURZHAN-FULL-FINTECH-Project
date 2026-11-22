@@ -63,6 +63,13 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 #: The image's ``CMD`` (Dockerfile) and the CI job's run flags.
 CONTAINER_CMD: tuple[str, ...] = ("make", "verify")
 
+#: Status values. ``UNSUPPORTED`` is *not* a failure: it says the host cannot
+#: provide the isolation at all. It must be reported as an explicit skip and
+#: must never be confused with a PASS (REQ-JUDGE-003).
+STATUS_PASS = "PASS"
+STATUS_FAIL = "FAIL"
+STATUS_UNSUPPORTED = "UNSUPPORTED"
+
 #: Paths that the container keeps writable (tmpfs in the CI run).
 WRITABLE_PATHS: tuple[str, ...] = (
     "artifacts/reports/latest",
@@ -196,6 +203,111 @@ def apply_image_build_steps(app_dir: Path) -> dict[str, Any]:
 
 
 # --------------------------------------------------------------------------- #
+# namespace capability probe
+# --------------------------------------------------------------------------- #
+#: ``unshare``/``setpriv`` messages that show the *environment* cannot provide
+#: the namespaces, as opposed to a defect in the run itself. Ubuntu 24.04's
+#: AppArmor policy (``kernel.apparmor_restrict_unprivileged_userns=1``) is the
+#: canonical case: it denies the namespace with ``Operation not permitted``
+#: before the run ever starts.
+NAMESPACE_UNSUPPORTED_MARKERS: tuple[tuple[str, str], ...] = (
+    ("operation not permitted", "the kernel refused the namespace (EPERM)"),
+    ("permission denied", "the kernel refused the namespace (EACCES)"),
+    ("function not implemented", "the kernel does not implement the namespace (ENOSYS)"),
+    ("invalid argument", "the kernel rejected the namespace request (EINVAL)"),
+    ("apparmor", "an AppArmor policy refused the namespace"),
+    ("unrecognized option", "util-linux is too old for --map-user/--map-group"),
+    ("unknown option", "util-linux is too old for --map-user/--map-group"),
+)
+
+
+def classify_namespace_error(output: str) -> str | None:
+    """Return the environmental reason if ``output`` says the host is unable.
+
+    ``None`` means "this is not an environment limitation" -- the caller must
+    then treat the failure as a real one.
+    """
+    lowered = output.lower()
+    for marker, reason in NAMESPACE_UNSUPPORTED_MARKERS:
+        if marker in lowered:
+            return reason
+    return None
+
+
+def probe_namespace_support(timeout: int = 120) -> dict[str, Any]:
+    """Check whether this host can provide the container-equivalent isolation.
+
+    The probe mirrors the *exact* namespace recipe the real run uses (an
+    unprivileged user namespace that maps the container's uid/gid, plus mount
+    and network namespaces), so a successful probe means the real run can
+    start. It costs milliseconds and it never runs the workload.
+
+    The result distinguishes three cases:
+
+    * ``supported`` -- the isolation is available, run the container command;
+    * ``unsupported`` -- the host forbids it (AppArmor, a hardened kernel, a
+      too-old util-linux). The check is **skipped**, explicitly, with a
+      reason -- never reported as a PASS and never reported as a FAIL;
+    * ``unknown`` -- the probe failed for a reason that is not environmental.
+      That is a real defect and is reported as such.
+    """
+    probe = (
+        "unshare --map-root-user --mount --net "
+        f"sh -c 'unshare --map-user={CONTAINER_UID} --map-group={CONTAINER_GID} -- true'"
+    )
+    command = ["unshare", "--map-root-user", "--mount", "--net", "sh", "-c", probe]
+    try:
+        proc = subprocess.run(
+            command,
+            text=True,
+            capture_output=True,
+            timeout=timeout,
+        )
+    except FileNotFoundError:
+        return {
+            "supported": False,
+            "reason": "unshare(1) is not available on this host",
+            "detail": "",
+            "probe_command": command,
+            "environmental": True,
+        }
+    except subprocess.TimeoutExpired:
+        return {
+            "supported": False,
+            "reason": f"the namespace probe did not finish within {timeout}s",
+            "detail": "",
+            "probe_command": command,
+            "environmental": True,
+        }
+    output = (proc.stdout + proc.stderr).strip()
+    if proc.returncode == 0:
+        return {
+            "supported": True,
+            "reason": "",
+            "detail": output,
+            "probe_command": command,
+            "environmental": False,
+        }
+    reason = classify_namespace_error(output)
+    if reason is None:
+        # Not an environment limitation: something in *our* recipe failed.
+        return {
+            "supported": False,
+            "reason": f"the namespace probe failed (exit {proc.returncode})",
+            "detail": output,
+            "probe_command": command,
+            "environmental": False,
+        }
+    return {
+        "supported": False,
+        "reason": reason,
+        "detail": output,
+        "probe_command": command,
+        "environmental": True,
+    }
+
+
+# --------------------------------------------------------------------------- #
 # the container run
 # --------------------------------------------------------------------------- #
 def _run_script(app_dir: Path, command: Iterable[str], capture_dir: Path) -> str:
@@ -261,10 +373,30 @@ PYEOF
 
 
 def run_container_equivalent(
-    app_dir: Path, timeout: int = 3600, capture_dir: Path | None = None
+    app_dir: Path,
+    timeout: int = 3600,
+    capture_dir: Path | None = None,
+    support: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Run the container command inside the namespaces."""
+    """Run the container command inside the namespaces.
+
+    ``support`` is the result of :func:`probe_namespace_support`. When the host
+    cannot provide the isolation the run is **skipped** (``UNSUPPORTED``), not
+    failed: a host that forbids unprivileged namespaces has not proven
+    anything about the image, and reporting that as a FAIL (or, worse, as a
+    PASS) misrepresents the evidence.
+    """
     capture = capture_dir if capture_dir is not None else app_dir.parent / "captured"
+    if support is None:
+        support = probe_namespace_support()
+    if not support.get("supported"):
+        environmental = support.get("environmental", True)
+        return {
+            "status": STATUS_UNSUPPORTED if environmental else STATUS_FAIL,
+            "reason": support.get("reason") or "the host cannot provide the isolation",
+            "skipped": bool(environmental),
+            "probe": support,
+        }
     script = _run_script(app_dir, CONTAINER_CMD, capture)
     try:
         proc = subprocess.run(
@@ -274,21 +406,59 @@ def run_container_equivalent(
             timeout=timeout,
         )
     except FileNotFoundError:
-        return {"status": "UNAVAILABLE", "reason": "unshare(1) is not available on this host"}
+        return {
+            "status": STATUS_UNSUPPORTED,
+            "reason": "unshare(1) is not available on this host",
+            "skipped": True,
+        }
     except subprocess.TimeoutExpired:
-        return {"status": "FAIL", "reason": f"the container run exceeded {timeout}s"}
+        return {"status": STATUS_FAIL, "reason": f"the container run exceeded {timeout}s"}
     output = proc.stdout + proc.stderr
     artifacts: list[str] = []
     if capture.is_dir():
         artifacts = sorted(p.name for p in capture.iterdir() if p.is_file())
+    status = STATUS_PASS if proc.returncode == 0 else STATUS_FAIL
+    if status == STATUS_FAIL:
+        # The outer namespace was created (the probe proved it), so a refusal
+        # from here is the *workload* failing, not the host. Only an
+        # environmental refusal of the namespace itself is a skip.
+        reason = classify_namespace_error(output)
+        if reason is not None and _looks_like_namespace_refusal(output):
+            status = STATUS_UNSUPPORTED
+            return {
+                "status": STATUS_UNSUPPORTED,
+                "reason": reason,
+                "skipped": True,
+                "exit_code": proc.returncode,
+                "output_tail": "\n".join(output.splitlines()[-40:]),
+            }
     return {
-        "status": "PASS" if proc.returncode == 0 else "FAIL",
+        "status": status,
         "exit_code": proc.returncode,
         "output_tail": "\n".join(output.splitlines()[-40:]),
         "output_sha256": hashlib.sha256(output.encode("utf-8")).hexdigest(),
         "produced_artifacts": artifacts,
         "produced_artifact_count": len(artifacts),
     }
+
+
+#: Lines that show the *namespace creation* itself was refused (as opposed to
+#: the workload inside the namespace failing).
+_NAMESPACE_REFUSAL_MARKERS: tuple[str, ...] = (
+    "unshare failed",
+    "unshare: ",
+    "failed to create",
+    "cannot unshare",
+    "uid_map",
+    "gid_map",
+    "setgroups",
+)
+
+
+def _looks_like_namespace_refusal(output: str) -> bool:
+    """Whether ``output`` reports a refusal to create the namespaces."""
+    lowered = output.lower()
+    return any(marker in lowered for marker in _NAMESPACE_REFUSAL_MARKERS)
 
 
 # --------------------------------------------------------------------------- #
@@ -308,12 +478,14 @@ def check(repo_root: Path = REPO_ROOT, keep: bool = False, timeout: int = 3600) 
         "git_sha": _git_commit(repo_root),
         "container_runtime_available_locally": _runtime_available(),
         "method": (
-            "tools/container_local_check.py: the image is materialised from the "
-            "build context (.dockerignore rules applied with Docker's own path "
-            "semantics) and the Dockerfile's offline build steps, then the container "
-            "command runs in an unprivileged user+mount+network namespace as uid "
-            "10001 with no capabilities, no_new_privs, a read-only image tree and "
-            "tmpfs over the writable paths."
+            "tools/container_local_check.py: a namespace capability probe first "
+            "checks that the host can provide the isolation (unprivileged user "
+            "namespace + mount + network namespace + the uid/gid mapping); the "
+            "image is then materialised from the build context (.dockerignore "
+            "rules applied with Docker's own path semantics) and the Dockerfile's "
+            "offline build steps, and the container command runs in an unprivileged "
+            "user+mount+network namespace as uid 10001 with no capabilities, "
+            "no_new_privs, a read-only image tree and tmpfs over the writable paths."
         ),
         "scope": (
             "This is a CONTAINER-EQUIVALENT local run, NOT a Docker build: no "
@@ -332,8 +504,23 @@ def check(repo_root: Path = REPO_ROOT, keep: bool = False, timeout: int = 3600) 
     }
 
     if violations or missing:
-        report["status"] = "FAIL"
+        report["status"] = STATUS_FAIL
         report["reason"] = "the build context violates the image contract"
+        report["finished_at_utc"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        return report
+
+    # Probe the host *before* materialising anything: the probe costs
+    # milliseconds and tells us whether the isolation is available at all.
+    support = probe_namespace_support()
+    report["namespace_support"] = support
+
+    if not support.get("supported") and support.get("environmental", True):
+        # The host forbids the isolation. This is an explicit SKIP, never a
+        # PASS and never a FAIL: nothing was proven about the image.
+        report["status"] = STATUS_UNSUPPORTED
+        report["skipped"] = True
+        report["reason"] = support.get("reason") or "the host cannot provide the isolation"
+        report["build_context"]["materialised"] = False
         report["finished_at_utc"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         return report
 
@@ -343,13 +530,16 @@ def check(repo_root: Path = REPO_ROOT, keep: bool = False, timeout: int = 3600) 
         app_dir.mkdir(parents=True)
         copied = materialise_context(paths, app_dir, repo_root)
         report["build_context"]["copied_files"] = copied
+        report["build_context"]["materialised"] = True
         report["image_build_steps"] = apply_image_build_steps(app_dir)
         if report["image_build_steps"].get("compileall", "").startswith("FAIL"):
-            report["status"] = "FAIL"
+            report["status"] = STATUS_FAIL
             report["reason"] = "the image's compileall step failed"
             report["finished_at_utc"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             return report
-        report["container_run"] = run_container_equivalent(app_dir, timeout=timeout)
+        report["container_run"] = run_container_equivalent(
+            app_dir, timeout=timeout, support=support
+        )
         report["status"] = report["container_run"]["status"]
         report["finished_at_utc"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         return report
@@ -414,11 +604,19 @@ def main(argv: list[str] | None = None) -> int:
         run = report.get("container_run") or {}
         if run.get("output_tail"):
             print(run["output_tail"])
-        if report["status"] != "PASS":
+        if report["status"] != STATUS_PASS:
             print(f"  reason: {report.get('reason') or run.get('reason') or 'see the output above'}")
-    if report["status"] == "UNAVAILABLE":
+        if report["status"] == STATUS_UNSUPPORTED:
+            print(
+                "  SKIPPED: this host cannot provide the namespace isolation, so the "
+                "container-equivalent run was NOT executed. This is not a PASS."
+            )
+    if report["status"] in {STATUS_UNSUPPORTED, "UNAVAILABLE"}:
+        # Exit code 2 == "the host cannot provide the isolation". The caller
+        # must report this as an explicit skip; it must never be treated as a
+        # failure to hide, nor as a success.
         return 2
-    return 0 if report["status"] == "PASS" else 1
+    return 0 if report["status"] == STATUS_PASS else 1
 
 
 if __name__ == "__main__":

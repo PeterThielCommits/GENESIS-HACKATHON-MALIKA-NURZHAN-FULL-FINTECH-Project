@@ -913,3 +913,50 @@ Decision:
 
 Refs: `docs/EVIDENCE/container-local-2026-11-22.json`,
 `docs/EVIDENCE/offline-local-2026-11-22.json`, `docs/LIMITATIONS.md` (L9).
+
+## D-18-04 (2026-11-22) — A CI step may not mask its exit status; an unavailable environment is an explicit skip
+
+Context: the CI job `docker-offline` reported **success** while one of its
+steps had failed with exit code 1. The only trace was a
+`Process completed with exit code 1` annotation attached to a *successful*
+job. Two constructs made the failure invisible (`continue-on-error: true` and
+`|| true`), and underneath them were two real defects: the container-equivalent
+tool reported a host that forbids unprivileged user namespaces as a generic
+FAIL, and the `publish` subcommand of the provenance tool was unreachable dead
+code that crashed with an `AttributeError`. See `BUG-TL-0015..0017`.
+
+Decision:
+
+1. **A failing step may never be reported as a passing one.** The workflow no
+   longer contains `continue-on-error: true` and no command swallows a
+   non-zero exit status with `|| true` / `|| :` / `|| exit 0`. A step that must
+   tolerate a failure handles it explicitly, reports it (`::error::` /
+   `::warning::`), and decides its own exit status.
+2. **An environment that cannot provide the isolation is a SKIP, not a FAIL
+   and not a PASS.** `tools/container_local_check.py` probes the host first,
+   with the same namespace recipe the run needs. An environmental refusal
+   (EPERM, EACCES, ENOSYS, an AppArmor policy, a util-linux without
+   `--map-user`) yields `UNSUPPORTED` — status `UNSUPPORTED`, exit code **2**,
+   and a reason recorded in the artifact. A failure the probe cannot explain
+   stays a `FAIL` with exit code **1**. The host has proven nothing about the
+   image in the skip case, so the artifact says so.
+3. **The skip is visible, never silent** (`REQ-JUDGE-003`). The CI step turns
+   exit code 2 into a `::notice::` annotation and a job-summary line; every
+   other non-zero code becomes a `::error::` annotation *and* fails the step.
+   The evidence artifact records the probe and the reason.
+4. **The static guard enforces it.** `tools/check_workflows.py` gained a
+   masking policy (`scan_masking()`); `make lint` runs it over the
+   repository's own workflows, so neither construct can reach a push.
+5. **The real validation path is kept.** The workflow tries to enable
+   unprivileged user namespaces on the runner
+   (`sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0`) and
+   reports whether that worked, so the namespace-equivalent run executes
+   wherever the environment permits it. The authoritative container evidence
+   remains the CI `docker-offline` job, which runs the real hardened image.
+
+This supersedes clause 4 of `D-18-03` ("CI runs it informationally, with
+`continue-on-error`"): the step is no longer masked, it distinguishes the skip
+from the failure, and a real failure fails the job.
+
+Refs: `docs/QUALITY_AUDIT/BUG_REGISTRY.md` (BUG-TL-0015..0017),
+`tests/judge/test_ci_masking.py`, `docs/LIMITATIONS.md` (L12).

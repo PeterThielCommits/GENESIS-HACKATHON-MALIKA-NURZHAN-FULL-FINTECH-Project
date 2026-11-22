@@ -151,3 +151,54 @@ no capabilities, `no_new_privs`, a read-only tree and tmpfs over the writable
 paths. Measured: PASS, 12/12 gates inside the sandbox, 20 artifacts
 identical in name to the host run. It is explicitly **not** a Docker build,
 and `docs/LIMITATIONS.md` (L9) says so.
+
+## Failure Case 5 — A Green CI Run That Hid a Failed Step (Phase 18 close-out, Fixed & Re-Verified)
+
+### Measured failure (before the fix)
+
+The `docker-offline` job of every successful CI run carried a
+`Process completed with exit code 1` annotation while the job's conclusion was
+`success`. The step timings showed the failing step: the container-equivalent
+step's start and completion timestamps were identical (zero seconds), while a
+genuine execution takes 87–154 seconds.
+
+| Measurement | Result |
+|---|---|
+| CI step duration (successful jobs `137280266858`, `137282565423`, `137290242282`) | **0 s** |
+| Genuine local run of the same tool | **156.9 s** (`make verify` inside the sandbox: 153.6 s, 12/12 gates) |
+| Same tool with the namespace refused | **1.2 s**, exit 1 |
+
+### Root cause
+
+Three defects compounded (`BUG-TL-0015..0017`, `D-18-04`):
+
+1. the tool classified a host that forbids unprivileged user namespaces as a
+   generic **FAIL** — the same class of error as "the image is broken", when
+   in fact the host had proven nothing about the image;
+2. the workflow masked the exit status twice (`continue-on-error: true` and
+   `|| true`), so the failure was visible only as an annotation on a green
+   job;
+3. the `publish` subcommand of the provenance tool was unreachable dead code
+   and crashed with an `AttributeError`; the step named "Publish the image
+   build provenance" had never published anything, and its drift comparison
+   never ran.
+
+The trigger is Ubuntu 24.04's AppArmor policy
+`kernel.apparmor_restrict_unprivileged_userns=1`, which refuses
+`unshare --map-root-user --mount --net` with `Operation not permitted`.
+
+### Fix & re-verification (after the fix)
+
+* a capability probe distinguishes an environmental refusal (an explicit skip,
+  exit code 2, with the reason recorded) from a real failure (exit code 1);
+* the CI step has no mask: `0` = PASS, `2` = SKIPPED with a `::notice::`
+  annotation and a job-summary line, anything else = `::error::` **and a
+  failed step**;
+* `tools/check_workflows.py` enforces the policy statically, so neither
+  construct can reach a push;
+* `tests/judge/test_ci_masking.py` (28 tests) reproduces each defect on the
+  old code.
+
+Re-verified locally: a refused namespace now yields `UNSUPPORTED` with exit
+code **2** (was `FAIL` with exit code 1); the repository's own workflows pass
+the masking policy; `publish` runs the publisher instead of crashing.
