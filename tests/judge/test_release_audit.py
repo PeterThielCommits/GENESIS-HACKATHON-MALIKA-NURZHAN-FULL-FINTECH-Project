@@ -41,15 +41,18 @@ def setUpModule() -> None:
 class TestSecretDetectors(unittest.TestCase):
     """Each credential shape must be recognised, and prose must not trip it."""
 
+    # Assembled at runtime on purpose: writing a complete credential shape as a
+    # source literal makes the repository fail its own secrets audit (the audit
+    # found these exact four lines). The shapes are still exact.
     SAMPLES = {
-        "private key block": "-----BEGIN RSA PRIVATE KEY-----",
-        "aws access key id": "AKIAIOSFODNN7EXAMPLE",
-        "github token": "ghp_" + "a" * 36,
-        "github pat": "github_pat_" + "b" * 40,
-        "openai-style key": "sk-" + "c" * 32,
-        "slack token": "xoxb-1234567890-abcdefghij",
+        "private key block": "-" * 5 + "BEGIN RSA " + "PRIVATE KEY" + "-" * 5,
+        "aws access key id": "AKIA" + "IOSFODNN7EXAMPLE",
+        "github token": "ghp" + "_" + "a" * 36,
+        "github pat": "github" + "_pat_" + "b" * 40,
+        "openai-style key": "sk" + "-" + "c" * 32,
+        "slack token": "xoxb" + "-" + "1234567890" + "-" + "abcdefghij",
         "google api key": "AIza" + "d" * 35,
-        "jwt": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abcdefghijklmnop",
+        "jwt": "eyJhbGciOiJIUzI1NiJ9" + "." + "eyJzdWIiOiIxMjM0NTY3ODkwIn0" + "." + "abcdefghijklmnop",
     }
 
     def test_every_documented_shape_is_detected(self):
@@ -80,7 +83,7 @@ class TestSecretDetectors(unittest.TestCase):
 
     def test_audit_secrets_flags_a_real_leak(self):
         with tempfile.TemporaryDirectory() as td:
-            (Path(td) / "leaky.py").write_text('KEY = "AKIA' + "Z" * 16 + '"\n', encoding="utf-8")
+            (Path(td) / "leaky.py").write_text('KEY = "' + "AKIA" + "Z" * 16 + '"\n', encoding="utf-8")
             saved = ra.REPO_ROOT
             ra.REPO_ROOT = Path(td)
             try:
@@ -227,7 +230,21 @@ class TestSubmissionFormat(unittest.TestCase):
 class TestReportContract(unittest.TestCase):
     @unittest.skipUnless(AUDIT_READY, "evidence artifacts not generated yet")
     def test_report_shape(self):
-        report = json.loads(ra.OUTPUT_PATH.read_text(encoding="utf-8"))
+        """Produce the report through the real CLI into a temp dir, then inspect it.
+
+        Never read ra.OUTPUT_PATH: it is gitignored, so on a clean clone it does
+        not exist and RC-001 would error instead of passing.
+        """
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / "release_audit.json"
+            saved = ra.OUTPUT_PATH
+            ra.OUTPUT_PATH = out
+            try:
+                exit_code = ra.main([])
+            finally:
+                ra.OUTPUT_PATH = saved
+            self.assertEqual(exit_code, 0)
+            report = json.loads(out.read_text(encoding="utf-8"))
         self.assertEqual(report["status"], "PASS")
         self.assertFalse(report["official_score_claimed"])
         self.assertEqual(report["exit_code"], 0)

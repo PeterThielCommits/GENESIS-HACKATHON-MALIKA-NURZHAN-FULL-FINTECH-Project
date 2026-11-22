@@ -11,6 +11,7 @@ from __future__ import annotations
 import copy
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -81,8 +82,18 @@ class TestPublishedTrajectories(unittest.TestCase):
         self.assertGreaterEqual(report["steps_replayed"], 500)
 
     @unittest.skipUnless(TRAJ_READY, "trajectories not generated yet")
-    def test_published_report_matches_a_fresh_replay(self):
-        published = json.loads(rp.OUTPUT_PATH.read_text(encoding="utf-8"))
+    def test_report_written_by_the_cli_matches_a_fresh_replay(self):
+        """Write the report through the real CLI into a temp dir, then compare.
+
+        Never read rp.OUTPUT_PATH here: it lives under a gitignored directory, so
+        on a clean clone it does not exist and RC-001 would error (found by the
+        TZ 16.2 clean-clone run). The CLI is exercised for real, just elsewhere.
+        """
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / "trajectory_replay.json"
+            rc = rp.main(["--output", str(out)])
+            self.assertEqual(rc, 0)
+            published = json.loads(out.read_text(encoding="utf-8"))
         fresh = rp.replay_all()
         self.assertEqual(published["runs_replayed"], fresh["runs_replayed"])
         self.assertEqual(published["status"], "PASS")
