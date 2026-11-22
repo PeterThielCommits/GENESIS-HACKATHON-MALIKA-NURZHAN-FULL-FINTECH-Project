@@ -40,7 +40,8 @@
     "One documented demo probe was not runnable (score_episode on checked-in episodes/dev/* has no sealed/truth.json, by design D-01-04)",
     "Doc-claim tests placed inside RC-001 could not work: they read verify_summary.json, which the same run writes last (chicken-and-egg FileNotFoundError on a clean tree)",
     "Circular self-reference: asserting the gate pass-ratio made a doc-drift failure persist a failing summary that poisoned every subsequent run (deadlock)",
-    "A doc-claim test hardcoded the value to corrupt, so it silently stopped testing anything once that fact was removed"
+    "A doc-claim test hardcoded the value to corrupt, so it silently stopped testing anything once that fact was removed",
+    "Hardened offline container rejected the new report directory: --read-only rootfs with tmpfs only for reports/latest and trajectories caused FileNotFoundError. Fixed in Dockerfile (pre-create) + make docker-check (16 MB tmpfs) and made the checker report-write failure-tolerant"
   ],
   "decisions": [
     "D-15-01",
@@ -113,6 +114,16 @@
       "command": "make verify (twice consecutively) then make docs-verify",
       "exit_code": 0,
       "result": "stable, no drift"
+    },
+    {
+      "command": "make verify  # simulated read-only container layout",
+      "exit_code": 0,
+      "result": "12/12 PASS; doc-claims report degrades gracefully"
+    },
+    {
+      "command": "tools/verify_doc_claims.py with unwritable output path",
+      "exit_code": 0,
+      "result": "PASS verdict preserved, note printed"
     }
   ],
   "negative_tests": {
@@ -139,7 +150,8 @@
     "docs/DATA_DICTIONARY.md field list is covered by placeholder/denylist scans but not individually re-derived from schemas.",
     "The doc-claims gate proves docs match artifacts, not that artifacts measure the right thing (that is RC-001..RC-012).",
     "Sampled performance numbers stay in performance_report.json and are deliberately not asserted in docs.",
-    "make demo-backup re-runs the full verify (~63s), so it is a reviewer tool rather than a per-commit gate."
+    "make demo-backup re-runs the full verify (~63s), so it is a reviewer tool rather than a per-commit gate.",
+    "L-H: claimed baseline numbers derive from artifacts/trajectories/trajectories.jsonl, which make verify does not regenerate (produced by make official-eval and committed); regenerating is a manual reviewer step."
   ],
   "next_phase": "Phase 16 - release candidate: clean-clone verify on a fresh runner, offline Docker re-run, secrets/file-list/size audit, tag + GitHub release."
 }

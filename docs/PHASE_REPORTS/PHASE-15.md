@@ -63,7 +63,18 @@ The gate was first placed inside the RC-001 test suite. A clean-checkout run (th
 
 A fourth bug was caught by the tests themselves: one test hardcoded `**12/12**` as the value to corrupt, so it silently stopped testing anything once that fact was removed. It now derives the value from the rendered block.
 
-### 3.2 Determinism of the gate itself (a design bug found and fixed)
+### 3.2 The hardened offline container rejected the new directory (CI catch)
+
+The `docker-offline` CI job runs `make verify` with `--read-only` rootfs and tmpfs mounts only for `artifacts/reports/latest` and `artifacts/trajectories`. The new Phase 15 report directory was therefore unwritable, and an unwritable path raised `FileNotFoundError` instead of reporting the verdict. Two fixes, both correct in their own right:
+
+1. `Dockerfile` pre-creates `artifacts/reports/doc_claims`, and `make docker-check` mounts a 16 MB tmpfs there — the rootfs stays read-only.
+2. `tools/verify_doc_claims.py` now treats the report as a convenience artifact, never as the verdict: if the write fails it prints a note and returns the real exit code. Verified by pointing the output path at a non-creatable location (`PASS`, exit 0) and by running the whole `make verify` in a simulated read-only layout.
+
+### 3.3 Pre-existing tooling gap this exposed
+
+`make verify` writes `artifacts/trajectories/trajectories.jsonl` only via `make official-eval`, so the documentation checks depend on a checked-in file. That is deliberate (the trajectory log is a committed reproducibility artifact), but it means the doc gate measures a file that `make verify` does not regenerate. Recorded as limitation L-H below.
+
+### 3.4 Determinism of the gate itself (a design bug found and fixed)
 
 First implementation put *sampled* metrics (p99 latency, peak RSS, max episode time) into the byte-compared block. Those vary per run, so the gate failed on the very next `make verify` — a self-defeating check. Fixed by publishing only **stable** facts (budgets, verdicts, counts, contract enums) and excluding wall-clock timings from the generated table. Verified by running `make verify` twice in a row and re-checking: PASS both times.
 
@@ -94,6 +105,8 @@ The relocated report also avoids a subtler trap: `artifacts/reports/latest/` is 
 | `python3 -m unittest tests.judge.test_doc_claims` | 0 | 18 tests OK |
 | `python3 -m unittest tests.judge.test_doc_claims tests.judge.test_judge_kit` | 0 | 56 tests OK |
 | `python3 tools/freeze_release.py --verify` | 0 | 30 frozen files intact (`0747baf0…`) |
+| `make verify` in simulated read-only container layout | 0 | 12/12 PASS — doc-claims report degrades gracefully |
+| `tools/verify_doc_claims.py` with unwritable output path | 0 | PASS verdict preserved, note printed |
 | full suite via RC-001 | 0 | **428 tests**, 1 optional skip (critical_skipped=0) |
 | `make verify` ×2 consecutive, then `docs-verify` | 0 | stable — no drift |
 
@@ -120,6 +133,7 @@ The relocated report also avoids a subtler trap: `artifacts/reports/latest/` is 
 3. The doc-claims gate proves *documentation matches artifacts*. It cannot prove the artifacts themselves measure the right thing — that is the job of RC-001..RC-012.
 4. Sampled performance numbers remain available in `performance_report.json` but are deliberately not asserted in docs (see §3.1).
 5. `make demo-backup` re-runs the full `make verify` (~63 s), so it is a reviewer tool, not a per-commit gate.
+6. **L-H:** the claimed baseline numbers derive from `artifacts/trajectories/trajectories.jsonl`, which `make verify` does not regenerate (it is produced by `make official-eval` and committed). Regenerating it is a manual reviewer step, not part of the gate.
 
 ## 8. Next-phase readiness (Phase 16 — release candidate)
 

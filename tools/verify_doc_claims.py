@@ -587,8 +587,17 @@ def main(argv: list[str] | None = None) -> int:
     report["config_hash"] = sha256_hex(
         {"facts": [f["id"] for f in report["facts"]], "docs": list(DOC_SCAN)}
     )
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT_PATH.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    # The report is a convenience artifact, not the verdict: the verdict is the
+    # exit code. Under a read-only rootfs (hardened offline container, TZ §22.4)
+    # writing may be impossible unless a tmpfs is mounted, and that must never
+    # turn a passing documentation check into a crash.
+    report_written = True
+    try:
+        OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        OUTPUT_PATH.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    except OSError as exc:
+        report_written = False
+        print(f"doc-claims: note: report not written ({exc.__class__.__name__}: {exc}); verdict still authoritative")
 
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))
@@ -598,11 +607,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  generated block refreshed in {README}")
         for failure in failures:
             print(f"  [{failure['status']}] {failure['id']}: {failure.get('detail', '')}")
-        try:
-            shown = OUTPUT_PATH.relative_to(REPO_ROOT)
-        except ValueError:  # caller redirected the output outside the repo
-            shown = OUTPUT_PATH
-        print(f"report: {shown}")
+        if report_written:
+            try:
+                shown = OUTPUT_PATH.relative_to(REPO_ROOT)
+            except ValueError:  # caller redirected the output outside the repo
+                shown = OUTPUT_PATH
+            print(f"report: {shown}")
     return 0 if not failures else 1
 
 
