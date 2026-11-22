@@ -14,7 +14,7 @@ WORKDIR /app
 COPY . /app
 
 # Ensure non-root user, pre-compile bytecode before read-only runtime, and pre-create report dirs (TZ §22.4)
-RUN python3 -m compileall -q judge_adapter.py core contracts adapter gen invariants verifier nlp env harness scoring seal arena metamorphic judge tools tests \
+RUN python3 -m compileall -q judge_adapter.py core contracts adapter gen invariants verifier nlp env harness scoring seal arena metamorphic judge tools tests independent_verifier \
     && useradd --create-home --uid 10001 twinledger \
     && mkdir -p /app/artifacts/reports/latest /app/artifacts/reports/doc_claims /app/artifacts/trajectories \
     && chown -R twinledger:twinledger /app \

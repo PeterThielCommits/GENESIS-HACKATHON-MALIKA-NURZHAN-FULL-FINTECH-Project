@@ -298,6 +298,7 @@ LOCAL_PACKAGES = {
     "arena",
     "metamorphic",
     "judge",
+    "independent_verifier",
     "tools",
     "tests",
     "judge_adapter",

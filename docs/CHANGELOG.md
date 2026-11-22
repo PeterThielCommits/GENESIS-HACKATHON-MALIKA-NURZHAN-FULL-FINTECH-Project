@@ -1,5 +1,14 @@
 # TwinLedger — Changelog
 
+## Unreleased — Phase 16 §7 risk-closure round (2026-11-22)
+
+- **Independent re-derivation implementation (`D-16-04`):** new `independent_verifier/` — a from-scratch Stage-1 verifier authored from `spec/` + `contracts/` alone (own money/FX via `Fraction`, `zoneinfo` fiscal periods, own discovery algorithms, own ProofGraph acyclicity/path checks, own evidence minimality/ablation). Measured agreement: all 10 committed dev/train episodes signature-identical (identical `episode_public_hash`); official `D01..D20` (`master_seed=2026`) re-derived and cross-checked at **F1 = 1 exact, FP = 0, FN = 0**; evidence enumeration complete. New `tools/verify_independent_rederivation.py` harness + `docs/EVIDENCE/independent-rederivation-2026-11-22.json`. **Not** organisational independence — `Q-ORG-01` stays OPEN.
+- **Offline verification beyond CI:** new `tools/offline_local_check.py` (user+net+mount namespace, read-only bind of the tree, no network route, full suite PASS) + static Dockerfile/`.dockerignore` audit (10/10) + `docs/EVIDENCE/offline-local-2026-11-22.json`. The Docker image build remains CI-authoritative (`docker-offline` green on `main` and on the `v1.0.1` tag commit); local scope and limits are recorded in the artifact.
+- **Documentation gate extended:** `tools/verify_doc_claims.py` gains `C-EVIDENCE`, `C-SCORE-HONEST`, `C-QORG-OPEN` (21/21 checks PASS, was 18).
+- **GitHub release `v1.0.0` supersession pointer:** release body now opens with a SUPERSEDED banner pointing to `v1.0.1`; tags unmoved; repo docs already pointed at v1.0.1.
+- **CI hygiene:** `tools/check_import_boundaries.py` and `tools/release_audit.py` now cover `independent_verifier/`; `Makefile` lint root and `Dockerfile` compileall include it; `tests/independent_verifier/` (8 tests) added — suite now 548.
+- No frozen file changed (`freeze_release --verify` → 30 files, `0747baf0…`); no tag moved; `code_version` stays `twinledger@1.0.0`; `official_score_claimed: false`.
+
 ## 1.0.1 — Release-blocking image fix and post-release hardening (2026-11-22)
 
 - **Submission image no longer ships sealed truth (`D-16-02`, release blocker):** `.dockerignore` matched only depth-1 `episodes/*/sealed/`; the real depth-2 layout (`episodes/dev/ep_x/sealed/`) entered the build context. Both depths now excluded; locked by `TestDockerIgnore`. Fixes a `REQ-ARENA-005` violation that affected tag `v1.0.0`.

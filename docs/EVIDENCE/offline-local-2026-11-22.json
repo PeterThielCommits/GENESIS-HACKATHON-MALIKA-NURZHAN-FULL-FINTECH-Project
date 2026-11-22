@@ -1,0 +1,86 @@
+{
+  "artifact": "offline-local-check",
+  "ci_authoritative_gate": {
+    "earlier_runs": [
+      {
+        "note": "v1.0.1 release candidate on 9737961, both jobs success",
+        "run_id": 45009197767
+      },
+      {
+        "core": "success",
+        "docker-offline": "success",
+        "run_id": 45020669250,
+        "sha": "640c585 (v1.0.1 tag commit)"
+      },
+      {
+        "note": "PR #27 (49b766c), both jobs success",
+        "run_id": 45021076968
+      }
+    ],
+    "latest_run_on_main": {
+      "core": "success",
+      "docker-offline": "success",
+      "run_id": 45021422570,
+      "sha": "3b83864ef7ade7dcddfe40a84c3b7b688ff992e1"
+    },
+    "workflow": ".github/workflows/ci.yml (job docker-offline: make docker-build + make docker-check-container)"
+  },
+  "container_runtime_available_locally": false,
+  "container_runtime_probe": "docker/podman/buildah/nerdctl/ctr/runc/containerd: none found on PATH (command -v), 2026-11-22",
+  "generated_at": "2026-11-22T12:51:55Z",
+  "git_sha": "369a3d78c22aee0401007f95d4d3e9593ff1b79f",
+  "local_method": "tools/offline_local_check.py: user+net+mount namespace (unshare -rmn); repo bind-mounted READ-ONLY; artifacts/ overlaid with tmpfs; network route refused if reachable; unittest discover suite executed with PYTHONDONTWRITEBYTECODE=1",
+  "local_result": {
+    "exit_code": 0,
+    "failures": 0,
+    "network_route_present": false,
+    "skipped": 26,
+    "source_tree_writable": false,
+    "tests_run": 548
+  },
+  "purpose": "Supporting LOCAL evidence for the Docker offline gate (TZ \u00a722.4). The image build itself remains CI-authoritative.",
+  "scope_statement": "This artifact does NOT prove a Docker image builds on this host (no container runtime available). It proves (a) the full 548-test suite passes with zero network access and a read-only source tree, (b) the Dockerfile/.dockerignore/Makefile hardening flags match the intended configuration, (c) the CI docker-offline job passed on main (run 45021422570) and on the v1.0.1 tag commit. A maintainer with Docker should run `make docker-check` locally once and record the result to close this gap fully.",
+  "static_audit_pass": true,
+  "static_dockerfile_dockerignore_audit": [
+    {
+      "check": "Dockerfile FROM pinned python:3.11-slim-bookworm",
+      "pass": true
+    },
+    {
+      "check": "PIP_NO_INDEX=1 (no network installs at runtime)",
+      "pass": true
+    },
+    {
+      "check": "no-new-privileges / cap-drop ALL in Makefile docker-check-container",
+      "pass": true
+    },
+    {
+      "check": "--network=none in docker-check-container",
+      "pass": true
+    },
+    {
+      "check": "read-only rootfs (--read-only) in docker-check-container",
+      "pass": true
+    },
+    {
+      "check": "non-root USER 10001 in Dockerfile",
+      "pass": true
+    },
+    {
+      "check": ".dockerignore excludes depth-2 sealed layout (episodes/*/*/sealed/)",
+      "pass": true
+    },
+    {
+      "check": ".dockerignore excludes hidden dirs (episodes/hidden/)",
+      "pass": true
+    },
+    {
+      "check": ".dockerignore excludes .env and key material",
+      "pass": true
+    },
+    {
+      "check": ".dockerignore excludes artifacts/reports/latest outputs",
+      "pass": true
+    }
+  ]
+}

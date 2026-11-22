@@ -14,10 +14,12 @@ feature-frozen; nothing in this handoff authorises new features.
 
 ```
 v1.0.1   -> annotated tag (object 3601493...) on 640c585, merge commit of PR #26; release published 2026-11-22 (D-16-03)
-v1.0.0   -> retained for history; superseded for submission (sealed-truth image defect, D-16-02)
+v1.0.0   -> retained for history; superseded for submission (sealed-truth image defect, D-16-02); its GitHub release notes now carry a supersession banner (tags unmoved)
 make rc-check (clean clone, emptied evidence dir) -> verify 12/12, docs 22/18, replay-all 80/80 (567 steps), release-audit 6/6
 CI (9737961, run 45009197767)                  -> core PASS, docker-offline PASS
+CI (main @ 3b83864, run 45021422570)           -> core PASS, docker-offline PASS
 freeze_release --verify                         -> 30 files intact, 0747baf0…
+Independent re-derivation (2026-11-22)          -> independent_verifier/ : 10/10 committed episodes signature-identical; D01..D20 F1=1 exact, FP=FN=0
 ```
 
 ## Rules this project established (do not break them)
@@ -59,10 +61,10 @@ freeze_release --verify                         -> 30 files intact, 0747baf0…
 
 | ID | Item | Owner |
 |---|---|---|
-| `Q-ORG-01` | Verifier was not built by a separate human/agent context. Re-derive, or accept and disclose. | Human owner |
+| `Q-ORG-01` | Verifier was not built by a separate human/agent context. Technical re-derivation now exists (`independent_verifier/`, 10/10 committed episodes signature-identical, `D01..D20` F1=1 exact, FP=FN=0; `docs/EVIDENCE/independent-rederivation-2026-11-22.json`) — organisational separation still does not. Accept and disclose, or re-derive under a separate owner. | Human owner |
 | `Q-ORG-02` | CODEOWNERS personas are intended, not real accounts (already disclosed in the file header). | Human owner |
 | `Q-DOC-01` | Should the 16-family distractor catalogue appear in narration? Not published today. | Next agent / owner |
-| — | Narrative behavioural claims are only partly mechanical; prose needs review. | Next agent |
+| — | Narrative behavioural claims are only partly mechanical; prose needs review (`C-EVIDENCE`, `C-SCORE-HONEST`, `C-QORG-OPEN` added 2026-11-22). | Next agent |
 
 `Q-REL-01` is **RESOLVED** (`v1.0.1` cut, `D-16-03`, 2026-11-22).
 
@@ -70,6 +72,8 @@ freeze_release --verify                         -> 30 files intact, 0747baf0…
 
 Get a human answer to `Q-ORG-01`. If the answer is "accept and disclose", record it
 in `docs/DECISIONS.md` as a new `D-xx-xx` and close the question. If the answer is
-"re-derive", scope a fresh `verifier/` authored from `spec/` and `contracts/` only,
-with `tests/verifier/test_boundaries.py` proving the import and file-open boundaries
-still hold against the old one. Do not attempt both.
+"re-derive", `independent_verifier/` already provides the second implementation —
+what remains is *who authors it next and under what review*. Note the 2026-11-22
+re-derivation was authored in the same session as everything else, so it
+strengthens the technical evidence but does not by itself close the organisational
+question. Do not attempt both.

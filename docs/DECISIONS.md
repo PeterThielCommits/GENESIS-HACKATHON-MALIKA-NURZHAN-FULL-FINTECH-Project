@@ -655,3 +655,56 @@ Scope and constraints honoured:
 Supersedes: the recommendation recorded in `Q-REL-01` (now RESOLVED by this
 decision). Refs: `D-16-02`, `D-15-07`, Phase 16 (`docs/PHASE_REPORTS/PHASE-16.md`,
 v1.0.1 addendum), release notes `docs/RELEASE_NOTES.md`.
+
+## D-16-04 (2026-11-22) — Phase 16 §7 risk-closure round: evidence, not assertions
+
+Phase 16's final report listed four risks (§7). This decision records how each
+was closed (or honestly not closed) without moving tags, editing frozen files,
+or self-approving a process decision.
+
+1. **Organisational independence unevidenced (`Q-ORG-01`) — strengthened
+   technically, NOT closed.** A second, from-scratch Stage-1 implementation
+   (`independent_verifier/`) was authored from `spec/verifier_algorithm.md` and
+   `contracts/` alone: own `Fraction`-based money/FX, own `zoneinfo` fiscal
+   periods, own discovery algorithms, own ProofGraph DAG with acyclicity and
+   finding-path checks, own minimal-evidence ablation. Measured agreement:
+   all 10 committed dev/train episodes re-derive signature-identically with
+   identical `episode_public_hash`; the official `D01..D20` matrix
+   (`master_seed=2026`) re-derives to sealed truth at F1 = 1 exact, FP = 0,
+   FN = 0 (harness: `tools/verify_independent_rederivation.py`; evidence:
+   `docs/EVIDENCE/independent-rederivation-2026-11-22.json`; regression-locked
+   by `tests/independent_verifier/`). Both implementations were written in one
+   AI-agent-assisted session, so this is **zero-common-mode technical evidence,
+   not organisational separation**. `Q-ORG-01` / `Q-ORG-02` stay OPEN.
+2. **Docker offline verification was CI-only.** No container runtime exists on
+   the execution host (probed 2026-11-22: `docker`, `podman`, `buildah`,
+   `nerdctl`, `ctr`, `runc`, `containerd` — none). Added
+   `tools/offline_local_check.py`: user+net+mount namespace, read-only bind of
+   the tree, tmpfs `artifacts/`, refused if any network route exists, full suite
+   PASS. Static Dockerfile/`.dockerignore` hardening audit 10/10 PASS. The
+   Docker image build remains **CI-authoritative** (`docker-offline` green on
+   `main` @ `3b83864`, run `45021422570`; also `45020669250` on the `v1.0.1` tag
+   commit `640c585`). Exact local scope recorded in
+   `docs/EVIDENCE/offline-local-2026-11-22.json`. A maintainer with Docker
+   should run `make docker-check` once locally to retire this entirely.
+3. **Prose only partly machine-checkable.** `tools/verify_doc_claims.py` gains
+   `C-EVIDENCE` (evidence artifacts exist, carry full git SHA, record PASS),
+   `C-SCORE-HONEST` (every `official_score_claimed` in the scan set asserts
+   `false`), and `C-QORG-OPEN` (`Q-ORG-01`/`Q-ORG-02` not presented as
+   RESOLVED). 18 → 21 checks, all PASS; new tests raise the suite to 548.
+4. **`v1.0.0` release notes lacked a supersession pointer.** The GitHub release
+   `v1.0.0` body now opens with a SUPERSEDED banner pointing to `v1.0.1`
+   (`D-16-02`, `D-16-03`). The tag itself is unchanged — published tags do not
+   move. Repository docs (`docs/RELEASE_NOTES.md`, `docs/CHANGELOG.md`) already
+   carried the pointer.
+
+Constraints honoured: no frozen file changed (`freeze_release --verify` → 30
+files, `0747baf0…`); no tag moved (`v1.0.0`, `v1.0.1`); `code_version` stays
+`twinledger@1.0.0`; `schema_version` stays `1.0.0`;
+`official_score_claimed: false`; `Q-ORG-01` / `Q-ORG-02` / `Q-DOC-01` remain
+OPEN; Phase 17 not restarted; `make official-eval` not run (the committed
+`trajectories.jsonl` untouched).
+
+Refs: Phase 16 report §10/§11 (`docs/PHASE_REPORTS/PHASE-16.md`),
+`docs/EVIDENCE/`, `docs/INDEPENDENCE.md` ("Re-derivation evidence"),
+`docs/AGENT_REPORTS/2026-11-22/`.

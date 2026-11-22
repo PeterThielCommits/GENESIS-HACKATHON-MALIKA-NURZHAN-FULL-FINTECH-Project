@@ -160,3 +160,44 @@ artifact (`D-16-03`). **EXIT GATE 16 re-confirmed PASS on this tree.**
   owner decision), `Q-DOC-01` (partial), `Q-REL-01` **RESOLVED**.
 - Report: `docs/PHASE_REPORTS/PHASE-16.md` (v1.0.1 addendum) and
   `docs/AGENT_REPORTS/2026-11-22/arena-phase-16-v1-0-1-release.md`.
+
+## Post-v1.0.1 risk-closure round (2026-11-22, branch `arena/d0407793-genesis-hackathon-malika-nurzh`)
+
+Phase-16 final-report risks, closed with evidence (not by moving tags, not by editing frozen files):
+
+- **Independent re-derivation (risk: organisational independence unevidenced).**
+  New `independent_verifier/` — a from-scratch Stage-1 implementation authored from
+  `spec/verifier_algorithm.md` + `contracts/` alone (own `Fraction` FX, `zoneinfo`
+  periods, ProofGraph acyclicity + path checks, minimal-evidence ablation).
+  Measured: all 6 dev + 4 train committed episodes re-derive signature-identically
+  (identical `episode_public_hash`); official `D01..D20` (`master_seed=2026`)
+  cross-check to sealed truth at **F1 = 1 exact, FP = 0, FN = 0** on all 20; evidence
+  enumeration complete; zero ProofGraph invariant errors. Regression-locked by
+  `tests/independent_verifier/test_independent_rederivation.py` (8 tests incl.
+  runtime file-open spy, fresh-subprocess import, boundary-scanner inclusion).
+  Evidence: `docs/EVIDENCE/independent-rederivation-2026-11-22.json`.
+  **`Q-ORG-01` remains OPEN** — same-session authorship; organisational separation
+  is a human decision, not a code change.
+- **Docker offline check was CI-only.** No container runtime exists on the execution
+  host (probed: `docker`/`podman`/`buildah`/`nerdctl`/`ctr`/`runc`/`containerd`
+  absent). Added `tools/offline_local_check.py`: user+net+mount namespace, read-only
+  bind of the tree, tmpfs `artifacts/`, no network route,
+  `PYTHONDONTWRITEBYTECODE=1` — full suite **OK (skipped=26)**. Static
+  Dockerfile/`.dockerignore`/Makefile hardening audit: 10/10 PASS. The Docker image
+  build remains **CI-authoritative** (run `45021422570` on `main` = `core` +
+  `docker-offline` success; also `45020669250` on the `v1.0.1` tag commit). Local
+  approximation scope and limits recorded in
+  `docs/EVIDENCE/offline-local-2026-11-22.json`.
+- **Prose machine-checkability extended.** `tools/verify_doc_claims.py` gains
+  `C-EVIDENCE` (evidence artifacts exist, carry full git SHA, record PASS),
+  `C-SCORE-HONEST` (every `official_score_claimed` asserts `false`),
+  `C-QORG-OPEN` (`Q-ORG-01`/`Q-ORG-02` not presented as RESOLVED). Gate now
+  **21/21 checks PASS** (was 18).
+- **v1.0.0 release notes lacked a supersession pointer.** GitHub release `v1.0.0`
+  body now opens with a SUPERSEDED banner pointing at `v1.0.1` (`D-16-02`/`D-16-03`);
+  the tag itself is unchanged (tags cannot move). Repo docs already carried the
+  pointer (`docs/RELEASE_NOTES.md`, `docs/CHANGELOG.md`).
+- Suite is now **548 tests** (8 new); README generated block re-rendered by
+  `python3 tools/verify_doc_claims.py --write` (the only sanctioned edit path).
+- `code_version` stays `twinledger@1.0.0` (names the frozen contract line, `D-16-03`);
+  `official_score_claimed: false`; `Q-ORG-01`/`Q-ORG-02`/`Q-DOC-01` OPEN.
