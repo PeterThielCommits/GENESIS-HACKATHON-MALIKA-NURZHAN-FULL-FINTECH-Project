@@ -1,7 +1,7 @@
 PYTHON ?= python3
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: help setup lint test test-official test-property build-episodes official-eval verify-core verify replay audit-shortcuts mutation-test report docs-verify demo demo-backup docker-check clean
+.PHONY: help setup lint test test-official test-property build-episodes official-eval verify-core verify replay audit-shortcuts mutation-test report docs-verify demo demo-backup release-audit replay-all rc-check docker-build docker-check-container docker-check clean
 
 help: ## Show available commands
 	@echo "TwinLedger — available make targets:"
@@ -18,6 +18,9 @@ help: ## Show available commands
 	@echo "  make docs-verify      Re-measure every documented number against its artifact (TZ 15.5/15.6)"
 	@echo "  make demo             3-minute deterministic jury walkthrough (seed=2025, no network)"
 	@echo "  make demo-backup      Technical backup demo: verify + docs-verify + replay + freeze"
+	@echo "  make release-audit    Phase 16: secrets, file list, size, dependencies, entrypoint (TZ 16.5/16.6)"
+	@echo "  make replay-all       Replay ALL 80 published trajectories and compare every step (TZ 16.4)"
+	@echo "  make rc-check         Release candidate gate: verify + docs-verify + replay-all + release-audit"
 	@echo "  make docker-check     Offline Docker check (--network=none --cpus=2 --memory=4g)"
 	@echo "  make clean            Remove generated temp artifacts (keeps sealed source inputs)"
 
@@ -83,6 +86,19 @@ demo-backup: ## Technical backup demo (TZ 15.4): gates + claims + replay + freez
 	@echo "== B4/4 frozen contract surface =="
 	@$(PYTHON) tools/freeze_release.py --verify
 	@echo "demo-backup: PASS (all four probes green)"
+
+release-audit: ## Secrets, file list, package size, dependencies, official entrypoint (TZ 16.5/16.6)
+	@$(PYTHON) tools/release_audit.py
+
+replay-all: ## Replay every published trajectory and compare all 80 runs (TZ 16.4)
+	@$(PYTHON) tools/replay_all_trajectories.py
+
+rc-check: ## Release candidate gate (TZ 16.2/16.4/16.5/16.6): verify + docs + replay + audit
+	@$(MAKE) --no-print-directory verify
+	@$(MAKE) --no-print-directory docs-verify
+	@$(MAKE) --no-print-directory replay-all
+	@$(MAKE) --no-print-directory release-audit
+	@echo "rc-check: PASS (release candidate is consistent)"
 
 docker-build: ## Build the offline verification image
 	@docker build -t twinledger:eval .

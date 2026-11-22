@@ -10,7 +10,7 @@
 
 - **Phase 15 re-audit DONE, EXIT GATE 15 PASS** (branch above). Documentation is now mechanically tied to evidence: `make docs-verify` re-measures 22 facts and runs 11 checks against `artifacts/reports/latest/` (and `make verify` runs it automatically once artifacts exist); `make demo-backup` chains verify + docs + replay + freeze. Decisions `D-15-01`, `D-15-02`.
 - New this phase: `docs/API_USAGE.md`, `docs/POLICY_PROTOCOL.md` (Task 15.3 was previously missing), `docs/DEMO.md`, `tools/verify_doc_claims.py`, `tests/judge/test_doc_claims.py`; `docs/DESIGN.md` rewritten as-built.
-- Measured: `make verify` **12/12 PASS** (61.9 s, 20 artifacts), also PASS on a clean `git ls-files` tree (61.1 s), full suite **439 tests** OK (1 optional Hypothesis skip, `critical_skipped=0`), `make docs-verify` PASS, `make demo-backup` PASS, lint CLEAN, freeze **30 files** intact (`0747baf0…`), `official_score_claimed: false`.
+- Measured: `make verify` **12/12 PASS** (61.9 s, 20 artifacts), also PASS on a clean `git ls-files` tree (61.1 s), full suite **474 tests** OK (1 optional Hypothesis skip, `critical_skipped=0`), `make docs-verify` PASS, `make demo-backup` PASS, lint CLEAN, freeze **30 files** intact (`0747baf0…`), `official_score_claimed: false`.
 - No frozen file changed (`contracts/*`, `configs/*`, `judge/rubric_map.json`, Master TZ untouched).
 
 ## Next actions

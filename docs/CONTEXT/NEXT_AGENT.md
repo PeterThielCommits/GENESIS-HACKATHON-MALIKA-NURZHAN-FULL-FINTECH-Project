@@ -6,7 +6,7 @@ Read `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/PHASE_REPORTS/PHASE-15.md` / `.
 Phase 15 re-audit is **DONE** and EXIT GATE 15 is met: a judge can deploy from the README and verify the claims mechanically.
 
 ```
-make verify        → 12/12 PASS, 439 tests, 21 evidence artifacts (docs gate runs automatically)
+make verify        → 12/12 PASS, 474 tests, 21 evidence artifacts (docs gate runs automatically)
 make docs-verify   → 22 measured facts, 11 checks PASS
 make demo-backup   → verify + docs + replay 5/5 + freeze 30 files PASS
 make demo          → 5-segment 3-minute walkthrough (seed 2025)
