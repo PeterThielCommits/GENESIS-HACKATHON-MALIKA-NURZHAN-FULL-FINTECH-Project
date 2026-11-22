@@ -19,7 +19,7 @@ Working directory inside the container: `/app`. Zero external `pip` packages or
 network access are required.
 
 ```bash
-make verify            # lint + full 12-gate Judge Kit (RC-001..RC-012) + 439 tests + 20 evidence artifacts
+make verify            # lint + full 12-gate Judge Kit (RC-001..RC-012) + 481 tests + 20 evidence artifacts
 make verify-core       # fast critical core & release-blocker gates (RC-001..005, RC-009)
 make test-official     # official Genesis FinTech 2026-11-20 mirror suite (Blocks 1..5: C01..C20, D01..D20, Block 3 #1..20 + M01..M12, P01..P20, Baselines) — 55 official mirror tests
 make replay            # fresh-process CLOSED_EVAL trajectory & Merkle receipt replay + paired P01..P20
@@ -27,6 +27,9 @@ make audit-shortcuts   # metadata-only L2 logistic regression audit (AUC <= 0.55
 make mutation-test     # 26/26 mutants killed matcher/reward suite + Official Block 3 M01..M12
 make report            # synthesize self-contained offline artifacts/reports/latest/report.html + report_index.json
 make official-eval     # run all 4 baseline policies across D01..D20 -> artifacts/trajectories/trajectories.jsonl + summary
+make replay-all        # replay ALL 80 published trajectories and compare every step (TZ 16.4)
+make release-audit     # release audit: secrets, file list, size, deps, official entrypoint (TZ 16.5/16.6)
+make rc-check          # release candidate gate: verify + docs-verify + replay-all + release-audit
 make docker-check      # build and run inside hardened offline container (--network=none --read-only --cap-drop ALL)
 python3 tools/demo_walkthrough.py        # deterministic 3-minute jury walkthrough (seed=2025)
 python3 tools/freeze_release.py --verify # cryptographic SHA-256 verification of frozen contracts & configs
@@ -143,7 +146,7 @@ python3 tools/verify_doc_claims.py   # re-measures and diffs this documentation
 ```
 
 Current measured state of this release (see the generated block for the full set):
-**12/12 PASS** verification gates, **439 tests**, **5/5 byte-identical replays**,
+**12/12 PASS** verification gates, **481 tests**, **5/5 byte-identical replays**,
 **0 canary hits**, `official_score_claimed: false`.
 
 <!-- BEGIN GENERATED:measured-facts -->
@@ -156,7 +159,7 @@ Current measured state of this release (see the generated block for the full set
 |---|---|---|
 | Verification gates defined (RC-001..RC-012) | **12** | `verify_summary.json` |
 | Official organiser score claimed | **false** | `verify_summary.json` |
-| Total tests in the verification suite | **439** | `verify_summary.json → RC-001` |
+| Total tests in the verification suite | **481** | `verify_summary.json → RC-001` |
 | Official mirror tests (Blocks 1–5) | **55** | `verify_summary.json → RC-004` |
 | Evidence artifacts indexed | **20** | `report_index.json` |
 | Required artifacts missing | **0** | `report_index.json` |

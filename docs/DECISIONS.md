@@ -321,6 +321,44 @@ The placeholder is kept (Git needs it); it is simply never counted. Locked by
 `TestArtifactPlaceholders` (4 tests), which also asserts that
 `report_index.json` and the directory contents agree exactly.
 
+## D-16-01 (2026-11-22) — Release gates measure, they do not describe
+
+Phase 16 added two gates whose authority comes from measurement, and whose value
+comes from being demonstrably able to fail:
+
+- `tools/replay_all_trajectories.py` (TZ 16.4) replays the **recorded actions** of
+  all 80 published runs against freshly rebuilt episodes and compares every
+  observation, reward and score. It deliberately does **not** re-run the baseline
+  policies: the claim under test is that the generator, environment and scorer are
+  deterministic, and mixing policy execution into it would make a policy change
+  look like a determinism failure.
+- `tools/release_audit.py` (TZ 16.5/16.6) measures secrets, forbidden paths,
+  package size, runtime imports, the official entrypoint and the submission
+  format. The entrypoint is verified **behaviourally** (each documented tool is
+  dispatched in a fresh environment) rather than by introspecting attributes,
+  because the adapter exposes no tool registry and an unknown action is answered
+  inside the observation, where an attribute check cannot see it.
+
+Three operating rules, each paid for with a real bug:
+
+1. **A gate must be shown to fail.** Every detector has a negative test with a
+   deliberately injected violation. The secrets audit even reported four
+   credential shapes in its own fixtures; they were removed rather than the audit
+   being exempted.
+2. **Never read a gitignored artefact inside a test.** `artifacts/reports/release/`
+   is generated, so tests drive the real CLI into a temporary directory instead.
+   This is `D-15-01` restated after it was reintroduced one directory over.
+3. **Gates must run where the artefact runs.** `.dockerignore` excludes `.git`, so
+   the submission image has no Git metadata; a `git ls-files`-only audit errored
+   there. `tracked_files()` falls back to a filesystem walk mirroring
+   `.dockerignore`. Verified in a Git checkout, a clean clone and a `git archive`
+   tarball.
+
+`artifacts/reports/release/` is gitignored for the same reason as
+`artifacts/reports/doc_claims/`: `artifacts/reports/latest/` is the frozen
+Judge Kit evidence set (D-15-03), and extra files there make counts depend on
+execution order.
+
 ## D-17-01 (2026-11-21) — Post-release cryptographic contract & config freeze manifest
 
 `tools/freeze_release.py` locks SHA-256 digests over all 30 frozen contract schemas (`contracts/*.schema.json`, `contracts/version.json`), operational configs (`configs/*`), provisional rubricator (`judge/rubric_map.json`), official check spec (`spec/official_fintech_checks_2026-11-20.md`), and Master TZ v3.0.0 (`docs/reference/TwinLedger_v3_Master_TZ_AI_Agents.txt`) in `configs/release_freeze.json`.
