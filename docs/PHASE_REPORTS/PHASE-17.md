@@ -36,7 +36,7 @@ sentence, which is about the **release** as a whole:
 
 Three gaps stood between the old state and that sentence:
 
-1. **The release surface had no digest.** 549 tracked files — runtime code,
+1. **The release surface had no digest.** 551 tracked files — runtime code,
    operational configs, the rubric map, the Dockerfile, the Makefile, the official
    entrypoint, the committed episodes and the whole documentation set — were
    protected by nothing but the git history.
@@ -138,6 +138,7 @@ were migrated, the *label* was not.
 | BUG-TL-0006 | P2 | `robustness_report.json` published `score_contract: "scoring.reward (internal provisional; not official_scorer)"` — false since `D-18-01` made `scoring.official_scorer` the single reward implementation | `judge/robustness_audit.SCORE_CONTRACT` names the single implementation and carries the live formula; a note keeps the "internal measurement, not a jury score" meaning explicit |
 | BUG-TL-0007 | P3 | stale "provisional / pending Q-005" wording in `scoring/matcher.py` and in a property-test comment, although `Q-005` was resolved on 2026-11-20 | docstring and comment corrected |
 | BUG-TL-0008 | P2 | the `C-PATHS` artifact contract of the documentation gate named `replay_all_report.json` — a file that **does not exist** (the real one is `trajectory_replay.json`) — and omitted `reward_property_matrix.json`, which is part of the published 20-file evidence set; a correct citation was reported as a phantom path | the contract is now derived from the producers; `tests/judge/test_doc_claims.py::test_generated_artifact_contract_matches_the_producers` fails on the old list |
+| BUG-TL-0009 | P1 | the CI workflow file was malformed YAML (an unquoted `": "` inside a step name) — GitHub created a run with **zero jobs** on every push and nothing in the repository failed, so the twelve gates and the offline container check had silently disappeared | the step name no longer contains a colon; new `tools/check_workflows.py` (stdlib-only) parses the workflow files in `make lint` and in `tests/judge/test_workflows.py` (13 tests) |
 
 Each fix carries a regression test that **fails on the old code**:
 `tests/scoring/test_formula_provenance.py` (6 tests) and the artifact
@@ -155,7 +156,7 @@ rewritten: it is a dated snapshot, and it now says so.
 | Gate | Command | Result | Artifact |
 |---|---|---|---|
 | Contract freeze | `python3 tools/freeze_release.py --verify` | **PASS** — 30 files, `0747baf0…` | `configs/release_freeze.json` |
-| Full Judge Kit | `make verify` | **PASS 12/12**, 588 tests (1 optional skip), 20 artifacts | `artifacts/reports/latest/verify_summary.json` |
+| Full Judge Kit | `make verify` | **PASS 12/12**, 601 tests (1 optional skip), 20 artifacts | `artifacts/reports/latest/verify_summary.json` |
 | Documentation claims | `make docs-verify` | **PASS** — 22 measured facts, **22/22** checks | `artifacts/reports/doc_claims/doc_claims_report.json` |
 | All trajectories | `make replay-all` | **PASS** — 80/80 runs, 567 steps byte-identical | `artifacts/reports/release/trajectory_replay.json` |
 | Release audit | `make release-audit` | **PASS 6/6** — secrets, file list, size, deps, entrypoint, submission | `artifacts/reports/release/release_audit.json` |
@@ -163,6 +164,7 @@ rewritten: it is a dated snapshot, and it now says so.
 | Release archive | `python3 tools/evidence_freeze.py --verify` | **PASS** — release surface intact | `docs/EVIDENCE/evidence_freeze.json` |
 | Release gate | `python3 tools/evidence_freeze.py --verify --require-reports` | **PASS** — surface + archived gate verdicts | `docs/EVIDENCE/evidence_freeze.json` |
 | Evidence archive | `python3 tools/release_evidence.py --verify` | **PASS** — honest and self-consistent | `docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json` |
+| Workflow files | `python3 tools/check_workflows.py` | **PASS** — every workflow file is well formed (BUG-TL-0009) | `.github/workflows/ci.yml` |
 
 ### Failed or skipped checks
 
@@ -241,7 +243,7 @@ OPEN — it is not an agent's to close.
 ```
 STATUS: DONE
 SCOPE: Phase 17 (TZ §24) — post-release evidence freeze; release v1.0.2.
-IMPLEMENTED: tools/evidence_freeze.py, tools/release_evidence.py,
+IMPLEMENTED: tools/evidence_freeze.py, tools/release_evidence.py, tools/check_workflows.py,
   docs/EVIDENCE/{evidence_freeze.json,phase-17-release-evidence-2026-11-22.json},
   make evidence-write/evidence-verify (wired into rc-check + CI), C-ARCHIVE,
   tests/judge/{test_evidence_freeze,test_release_evidence,test_release_freeze}.py,
@@ -255,7 +257,7 @@ REQUIREMENTS: REQ-CONTRACT-001, REQ-CONTRACT-003, REQ-JUDGE-004 (carried),
 TESTS RUN: python3 tools/freeze_release.py --verify; make verify;
   make docs-verify; make replay-all; make release-audit; make evidence-verify;
   python3 tools/release_evidence.py --verify; python3 -m unittest discover -s tests -t .
-TEST RESULTS: PASS — 12/12 gates, 588 tests (1 optional skip), 22/22 doc checks,
+TEST RESULTS: PASS — 12/12 gates, 601 tests (1 optional skip), 22/22 doc checks,
   80/80 replays (567 steps), 6/6 audit checks, 30/30 frozen files, release
   surface + archive verified. SKIPPED: Docker offline build (no container
   runtime on this host; CI-authoritative, recorded UNVERIFIED, not PASS).

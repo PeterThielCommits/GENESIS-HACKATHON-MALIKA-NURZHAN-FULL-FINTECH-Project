@@ -10,7 +10,7 @@
 > | `python3 tools/freeze_release.py --verify` | **PASS** — 30 frozen contract files intact, `0747baf0…` |
 > | `python3 tools/evidence_freeze.py --verify` | **PASS** — every tracked release file matches `docs/EVIDENCE/evidence_freeze.json` |
 > | `python3 tools/release_evidence.py --verify` | **PASS** — the release archive is honest, self-consistent and current |
-> | `make verify` (full Judge Kit) | **PASS 12/12** gates, 588 tests, 20 evidence artifacts |
+> | `make verify` (full Judge Kit) | **PASS 12/12** gates, 601 tests, 20 evidence artifacts |
 > | `make docs-verify` | **PASS** — 22 measured facts, 22 checks (new: `C-ARCHIVE`) |
 > | `make replay-all` | **PASS** — 80/80 runs, 567 steps byte-identical |
 > | `make release-audit` | **PASS 6/6** — secrets, file list, size, deps, entrypoint, submission |
@@ -30,7 +30,7 @@
   behaviour of the benchmark changed.
 - **Phase 16 remains the release** (`v1.0.1`, the recommended submission
   artifact). `v1.0.2` is a patch release that adds the Phase 17 evidence
-  archive and fixes four published-evidence defects; it does not change the
+  archive and fixes five published-evidence defects; it does not change the
   contract surface.
 
 ## What changed in this session
@@ -39,14 +39,14 @@
 |---|---|
 | Phase 17 archive | `tools/evidence_freeze.py` (release-surface digest + report verdicts) and `tools/release_evidence.py` (reconstructable release archive), `docs/EVIDENCE/` |
 | Gates | `make evidence-write` / `make evidence-verify`, wired into `make rc-check` and the CI `core` job; `C-ARCHIVE` in `tools/verify_doc_claims.py`; `tests/judge/test_release_freeze.py` turns the contract freeze into a test |
-| Defects | BUG-TL-0005 (published formula), BUG-TL-0006 (published score contract), BUG-TL-0007 (stale "provisional" wording), BUG-TL-0008 (documentation gate's artifact contract) — all non-frozen, each with a failing-on-old-code regression test |
+| Defects | BUG-TL-0005 (published formula), BUG-TL-0006 (published score contract), BUG-TL-0007 (stale "provisional" wording), BUG-TL-0008 (documentation gate's artifact contract), BUG-TL-0009 (malformed CI workflow disabled the CI gate) — all non-frozen, each with a failing-on-old-code regression test |
 | Docs | `docs/STATUS.md`, `docs/LIMITATIONS.md` (L8–L10), `docs/DECISIONS.md` (`D-17-02`, `D-17-03`), `docs/CHANGELOG.md`, `docs/RELEASE_NOTES.md`, `docs/PHASE_REPORTS/PHASE-17.md`, `docs/HANDOFF/phase-17-evidence-freeze.md`, `docs/CONTEXT/NEXT_AGENT.md` |
 
 ## Latest measurements (this session, 2026-11-22)
 
 | Command / condition | Result |
 |---|---|
-| `make verify` (working tree) | **exit 0** — 12/12 gates, 588 tests (1 optional skip), 20 artifacts |
+| `make verify` (working tree) | **exit 0** — 12/12 gates, 601 tests (1 optional skip), 20 artifacts |
 | `make replay-all` | **80/80** runs, **567** steps byte-identical |
 | `make release-audit` | **6/6** PASS |
 | `python3 tools/verify_doc_claims.py` | **22** measured facts, **22/22** checks PASS |

@@ -146,7 +146,7 @@ python3 tools/verify_doc_claims.py   # re-measures and diffs this documentation
 ```
 
 Current measured state of this release (see the generated block for the full set):
-**12/12 PASS** verification gates, the full **588-test** suite, **5/5 byte-identical replays**,
+**12/12 PASS** verification gates, the full **601-test** suite, **5/5 byte-identical replays**,
 **0 canary hits**, `official_score_claimed: false`.
 
 ### Verify the release archive itself (Phase 17, TZ §24)
@@ -158,6 +158,7 @@ without any explanation from the team:
 python3 tools/freeze_release.py --verify     # 30 frozen contract surfaces
 python3 tools/evidence_freeze.py --verify    # every tracked release file + the gate verdicts
 python3 tools/release_evidence.py --verify   # the reconstructable release archive
+python3 tools/check_workflows.py             # the CI workflow files are well formed
 ```
 
 `docs/EVIDENCE/evidence_freeze.json` pins the SHA-256 of every tracked release
@@ -193,7 +194,7 @@ python3 tools/release_evidence.py --verify --strict
 |---|---|---|
 | Verification gates defined (RC-001..RC-012) | **12** | `judge/rubric_map.json (frozen contract)` |
 | Official organiser score claimed | **false** | `verify_summary.json` |
-| Total tests in the verification suite | **588** | `unittest discovery over tests/ (state-independent)` |
+| Total tests in the verification suite | **601** | `unittest discovery over tests/ (state-independent)` |
 | Official mirror tests (Blocks 1–5) | **55** | `unittest discovery over tests/official/ (state-independent)` |
 | Evidence artifacts indexed | **20** | `report_index.json` |
 | Required artifacts missing | **0** | `report_index.json` |

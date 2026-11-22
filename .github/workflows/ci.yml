@@ -25,7 +25,7 @@ jobs:
         run: make verify && make report
       - name: Release candidate audit (TZ 16.5/16.6)
         run: make release-audit
-      - name: Evidence freeze (Phase 17: the committed archive must match the tree)
+      - name: Evidence freeze (Phase 17 - the committed archive must match the tree)
         run: make evidence-verify
       - name: Upload verify artifacts
         if: always()

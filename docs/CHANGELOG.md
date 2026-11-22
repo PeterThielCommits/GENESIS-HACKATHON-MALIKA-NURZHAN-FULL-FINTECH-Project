@@ -23,7 +23,7 @@
   asserts the committed freeze matches the tree, that the frozen surface is
   exactly the declared 30 files, and that the aggregate is still the released
   `0747baf0…`. A silent re-freeze is no longer possible — it needs a CR.
-- **Four published-evidence defects fixed (non-frozen, each with a failing-on-old-code
+- **Five published-evidence defects fixed (non-frozen, each with a failing-on-old-code
   regression test):** BUG-TL-0005 (P1) the reward-property matrix published the
   superseded provisional formula and `provisional: true` although its numbers
   were official; BUG-TL-0006 (P2) the robustness report published a
@@ -34,6 +34,11 @@
   and
   omitted `reward_property_matrix.json`, so a correct citation was reported as a
   phantom path. The published reward contract is now **derived from the
+  BUG-TL-0009 (P1) the CI workflow file itself was malformed YAML (an unquoted
+  `": "` inside a step name), so every push ran a workflow with **zero jobs**
+  and nothing in the repository failed -- the CI gate had silently disappeared.
+  New `tools/check_workflows.py` (stdlib-only) plus 13 tests now parse the
+  workflow files in `make lint` and in the test suite.
   live constants** (`scoring/official_scorer.official_formula_text()`), and
   `C-REWARD` audits generated artifacts as well as prose (`D-17-03`).
 - **Docs:** Phase 17 report rewritten, `docs/HANDOFF/phase-17-evidence-freeze.md`

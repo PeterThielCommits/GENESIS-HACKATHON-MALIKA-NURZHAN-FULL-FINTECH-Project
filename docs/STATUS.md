@@ -18,7 +18,7 @@
 | Phase 14 | 12-Gate Judge Kit & Self-Contained Offline HTML Report | DONE (re-audit 2026-11-21) | `judge/verify.py`, `judge/report.py`, `judge/schemas.py`, `judge/performance_and_deps.py`, `tests/judge/test_judge_kit.py`, `docs/PHASE_REPORTS/PHASE-14.md` |
 | Phase 15 | Complete Documentation & Demo (re-audit 2026-11-21) | DONE | `tools/verify_doc_claims.py`, `docs/API_USAGE.md`, `docs/POLICY_PROTOCOL.md`, `docs/DEMO.md`, `tests/judge/test_doc_claims.py`, `docs/PHASE_REPORTS/PHASE-15.md` |
 | Phase 16 | Hardened Offline Docker, Compose & CI Gate Verification | DONE (re-verified 2026-11-22, `v1.0.1`) | `Dockerfile`, `docker-compose.yml`, `.github/workflows/ci.yml`, `docs/PHASE_REPORTS/PHASE-16.md` (incl. v1.0.1 addendum); tag **`v1.0.1`** supersedes `v1.0.0` (`D-16-03`) |
-| Phase 17 | Post-Release Evidence Freeze (contract + release surface + verdicts) | DONE (deep execution 2026-11-22) | `tools/freeze_release.py`, `configs/release_freeze.json` (0747baf0…, D-12-02), `tools/evidence_freeze.py`, `tools/release_evidence.py`, `docs/EVIDENCE/`, `docs/PHASE_REPORTS/PHASE-17.md` (D-17-02, D-17-03) |
+| Phase 17 | Post-Release Evidence Freeze (contract + release surface + verdicts) | DONE (deep execution 2026-11-22) | `tools/freeze_release.py`, `configs/release_freeze.json` (0747baf0…, D-12-02), `tools/evidence_freeze.py`, `tools/release_evidence.py`, `tools/check_workflows.py`, `docs/EVIDENCE/`, `docs/PHASE_REPORTS/PHASE-17.md` (D-17-02, D-17-03) |
 | Official 2026-11-20 | FinTech Checks (`C01..C20`, `D01..D20`, `Block 3`, `P01..P20`, `Baselines`) | DONE | `judge_adapter.py`, `adapter/official_env.py`, `scoring/official_scorer.py`, `tests/official/` |
 
 ## Phase 11 re-audit (2026-11-21)
@@ -214,7 +214,7 @@ were not archived anywhere.
 - **17.1 — release surface archived.** New `tools/evidence_freeze.py` hashes
   every tracked file (code, configs, contracts, rubric map, Dockerfile,
   Makefile, entrypoint, episodes, docs) into
-  `docs/EVIDENCE/evidence_freeze.json` (548 tracked files, one aggregate digest).
+  `docs/EVIDENCE/evidence_freeze.json` (550 tracked files, one aggregate digest).
 - **17.2 — verify/replay reports archived as verdicts.** The manifest stores the
   *verdicts* of `verify_summary`, `replay_report`, `report_index`,
   `release_audit`, `doc_claims` and `trajectory_replay` (status + counts).
@@ -233,8 +233,7 @@ were not archived anywhere.
   `docs/HANDOFF/phase-17-evidence-freeze.md` + `docs/CONTEXT/NEXT_AGENT.md` +
   the machine-checked `reconstruct.commands` list in the archive.
 
-**Four real defects were found and fixed while auditing the published
-evidence** (all non-frozen; each with a regression test that fails on the old
+**Five real defects were found and fixed while auditing the publishedevidence** (all non-frozen; each with a regression test that fails on the old
 code):
 
 | ID | Severity | Defect |
@@ -243,6 +242,7 @@ code):
 | BUG-TL-0006 | P2 | `robustness_report.json` published `score_contract: "scoring.reward (internal provisional; not official_scorer)"` — false since `D-18-01` made `scoring.official_scorer` the single implementation |
 | BUG-TL-0007 | P3 | stale "provisional / pending Q-005" wording in `scoring/matcher.py` and in a property-test comment, although `Q-005` was resolved on 2026-11-20 |
 | BUG-TL-0008 | P2 | the documentation gate's artifact contract named `replay_all_report.json` (a file that does not exist; the real file is `trajectory_replay.json`) and omitted `reward_property_matrix.json`, so a correct citation was reported as a phantom path |
+| BUG-TL-0009 | P1 | the CI workflow file was malformed YAML (an unquoted `": "` in a step name): GitHub ran it with **zero jobs** on every push, so the twelve gates, the offline container check and the new evidence gate silently disappeared while the repository looked green |
 
 The published reward contract is now **derived, never re-typed**
 (`scoring/official_scorer.official_formula_text()` → `scoring.reward.FORMULA`

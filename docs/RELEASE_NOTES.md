@@ -43,7 +43,7 @@ results**, never a jury score (Master TZ §23.6).
    commands whose scripts exist. The contract freeze became a **test**
    (`tests/judge/test_release_freeze.py`): a frozen file cannot move without a
    failing suite and an approved CR.
-4. **Four defects in published evidence fixed (`D-17-03`) — all non-frozen,
+4. **Five defects in published evidence fixed (`D-17-03`) — all non-frozen,
    each with a regression test that fails on the old code:
    - **BUG-TL-0005 (P1):** the reward-property matrix published the *superseded
      provisional formula* and `provisional: true`, although every number in it
@@ -64,6 +64,12 @@ results**, never a jury score (Master TZ §23.6).
      which is part of the published 20-file evidence set. A *correct* citation
      was therefore reported as a phantom path. The contract is now derived from
      the producers.
+   - **BUG-TL-0009 (P1):** the CI workflow file was malformed YAML — an
+     unquoted `"  : "` inside a step name — so GitHub ran a workflow with
+     **zero jobs** on every push and nothing in the repository failed. The
+     twelve gates, the offline container check and the evidence gate had all
+     silently disappeared. `tools/check_workflows.py` (stdlib-only) now parses
+     the workflow files in `make lint` and in the test suite.
 5. **Documentation.** The Phase 17 report was rewritten;
    `docs/HANDOFF/phase-17-evidence-freeze.md` was added; `docs/STATUS.md`,
    `docs/CURRENT_STATE.md`, `docs/CONTEXT/NEXT_AGENT.md`, `docs/LIMITATIONS.md`
@@ -102,7 +108,7 @@ fresh `make verify` run.
 | Measurement | Value | Where |
 |---|---|---|
 | Judge Kit gates | **12/12 PASS** | `artifacts/reports/latest/verify_summary.json` |
-| Test suite | **588 tests** (1 optional skip) | unittest discovery over `tests/` |
+| Test suite | **601 tests** (1 optional skip) | unittest discovery over `tests/` |
 | Trajectory replay | **80/80 runs, 567 steps byte-identical** | `make replay-all` |
 | Release audit | **6/6 PASS** | `make release-audit` |
 | Documentation claims | **22 measured facts, 22/22 checks PASS** | `make docs-verify` |
@@ -199,7 +205,7 @@ and 20 evidence artefacts. Any deviation is a bug worth reporting.
 | Tag | `v1.0.2` (annotated) on the merge commit of the Phase 17 PR, cut **after** `make rc-check` PASS and CI green on the merge commit |
 | Parent release | `v1.0.1` (`640c585`), retained and still the recommended submission artifact |
 | Release-surface archive | `docs/EVIDENCE/evidence_freeze.json` (every tracked file at the release commit, + the gate verdicts) |
-| Release audit (tag tree) | 549 tracked files (the release-surface archive counts 548: it excludes itself), 0 credentials, 0 forbidden paths, 0 undeclared external imports (118 runtime modules) |
+| Release audit (tag tree) | 551 tracked files (the release-surface archive counts 550: it excludes itself), 0 credentials, 0 forbidden paths, 0 undeclared external imports (118 runtime modules) |
 | Release evidence | `docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json` (frozen digest, rubric map, decisions, reconstruct commands) |
 | Frozen contract surface | 30 files, `0747baf0…` (unchanged; this release touches no frozen file) |
 | `official_score_claimed` | `false` (TZ §23.6) |

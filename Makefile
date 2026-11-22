@@ -33,6 +33,7 @@ setup: ## Check Python version and optional extras; nothing is downloaded
 lint: ## Compile check (read-only rootfs safe) + import-boundary scan (REQ-ARC-001)
 	@$(PYTHON) -c 'import pathlib; roots = "judge_adapter.py core contracts adapter gen invariants verifier nlp env harness scoring seal arena metamorphic judge tools tests independent_verifier".split(); [compile(p.read_bytes(), str(p), "exec") for r in roots for p in ([pathlib.Path(r)] if pathlib.Path(r).is_file() else sorted(pathlib.Path(r).rglob("*.py")))]'
 	@$(PYTHON) tools/check_import_boundaries.py
+	@$(PYTHON) tools/check_workflows.py --optional
 
 test: ## All unit, contract, and official mirror tests (stdlib unittest)
 	@$(PYTHON) -m unittest discover -s tests -t . -v

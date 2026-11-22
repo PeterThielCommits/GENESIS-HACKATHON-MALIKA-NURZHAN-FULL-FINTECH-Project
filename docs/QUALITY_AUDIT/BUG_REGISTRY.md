@@ -517,6 +517,70 @@ missing / `reward_property_matrix.json` absent) and passes on the new one.
 
 ---
 
+## BUG-TL-0009 — A malformed workflow file silently disabled CI
+
+| Field | Value |
+|---|---|
+| Severity | **P1** (the CI gate disappeared; nothing in the repository failed) |
+| Category | Release infrastructure / YAML |
+| Status | **VERIFIED FIXED** |
+| Discovered by | Phase 17: every push of the branch ran a workflow with **zero jobs** and failed in 0 s |
+| Files affected | `.github/workflows/ci.yml`, `tools/check_workflows.py`, `tests/judge/test_workflows.py`, `Makefile` |
+
+### Symptom
+
+The Phase 17 evidence step was added to the CI workflow as
+
+```yaml
+- name: Evidence freeze (Phase 17: the committed archive must match the tree)
+  run: make evidence-verify
+```
+
+A **plain (unquoted) YAML scalar may not contain a colon followed by a
+space**: YAML reads `Phase 17: the committed archive must match the tree`
+as a mapping, not as text. The whole file therefore stopped being valid
+YAML.
+
+### Impact
+
+GitHub created a run for every push, the run failed **immediately with zero
+jobs**, and the only hint was "This run likely failed because of a workflow
+file issue". Nothing in the repository failed, because nothing in the
+repository ran: the twelve Judge Kit gates, the offline container check and
+the new evidence gate all silently disappeared, on four consecutive pushes.
+A reviewer looking only at the repository would have seen a green branch.
+
+### Root cause
+
+A step *name* was edited by hand, and nothing in the repository parses the
+workflow files. The CI configuration was the one artifact that was never
+checked — the one artifact whose failure removes the checking.
+
+### Fix
+
+- The step name no longer contains a colon (`Phase 17 - the committed
+  archive must match the tree`).
+- New `tools/check_workflows.py` (stdlib-only, offline) parses the workflow
+  files: a full YAML parse when PyYAML is importable, plus heuristics that
+  always run (no unquoted `": "`, no tab indentation, a `jobs:` mapping
+  must exist). The other YAML files of the repository
+  (`docker-compose.yml`, `spec/*.yaml`) are scanned with the same
+  heuristics.
+- It runs in `make lint` (and therefore in CI) and in
+  `tests/judge/test_workflows.py` (13 tests), so the hazard is caught
+  **before** a push, not after four of them.
+
+### Regression evidence
+
+| Test | Fails on old code | Passes on new code |
+|---|---|---|
+| `tests/judge/test_workflows.py::test_unquoted_colon_space_is_flagged` | yes (no checker existed) | yes |
+| `tests/judge/test_workflows.py::test_repository_workflows_are_well_formed` | yes (the broken file) | yes |
+| `tests/judge/test_workflows.py::test_tab_indentation_is_flagged` | yes | yes |
+| `tools/check_workflows.py` on the broken step name | reports the exact line | PASS |
+
+---
+
 ## Summary
 
 | ID | Severity | Component | Status |
@@ -529,6 +593,7 @@ missing / `reward_property_matrix.json` absent) and passes on the new one.
 | BUG-TL-0006 | P2 | `judge/robustness_audit.py` (score contract) | VERIFIED FIXED |
 | BUG-TL-0007 | P3 | `scoring/matcher.py` (docstring) | VERIFIED FIXED |
 | BUG-TL-0008 | P2 | `tools/verify_doc_claims.py` (artifact contract) | VERIFIED FIXED |
+| BUG-TL-0009 | P1 | `.github/workflows/ci.yml` (malformed YAML disabled CI) | VERIFIED FIXED |
 
 No claim is made that no bugs remain. Checks that were executed without
 finding a defect are listed in `FIX_VERIFICATION_MATRIX.md`, and residual

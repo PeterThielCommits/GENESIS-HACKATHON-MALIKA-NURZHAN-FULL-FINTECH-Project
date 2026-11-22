@@ -71,6 +71,12 @@
       "severity": "P2",
       "summary": "the documentation gate's artifact contract named replay_all_report.json (written by no producer) and omitted reward_property_matrix.json, so a correct citation was reported as a phantom path",
       "status": "VERIFIED FIXED"
+    },
+    {
+      "id": "BUG-TL-0009",
+      "severity": "P1",
+      "summary": "the CI workflow file was malformed YAML (an unquoted colon-space inside a step name), so GitHub ran it with zero jobs on every push and nothing in the repository failed",
+      "status": "VERIFIED FIXED"
     }
   ],
   "gates": [
@@ -84,7 +90,7 @@
       "gate": "judge kit",
       "command": "make verify",
       "result": "PASS",
-      "detail": "12/12 RC gates, 588 tests (1 optional skip), 20 artifacts"
+      "detail": "12/12 RC gates, 601 tests (1 optional skip), 20 artifacts"
     },
     {
       "gate": "documentation claims",
