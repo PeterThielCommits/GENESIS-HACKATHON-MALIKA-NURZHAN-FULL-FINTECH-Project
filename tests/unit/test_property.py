@@ -248,14 +248,19 @@ class TestStdlibProperties(unittest.TestCase):
             self.assertGreaterEqual(f1, Fraction(0))
             self.assertLessEqual(f1, Fraction(1))
         # Reward bounds over representative submissions.
+        # Official formula: return = clip([-1, 1], 2*F1 - 1 - 0.2*steps/100),
+        # so the bound is [-1, 1] and a missed error may score negative
+        # (official test 2). The former assertion floor of 0 was the
+        # superseded provisional formula (BUG-TL-0001).
         from tests.scoring.fixtures import duplicate_payment_truth, honest_finding
 
         truth = duplicate_payment_truth("T-PROP-BOUNDS")
         honest = honest_finding(truth)
         for findings, steps in (([], 0), ([honest], 0), ([honest], 100), ([honest, honest], 50)):
             r = compute_reward(findings, [truth], steps)
-            self.assertGreaterEqual(r.reward, Fraction(0))
+            self.assertGreaterEqual(r.reward, Fraction(-1))
             self.assertLessEqual(r.reward, Fraction(1))
+        self.assertEqual(compute_reward([], [truth], 100).reward, Fraction(-1))
 
     def test_duplicate_prediction_never_increases_tp(self):
         # §20.2: duplicating a prediction must not increase TP.

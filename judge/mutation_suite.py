@@ -152,11 +152,14 @@ def _verification_battery() -> None:
     rb_clean_20 = reward_mod.compute_reward([], [], 20)
     assert rb_clean_0.f1 == Fraction(1), "clean silence must give F1=1"
     assert rb_clean_20.reward < rb_clean_0.reward, "step penalty must decrease reward"
-    assert rb_clean_20.reward == Fraction(1) - reward_mod.load_scoring_config().eta * Fraction(20, 100), "step penalty magnitude wrong"
+    # Official formula (BUG-TL-0001): 2*F1 - 1 - 0.2*steps/100 with clip [-1,1].
+    # The weight is the official 0.2, not the superseded provisional eta=0.05.
+    _w = reward_mod.OFFICIAL_STEP_PENALTY_WEIGHT
+    assert rb_clean_20.reward == Fraction(1) - _w * Fraction(20, 100), "step penalty magnitude wrong"
 
-    # Exact rational precision check (catches binary float drift on 2/3 - 0.05 * 30 / 100)
+    # Exact rational precision check (catches binary float drift on 2*(2/3)-1-0.2*30/100)
     rb_third = reward_mod.compute_reward([f_exact], [t1, t1_clone], 30)
-    expected_exact = Fraction(2, 3) - reward_mod.load_scoring_config().eta * Fraction(30, 100)
+    expected_exact = 2 * Fraction(2, 3) - 1 - _w * Fraction(30, 100)
     assert rb_third.reward == expected_exact, "reward must use exact Fraction arithmetic"
 
     # 6. Explanation invariance
@@ -272,6 +275,7 @@ def _build_mutants() -> tuple[MutantSpec, ...]:
     orig_opt_match = matcher_mod.optimal_matching
     orig_comp_rew = reward_mod.compute_reward
     orig_f1 = reward_mod.f1_score
+    orig_metrics = reward_mod.reward_metrics
     orig_audit = diag_mod._audit_status
     orig_val_f = canon_mod.validate_findings
     orig_step = env_mod.TwinLedgerEnv.step
@@ -325,12 +329,18 @@ def _build_mutants() -> tuple[MutantSpec, ...]:
 
     @contextmanager
     def m07():
-        with patch.object(reward_mod, "f1_score", lambda tp, fp, fn: orig_f1(tp, 0, fn)):
+        # BUG-TL-0001 follow-up: target the real reward path, not the legacy
+        # f1_score helper that no longer feeds reward_metrics.
+        def bad(tp, fp, fn, steps_used, *, step_budget):
+            return orig_metrics(tp, 0, fn, steps_used, step_budget=step_budget)
+        with patch.object(reward_mod, "reward_metrics", bad):
             yield
 
     @contextmanager
     def m08():
-        with patch.object(reward_mod, "f1_score", lambda tp, fp, fn: orig_f1(tp, fp, 0)):
+        def bad(tp, fp, fn, steps_used, *, step_budget):
+            return orig_metrics(tp, fp, 0, steps_used, step_budget=step_budget)
+        with patch.object(reward_mod, "reward_metrics", bad):
             yield
 
     @contextmanager
@@ -370,11 +380,13 @@ def _build_mutants() -> tuple[MutantSpec, ...]:
 
     @contextmanager
     def m13():
-        def bad(tp: int, fp: int, fn: int) -> Fraction:
+        def bad(tp: int, fp: int, fn: int, steps_used: int, *, step_budget: int):
             if tp == 0 and fp == 0 and fn == 0:
-                return Fraction(0)
-            return orig_f1(tp, fp, fn)
-        with patch.object(reward_mod, "f1_score", bad):
+                # Clean silence must give F1=1 (official test 3); this mutant
+                # pretends it is a total miss.
+                return orig_metrics(tp, fp, 1, steps_used, step_budget=step_budget)
+            return orig_metrics(tp, fp, fn, steps_used, step_budget=step_budget)
+        with patch.object(reward_mod, "reward_metrics", bad):
             yield
 
     @contextmanager

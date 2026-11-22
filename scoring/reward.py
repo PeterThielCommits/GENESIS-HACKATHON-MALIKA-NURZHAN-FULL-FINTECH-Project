@@ -1,26 +1,33 @@
-"""TP/FP/FN, F1 and the provisional official reward.
+"""TP/FP/FN, F1 and the official reward — thin view over ``official_scorer``.
 
-Implements Master TZ v3.0.0 sections 15.4-15.6 and Phase 6 task 6.5.
+**Status: consolidated (BUG-TL-0001).** This module used to carry its own
+reward implementation with the provisional formula
+``R = max(0, F1 - ETA * steps_used / max_steps)``, ETA=0.05 (assumption
+A-005). The organisers published the official definitions on 2026-11-20
+(``spec/official_fintech_checks_2026-11-20.md``), which fix
 
-Definitions (explicit conventions, provisional until the organisers
-publish the official rubric — Q-005, assumption A-005):
+  - ``return = clip([-1, 1], 2*F1 - 1 - 0.2 * inspection_steps / 100)``,
+  - Block 3 test vectors such as ``0.98`` (test 1), ``47/150`` (tests 5,
+    13), ``-871/1050`` (test 12) and ``-0.02`` (test 14),
+  - ``P = R = 0`` for a clean book with an empty submission (test 3).
 
-  - TP/FP/FN come from the matcher only (REQ-SCORE-001).
-  - ``F1 = 2*TP / (2*TP + FP + FN)``; when TP = FP = FN = 0 (clean book,
-    empty submission) ``F1 = 1`` by the explicit rule of TZ 15.4 —
-    silence on a clean book is a correct audit.
-  - ``precision = TP / (TP + FP)`` with an empty submission defined as
-    ``precision = 1``; ``recall = TP / (TP + FN)`` with an empty truth
-    defined as ``recall = 1``.
-  - ``R = max(0, F1 - ETA * steps_used / max_steps)`` with ETA and
-    max_steps read from ``configs/scoring/default.json`` (no hidden
-    defaults, D-01-05). The formula stays provisional (A-005).
+Keeping a second, divergent implementation meant that every internal
+report (autohacker attribution, mutation suite, robustness audit, the
+reward-property matrix) published numbers the jury would never reproduce:
+the legacy formula failed 10 of 11 published test vectors.
 
-All arithmetic uses exact rationals (``fractions.Fraction``); decimal
-strings are rendered only for display, rounded ROUND_HALF_EVEN to 7
-places (TZ 15.5: raw reward is stored exactly). ``steps_used`` counts
-inspection tool calls including erroneous ones, excluding submit
-(assumption A-06, provisional).
+There is now exactly one implementation of the reward —
+:func:`scoring.official_scorer.compute_official_metrics`, which
+``score_official_findings`` (and therefore ``judge_adapter.score_episode``)
+already used. This module keeps the ``RewardBreakdown`` shape, the
+config-loader and the exact-decimal helpers, and derives the reward from
+that single source.
+
+Arithmetic stays in ``fractions.Fraction``; decimal strings are rendered
+only for display, rounded ROUND_HALF_EVEN to 7 places (TZ 15.5: the raw
+reward is stored exactly). ``steps_used`` counts inspection tool calls
+including erroneous ones, excluding submit (official border decision,
+confirmed 2026-11-20 — no longer merely assumption A-06).
 """
 
 from __future__ import annotations
@@ -35,12 +42,18 @@ from typing import Any, Sequence
 from contracts.models import Finding, TruthFinding
 from scoring.canon import ScoringInputError
 from scoring.matcher import MatchResult, optimal_matching
+from scoring.official_scorer import (
+    OFFICIAL_STEP_PENALTY_WEIGHT,
+    compute_official_metrics,
+)
 
 DEFAULT_CONFIG_PATH = (
     Path(__file__).resolve().parent.parent / "configs" / "scoring" / "default.json"
 )
 
-FORMULA = "R = max(0, F1 - eta * steps_used / max_steps)"
+FORMULA = (
+    "return = clip([-1, 1], 2*F1 - 1 - 0.2 * inspection_steps / 100)"
+)
 
 #: Display rounding for decimal renderings (raw values stay exact).
 DISPLAY_PLACES = 7
@@ -118,16 +131,40 @@ def render_decimal(value: Fraction, places: int = DISPLAY_PLACES) -> str:
         return format(decimal_value.quantize(quantum, rounding=ROUND_HALF_EVEN), "f")
 
 
+def reward_metrics(
+    tp: int, fp: int, fn: int, steps_used: int, *, step_budget: int
+) -> tuple[Fraction, Fraction, Fraction, Fraction]:
+    """The single reward path: ``(precision, recall, f1, clipped_return)``.
+
+    ``compute_reward`` goes through this name so fault-injection suites can
+    substitute the metric computation *on the real reward path* (the mutation
+    suite patches this symbol). The arithmetic itself still lives only in
+    :func:`scoring.official_scorer.compute_official_metrics`.
+    """
+    return compute_official_metrics(tp, fp, fn, steps_used, step_budget=step_budget)
+
+
 def f1_score(tp: int, fp: int, fn: int) -> Fraction:
-    """F1 from counts; clean book + empty submission yields 1 (TZ 15.4)."""
+    """F1 from counts; clean book + empty submission yields 1 (official test 3)."""
     _validate_counts(tp, fp, fn)
-    if tp == 0 and fp == 0 and fn == 0:
-        return Fraction(1)
-    return Fraction(2 * tp, 2 * tp + fp + fn)
+    return compute_official_metrics(tp, fp, fn, 0)[2]
 
 
 def precision_score(tp: int, fp: int) -> Fraction:
-    """Precision from counts; empty submission is defined as 1."""
+    """Precision from counts, with an empty submission defined as 1.
+
+    NOTE — two different conventions coexist deliberately:
+
+    * the **official reward** (``compute_official_metrics``) reports
+      ``P = R = 0`` for a clean book with an empty submission (official
+      Block 3 test 3), and that is what ``RewardBreakdown.precision``
+      carries;
+    * this helper keeps the **vacuous-truth** convention used by the
+      generator cross-check (``scoring/crosscheck.py``), where "nothing was
+      asserted and nothing was wrong" must read as perfect precision for a
+      clean episode. Changing it to 0 would fail EXIT GATE 8 on clean
+      episodes for a bookkeeping reason, not an accounting one.
+    """
     _validate_counts(tp, fp, 0)
     if tp + fp == 0:
         return Fraction(1)
@@ -135,7 +172,11 @@ def precision_score(tp: int, fp: int) -> Fraction:
 
 
 def recall_score(tp: int, fn: int) -> Fraction:
-    """Recall from counts; empty truth is defined as 1."""
+    """Recall from counts, with an empty truth defined as 1.
+
+    See :func:`precision_score` for why this is not the official
+    ``P = R = 0`` reward convention.
+    """
     _validate_counts(tp, 0, fn)
     if tp + fn == 0:
         return Fraction(1)
@@ -215,12 +256,14 @@ def compute_reward(
     config: ScoringConfig | None = None,
     match_result: MatchResult | None = None,
 ) -> RewardBreakdown:
-    """Compute the exact reward for one episode outcome.
+    """Compute the exact official reward for one episode outcome.
 
-    ``steps_used`` counts inspection tool calls (including erroneous
-    ones, excluding submit — provisional A-06) and must satisfy
-    ``0 <= steps_used <= max_steps``. The matcher is the single source
-    of TP/FP/FN (REQ-SCORE-001).
+    Delegates the arithmetic to :func:`scoring.official_scorer.compute_official_metrics`
+    so this module can never drift from the jury-facing scorer again
+    (BUG-TL-0001). ``steps_used`` counts inspection tool calls (including
+    erroneous ones, excluding submit — official border decision) and must
+    satisfy ``0 <= steps_used <= max_steps``. The matcher is the single
+    source of TP/FP/FN (REQ-SCORE-001).
     """
     scoring_config = config if config is not None else load_scoring_config()
     if type(steps_used) is not int or isinstance(steps_used, bool):
@@ -231,17 +274,24 @@ def compute_reward(
         )
     result = match_result if match_result is not None else optimal_matching(findings, truths)
     tp, fp, fn = result.tp, result.fp, result.fn
-    f1 = f1_score(tp, fp, fn)
-    penalty = scoring_config.eta * Fraction(steps_used, scoring_config.max_steps)
-    reward = max(Fraction(0), f1 - penalty)
+    precision, recall, f1, reward = reward_metrics(
+        tp, fp, fn, steps_used, step_budget=scoring_config.max_steps
+    )
+    # The penalty reported in the breakdown is the one actually applied by the
+    # official formula (weight 0.2), not the superseded provisional eta=0.05.
+    # ``configs/scoring/default.json`` is a frozen contract and still carries
+    # ``eta: 0.05``; that key no longer drives the reward (see D-18-01).
+    penalty = OFFICIAL_STEP_PENALTY_WEIGHT * Fraction(steps_used, scoring_config.max_steps)
     return RewardBreakdown(
         tp=tp,
         fp=fp,
         fn=fn,
-        precision=precision_score(tp, fp),
-        recall=recall_score(tp, fn),
+        precision=precision,
+        recall=recall,
         f1=f1,
-        eta=scoring_config.eta,
+        # ``eta`` reports the weight actually applied by the official formula
+        # so no consumer can read a stale 0.05 bound off the breakdown.
+        eta=OFFICIAL_STEP_PENALTY_WEIGHT,
         steps_used=steps_used,
         max_steps=scoring_config.max_steps,
         penalty=penalty,
@@ -252,12 +302,14 @@ def compute_reward(
 
 
 __all__ = [
+    "OFFICIAL_STEP_PENALTY_WEIGHT",
     "ScoringConfig",
     "RewardBreakdown",
     "ScoringInputError",
     "FORMULA",
     "DISPLAY_PLACES",
     "render_decimal",
+    "reward_metrics",
     "f1_score",
     "precision_score",
     "recall_score",
