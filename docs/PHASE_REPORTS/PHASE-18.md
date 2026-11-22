@@ -130,13 +130,20 @@ FROM ${BASE_IMAGE}
 
 The two Debian packages are **recorded, not pinned**: vendoring `.deb` files is
 forbidden (TZ §22.3) and pinning an exact version would break the build as
-soon as the mirror drops it (`docs/LIMITATIONS.md`, L11).
+soon as the mirror drops it (`docs/LIMITATIONS.md`, L11). The versions read
+back from the CI-built image are published in
+`docs/EVIDENCE/docker-build-info.json` (`apt_packages_observed`), and
+`tools/docker_build_info.py publish` compares the image's own record with that
+file: a **changed base image, digest or Python patch version is a hard
+failure** (the image is no longer the released one), while a **changed package
+version is reported as drift** (a warning), because a moved Debian mirror is
+an environment fact, not a defect.
 
 ## 6. Gates
 
 | Gate | Result |
 |---|---|
-| `make verify` | **PASS 12/12**, 623 tests, 20 artifacts |
+| `make verify` | **PASS 12/12**, 625 tests, 20 artifacts |
 | `make docs-verify` | **PASS**, 22 measured facts, 22/22 checks |
 | `make replay-all` | **PASS**, 80/80 runs, 567 steps byte-identical |
 | `make release-audit` | **PASS 6/6** (the SUBMISSION check now also verifies the base image pin) |

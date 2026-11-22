@@ -226,6 +226,24 @@ def verify(require_pinned: bool = True, require_build_info: bool = False) -> dic
             for package in TRACKED_APT_PACKAGES:
                 if package not in declared:
                     problems.append(f"the committed build info does not declare {package}")
+        # The versions actually installed in the CI-built image are recorded
+        # (TZ 22.4 "package versions"). They are not pinned - apt resolves them
+        # at build time - but a *recorded* version must exist and must be a
+        # real version string, so "unknown" can never be published as fact.
+        observed = committed.get("apt_packages_observed")
+        if not isinstance(observed, dict):
+            problems.append("the committed build info records no observed apt package versions")
+        else:
+            for package in TRACKED_APT_PACKAGES:
+                version = observed.get(package)
+                if not version:
+                    problems.append(
+                        f"the committed build info records no version for the {package} package"
+                    )
+                elif version == "unknown":
+                    problems.append(
+                        f"the recorded version for the {package} package is 'unknown', not a fact"
+                    )
 
     return {
         "status": "PASS" if not problems else "FAIL",
@@ -365,6 +383,7 @@ def publish(image: str = "twinledger:eval") -> dict[str, Any]:
         "image_build_info": info,
         "error": error,
         "problems": [],
+        "warnings": [],
         "status": "PASS",
     }
     if info is None:
@@ -378,19 +397,27 @@ def publish(image: str = "twinledger:eval") -> dict[str, Any]:
             except json.JSONDecodeError as exc:
                 result["problems"].append(f"{BUILD_INFO_PATH.name} is not valid JSON: {exc}")
         if committed is not None:
+            # The *pinned* facts: the base image, its digest and the Python
+            # patch version are fixed by the digest, so a difference means the
+            # image is no longer the released one -> a hard problem.
             for key in ("base_image", "base_image_digest", "python_version"):
                 if committed.get(key) != info.get(key):
                     result["problems"].append(
                         f"{key}: committed {committed.get(key)!r} != image {info.get(key)!r}"
                     )
-            committed_packages = committed.get("apt_packages") or {}
+            # The Debian package versions are *resolved by apt at build time*
+            # (L11) and are therefore not pinned. The committed record holds the
+            # version observed in the CI-built image; a difference is reported
+            # as drift, not as a failure.
+            committed_packages = committed.get("apt_packages_observed") or {}
             image_packages = info.get("apt_packages") or {}
             for package in TRACKED_APT_PACKAGES:
                 expected = committed_packages.get(package)
                 actual = image_packages.get(package)
                 if expected and expected != actual:
-                    result["problems"].append(
-                        f"apt package {package}: recorded {expected!r} != image {actual!r}"
+                    result["warnings"].append(
+                        f"apt package {package}: recorded {expected!r} != image {actual!r} "
+                        "(resolved by apt at build time; not pinned - see limitation L11)"
                     )
             result["image_apt_package_versions"] = image_packages
         if result["problems"]:
@@ -398,6 +425,8 @@ def publish(image: str = "twinledger:eval") -> dict[str, Any]:
     if os.environ.get("GITHUB_ACTIONS") == "true":
         payload = json.dumps(info if info is not None else {"error": error}, sort_keys=True)
         print(f"::notice title=image-build-info::{payload}")
+        for warning in result["warnings"]:
+            print(f"::warning title=image-build-info-drift::{warning}")
         for problem in result["problems"]:
             print(f"::error title=image-build-info-drift::{problem}")
     return result
@@ -460,15 +489,17 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  ! {warning}")
         return 0 if result["status"] == "PASS" else 1
 
-    if args.command == "publish":
-        result = publish(args.image)
-        if args.json:
-            print(json.dumps(result, indent=2, sort_keys=True))
-        else:
-            print(f"image-build-info: {result['status']}")
-            for problem in result["problems"]:
-                print(f"  - {problem}")
-        return 0 if result["status"] in {"PASS", "UNAVAILABLE"} else 1
+        if args.command == "publish":
+            result = publish(args.image)
+            if args.json:
+                print(json.dumps(result, indent=2, sort_keys=True))
+            else:
+                print(f"image-build-info: {result['status']}")
+                for warning in result.get("warnings", []):
+                    print(f"  ! {warning}")
+                for problem in result["problems"]:
+                    print(f"  - {problem}")
+            return 0 if result["status"] in {"PASS", "UNAVAILABLE"} else 1
 
     result = resolve()
     if args.report_status:

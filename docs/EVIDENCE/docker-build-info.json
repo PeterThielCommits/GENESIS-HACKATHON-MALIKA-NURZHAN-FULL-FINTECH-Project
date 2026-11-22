@@ -8,10 +8,17 @@
     "make",
     "util-linux"
   ],
-  "package_version_policy": "The two Debian packages are resolved by apt at build time from the pinned base image's configured Debian mirrors. Vendoring them is not permitted (TZ 22.3), and pinning an exact version would break the build as soon as the mirror drops that version. The versions actually installed are therefore recorded inside the image (/usr/local/share/twinledger/build_info.json) and published by the CI job docker-offline.",
+  "apt_packages_observed": {
+    "make": "4.3-4.1",
+    "util-linux": "2.38.1-5+deb12u3"
+  },
+  "apt_packages_observed_in": "the CI-built image of the pinned digest (CI run 45044654821, job docker-offline); the values are the dpkg versions the image reported in /usr/local/share/twinledger/build_info.json",
+  "package_version_policy": "The two Debian packages are resolved by apt at build time from the pinned base image's configured Debian mirrors. Vendoring them is not permitted (TZ 22.3), and pinning an exact version would break the build as soon as the mirror drops it, so the versions actually installed are recorded rather than pinned: this file records the versions observed in the CI-built image, the image records its own, and `tools/docker_build_info.py publish` reports any difference as drift (a warning), never as a silent change. See docs/LIMITATIONS.md (L11) and docs/DECISIONS.md (D-18-02).",
   "verified_by": [
     "CI job base-image (resolves the upstream tag digest and reports drift)",
     "CI job docker-offline (builds the pinned image and publishes its own build record)"
   ],
-  "multi_arch": "The pinned digest is the multi-platform manifest list (linux/amd64 and linux/arm64)."
+  "multi_arch": "The pinned digest is the multi-platform manifest list (linux/amd64 and linux/arm64).",
+  "upstream_digest_at_release_time": "sha256:a83ba18aef0f865b1a4a611c2cf460fe446f2795673bbb9fe43be570439e3b39",
+  "upstream_digest_note": "The upstream python:3.11-slim-bookworm tag has moved since the pin was taken. The drift is reported by the CI job base-image; the release keeps the pinned digest, so the image is unaffected."
 }

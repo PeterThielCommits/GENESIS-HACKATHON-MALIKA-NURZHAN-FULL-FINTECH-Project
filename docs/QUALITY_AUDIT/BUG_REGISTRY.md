@@ -807,6 +807,72 @@ the package versions in `dependency_report.json`.
 
 ---
 
+## BUG-TL-0014 — The CI package-version drift check could never fire
+
+| Field | Value |
+|---|---|
+| Severity | P2 |
+| Component | `tools/docker_build_info.py` (`publish`) and `docs/EVIDENCE/docker-build-info.json` |
+| Status | VERIFIED FIXED |
+| Discovered by | Phase 18: reading back the CI-built image's own provenance record |
+
+### Symptom
+
+`tools/docker_build_info.py publish` compares the image's own build record
+with the committed `docs/EVIDENCE/docker-build-info.json` and reports a
+difference. The comparison read the committed file's `apt_packages` map — a key
+the committed record never had (it only listed `apt_packages_required`, the
+package *names*). The loop therefore always found an empty expectation and
+skipped the check: the drift comparison for the Debian package versions was a
+silent no-op. A mirror that started serving a different `util-linux` would
+have produced no signal at all, even though TZ §22.4 asks for the package
+versions to be recorded.
+
+### Impact
+
+Low, but it is a *reporting* defect in the layer whose whole job is to report
+drift: the recorded-version check was structurally unreachable, so the
+"CI says so out loud" property was not actually true for the two packages.
+
+### Root cause
+
+The committed record was written from the *declared* contract (which packages
+the image installs) rather than from the *observed* contract (which versions
+the built image actually contains), and the two were never separated in the
+schema.
+
+### Fix
+
+The schema now separates them:
+
+* `apt_packages_required` — the names the image must install (unchanged);
+* `apt_packages_observed` — the versions read back from the CI-built image
+  (`make 4.3-4.1`, `util-linux 2.38.1-5+deb12u3`, CI run `45044654821`).
+
+`publish` now compares against `apt_packages_observed` and **splits the
+outcome by what is actually pinned**:
+
+* a changed base image, digest or Python patch version is a **hard failure**
+  — the image is no longer the released one (`DRIFT`);
+* a changed package version is a **warning** — the versions are resolved by
+  `apt` at build time and are deliberately not pinned (limitation L11), so a
+  moved Debian mirror must be reported, not fail the build.
+
+`docker_build_info.py verify` and the release audit now require that every
+tracked package has a *real* recorded version, and reject the literal
+`"unknown"`, so a missing observation can never be published as a fact.
+
+### Regression evidence
+
+| Test | Fails on old code | Passes on new code |
+|---|---|---|
+| `tests/judge/test_docker_hardening.py::test_committed_build_info_publishes_the_observed_package_versions` | yes (the record had no observed versions) | yes |
+| `tests/judge/test_docker_hardening.py::test_static_verify_rejects_an_unrecorded_package_version` | yes (the check could not fail) | yes |
+| `tools/docker_build_info.py verify --require-build-info` | PASS with no version recorded | PASS with the versions recorded |
+| `make release-audit` (SUBMISSION check) | PASS without any observed version | PASS, and now requires a real version per package |
+
+---
+
 ## Summary
 
 | ID | Severity | Component | Status |
@@ -824,6 +890,7 @@ the package versions in `dependency_report.json`.
 | BUG-TL-0011 | P1 | `Dockerfile` (floating base image tag) | VERIFIED FIXED |
 | BUG-TL-0012 | P2 | `docker-compose.yml` (no process/file-size limits) | VERIFIED FIXED |
 | BUG-TL-0013 | P2 | `judge/performance_and_deps.py` (substring check) | VERIFIED FIXED |
+| BUG-TL-0014 | P2 | `tools/docker_build_info.py` (package-version drift check) | VERIFIED FIXED |
 
 No claim is made that no bugs remain. Checks that were executed without
 finding a defect are listed in `FIX_VERIFICATION_MATRIX.md`, and residual

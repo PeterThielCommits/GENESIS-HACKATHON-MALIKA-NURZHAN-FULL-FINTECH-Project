@@ -31,13 +31,18 @@ make replay-all        # replay ALL 80 published trajectories and compare every 
 make release-audit     # release audit: secrets, file list, size, deps, official entrypoint (TZ 16.5/16.6)
 make rc-check          # release candidate gate: verify + docs-verify + replay-all + release-audit
 make docker-check      # build and run inside hardened offline container (--network=none --read-only --cap-drop ALL)
+make container-local-check # the same container command, hardened, on a host WITHOUT a container runtime
+make base-image-verify # the Docker base image is pinned by digest and the recorded build info agrees
 python3 tools/demo_walkthrough.py        # deterministic 3-minute jury walkthrough (seed=2025)
 python3 tools/freeze_release.py --verify # cryptographic SHA-256 verification of frozen contracts & configs
 python3 tools/verify_doc_claims.py       # re-measure every number published in this README
 ```
 
 Pinned versions and reproduction parameters are locked in
-`configs/official_eval_manifest.json`.
+`configs/official_eval_manifest.json`. The **container** is pinned too: the base
+image is fixed by digest (`python:3.11-slim-bookworm@sha256:a36c24f9…`, CPython
+3.11.16 on Debian bookworm) and the image records its own provenance - see
+`docs/EVIDENCE/docker-build-info.json`.
 
 ---
 
@@ -146,7 +151,7 @@ python3 tools/verify_doc_claims.py   # re-measures and diffs this documentation
 ```
 
 Current measured state of this release (see the generated block for the full set):
-**12/12 PASS** verification gates, the full **623-test** suite, **5/5 byte-identical replays**,
+**12/12 PASS** verification gates, the full **625-test** suite, **5/5 byte-identical replays**,
 **0 canary hits**, `official_score_claimed: false`.
 
 ### Verify the release archive itself (Phase 17, TZ §24)
@@ -194,7 +199,7 @@ python3 tools/release_evidence.py --verify --strict
 |---|---|---|
 | Verification gates defined (RC-001..RC-012) | **12** | `judge/rubric_map.json (frozen contract)` |
 | Official organiser score claimed | **false** | `verify_summary.json` |
-| Total tests in the verification suite | **623** | `unittest discovery over tests/ (state-independent)` |
+| Total tests in the verification suite | **625** | `unittest discovery over tests/ (state-independent)` |
 | Official mirror tests (Blocks 1–5) | **55** | `unittest discovery over tests/official/ (state-independent)` |
 | Evidence artifacts indexed | **20** | `report_index.json` |
 | Required artifacts missing | **0** | `report_index.json` |

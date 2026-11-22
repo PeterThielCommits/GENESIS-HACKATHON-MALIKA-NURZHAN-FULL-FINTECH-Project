@@ -20,11 +20,11 @@ read-only tree and no network. Phases 0–18 are all `DONE` (see
 authorises new features.
 
 ```
-v1.0.3   -> annotated tag on the merge commit of the Phase 18 PR; the recommended artifact (same benchmark behaviour as v1.0.2 + the container hardening)
+v1.0.3   -> the intended patch release: an annotated tag on the merge commit of the Phase 18 PR (not yet created); same benchmark behaviour as v1.0.2 + the container hardening
 v1.0.2   -> retained for history (adds the Phase 17 evidence archive); tag unmoved
 v1.0.1   -> retained for history (image no longer ships sealed truth, D-16-02); tag unmoved
 v1.0.0   -> retained for history; superseded for submission; tag unmoved
-make verify                                          -> 12/12 gates, 623 tests, 20 artifacts
+make verify                                          -> 12/12 gates, 625 tests, 20 artifacts
 make docs-verify                                     -> 22 measured facts, 22 checks
 make replay-all                                      -> 80/80 runs, 567 steps byte-identical
 make release-audit                                   -> 6/6 PASS

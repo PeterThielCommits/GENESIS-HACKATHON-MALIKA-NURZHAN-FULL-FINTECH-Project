@@ -173,6 +173,44 @@ class TestBaseImagePinning(unittest.TestCase):
         for package in dbi.TRACKED_APT_PACKAGES:
             self.assertIn(package, committed["apt_packages_required"])
 
+    def test_committed_build_info_publishes_the_observed_package_versions(self) -> None:
+        """TZ 22.4 asks for the package versions, not only the package names."""
+        path = REPO_ROOT / "docs" / "EVIDENCE" / "docker-build-info.json"
+        if not path.is_file():
+            self.skipTest("docs/EVIDENCE/docker-build-info.json is not committed yet")
+        committed = json.loads(path.read_text(encoding="utf-8"))
+        observed = committed.get("apt_packages_observed")
+        self.assertIsInstance(observed, dict, "the observed package versions must be published")
+        for package in dbi.TRACKED_APT_PACKAGES:
+            version = observed.get(package)
+            self.assertTrue(version, f"no observed version for {package}")
+            self.assertNotEqual(version, "unknown", f"{package} records 'unknown', not a fact")
+            self.assertRegex(version, r"^\d", f"{package} version {version!r} is not a version")
+
+    def test_static_verify_rejects_an_unrecorded_package_version(self) -> None:
+        """The static check must fail when a version was never observed."""
+        committed = json.loads(
+            (REPO_ROOT / "docs" / "EVIDENCE" / "docker-build-info.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        broken = dict(committed)
+        broken["apt_packages_observed"] = {"make": "4.3-4.1"}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "docker-build-info.json"
+            path.write_text(json.dumps(broken), encoding="utf-8")
+            original = dbi.BUILD_INFO_PATH
+            try:
+                dbi.BUILD_INFO_PATH = path
+                result = dbi.verify(require_pinned=True, require_build_info=True)
+            finally:
+                dbi.BUILD_INFO_PATH = original
+        self.assertEqual(result["status"], "FAIL", result["problems"])
+        self.assertTrue(
+            any("util-linux" in problem for problem in result["problems"]),
+            result["problems"],
+        )
+
 
 class TestComposeProfile(unittest.TestCase):
     """The Compose profile is the judge-facing container definition."""

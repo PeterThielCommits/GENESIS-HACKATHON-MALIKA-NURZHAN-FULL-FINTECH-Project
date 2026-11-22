@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "ad86772887e3f8b3f5fdbf897ccea13c7b5a88674473ea11213cc8485b2f6a49",
+  "aggregate_sha256": "56bd9fe07b942df4970f71ba5549849f6144766921702470252b62c06f6b4c28",
   "anchor_note": "aggregate_sha256 identifies the archived tree and is commit-independent; source_commit is the HEAD the working tree was based on when the archive was generated (the archive is written before the commit that carries it).",
   "code_version": "twinledger@1.0.0",
   "files": [
@@ -64,9 +64,9 @@
       "sha256": "e0fc6b100e4e82afb775e906eb088dbb4f8f555235fe830ae97a91fe22d11af3"
     },
     {
-      "bytes": 16491,
+      "bytes": 16937,
       "path": "README.md",
-      "sha256": "ad14debbae5bee67ecd5d9747cace967852aa6ea9796c60c64544b4fc48c1875"
+      "sha256": "04650957b57747fce29f9f8b6121f456fec5a0bd0673dd025272ef4f9f5e76cb"
     },
     {
       "bytes": 274,
@@ -419,9 +419,9 @@
       "sha256": "175b4709b45293d3cb783993bd7725f8574e292614b6137f11ce8d23e487e3b0"
     },
     {
-      "bytes": 8484,
+      "bytes": 8506,
       "path": "docs/CONTEXT/NEXT_AGENT.md",
-      "sha256": "ffc480cd555088276c8d40d11597519019840976e4099491d1133b2ddb251d8a"
+      "sha256": "b6cd4d5c0fa578056a3becc63e5d8a94fe4f7f502016a077ffe84c6cb7e95fba"
     },
     {
       "bytes": 0,
@@ -434,9 +434,9 @@
       "sha256": "eb845da4b600524d4155dc5ccccf000b69bfa7a55aaf8a9500c4422ad74cf4b5"
     },
     {
-      "bytes": 7870,
+      "bytes": 8205,
       "path": "docs/CURRENT_STATE.md",
-      "sha256": "35a00142bda64e58f0f86d1eeff834c18a423202365a05949dc2d4aacbbc111f"
+      "sha256": "b2d682dab5b209acd653634772da40a871f91574d4b5191199264a906b01466b"
     },
     {
       "bytes": 5422,
@@ -451,7 +451,7 @@
     {
       "bytes": 7783,
       "path": "docs/DEMO.md",
-      "sha256": "d6138af96a9e4ee805b93076f1a9a03f05bc133ec9b965412a79d0c4b7ab4ec7"
+      "sha256": "36efea486d2d3bd018b50c07b4a1ef0e0898a68b3bec6a389bcb1053ce663b37"
     },
     {
       "bytes": 6509,
@@ -464,9 +464,9 @@
       "sha256": "294de10e4347d9b669e7960118f3f596b48bad7dba1dcc2dff31595eaa32963c"
     },
     {
-      "bytes": 1050,
+      "bytes": 1851,
       "path": "docs/EVIDENCE/docker-build-info.json",
-      "sha256": "50de65740a38a12ce86b27a6a3c55ceb4f0c6a8118ec2d94f2c7e5af7746de3b"
+      "sha256": "dd93c82434731ff713095db22fa1d7729adde54ce075842c3e9234fa9aabbbe1"
     },
     {
       "bytes": 15006,
@@ -481,7 +481,7 @@
     {
       "bytes": 12736,
       "path": "docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json",
-      "sha256": "0dc14cd49c1601aeedd7e7492fa1390c42164fd70e9aa914c4127e3be1d3e3fa"
+      "sha256": "7c0548e3300b3d172468400ef074c7178a8203ced0baa893241d08adb6fccb5f"
     },
     {
       "bytes": 9728,
@@ -534,9 +534,9 @@
       "sha256": "c3b02dc743ac3a7e803698829c0b4d9f646056800028419ca648b57f1e511c9f"
     },
     {
-      "bytes": 10469,
+      "bytes": 10837,
       "path": "docs/LIMITATIONS.md",
-      "sha256": "53049ff691adac0b5e1e5aad568dbd88630860f52ff68fe219c2602113ff260d"
+      "sha256": "78bebbdf54e95e9bb8e26399e30e67b071208857242966cbe27900ff02d38896"
     },
     {
       "bytes": 7232,
@@ -684,9 +684,9 @@
       "sha256": "6c3cfbbae09574589e8c00828984c78ca2c99c1361cf6a30783c5eec26242411"
     },
     {
-      "bytes": 8113,
+      "bytes": 8588,
       "path": "docs/PHASE_REPORTS/PHASE-18.md",
-      "sha256": "c43954ce9485544f626c9c49863af2812c36a43ee1dd74d4b47b998209fd5f99"
+      "sha256": "f3bb76f3aaf4e807b46ac3c1c4b76d8d7e59028bf862165a9de25bfcd8ad2fb4"
     },
     {
       "bytes": 1235,
@@ -714,9 +714,9 @@
       "sha256": "aa4dbe0caff6c6018fb09da4e933fc4a613d9a17bf480a20110ea3bd333e04d1"
     },
     {
-      "bytes": 34631,
+      "bytes": 37804,
       "path": "docs/QUALITY_AUDIT/BUG_REGISTRY.md",
-      "sha256": "8d7a2b8099a4d16c556b062f8f560ed3924ca9b81ad59d9ab6dad94994d70a37"
+      "sha256": "dc50000dfc2c257479ea9a69b63e85421f75be7253c2efa69cbe93858589350a"
     },
     {
       "bytes": 2921,
@@ -824,9 +824,9 @@
       "sha256": "0e736341f985c2d358375fdee26e100063a8397432c4a25f9d0e49ec4effafa6"
     },
     {
-      "bytes": 32664,
+      "bytes": 32745,
       "path": "docs/RELEASE_NOTES.md",
-      "sha256": "3946508f9f139e78b8851af196e4fb7488cdd686e0aedd624c57a677f5ca8eb7"
+      "sha256": "280d07c69e9730df14441f26474c470668eb1b613f8fbfe44a8a23c7bd64bd82"
     },
     {
       "bytes": 1729,
@@ -2349,9 +2349,9 @@
       "sha256": "4298545788f174c76ea4db317ed86cd86f75074c5dceecd53c9868c5c145e0fc"
     },
     {
-      "bytes": 12102,
+      "bytes": 14111,
       "path": "tests/judge/test_docker_hardening.py",
-      "sha256": "891c965cefe806e8d541191d579ca95c3362e79fd85ca91e58b29ebf4114c855"
+      "sha256": "52806e7bc402e5975338b85d96f856a490606edbdc29e8a78a09bcec2ebee294"
     },
     {
       "bytes": 11743,
@@ -2649,9 +2649,9 @@
       "sha256": "5429eb7ca03c71e27f7e1ea923e74309f526267a311441d169f8540dbbe04152"
     },
     {
-      "bytes": 20780,
+      "bytes": 22670,
       "path": "tools/docker_build_info.py",
-      "sha256": "f50b09ae629559b1f1803b858c8015d6ce5b5626dcf332bb22ce88cc7676dd8c"
+      "sha256": "7f3c27338e77c9098f5532c2a1723144e6d4c0be8d0abf279c91cb6967da0f47"
     },
     {
       "bytes": 4838,
@@ -2689,9 +2689,9 @@
       "sha256": "b8cd9abb1892a1686915ef8a4593abd59f137c3a6c2beefe54cbd414a9acd907"
     },
     {
-      "bytes": 27291,
+      "bytes": 28020,
       "path": "tools/release_audit.py",
-      "sha256": "0d050b1a2ec3459346c94c8103a448a7568bfab041bf5e432300db15bf1fb5e4"
+      "sha256": "be1419cbae126039854c626b7178c62eaf72c668e03b60d8eb43db807fb8dba5"
     },
     {
       "bytes": 19557,
@@ -2795,7 +2795,7 @@
     }
   ],
   "frozen_file_count": 558,
-  "generated_at_utc": "2026-11-22T16:46:58Z",
+  "generated_at_utc": "2026-11-22T16:54:59Z",
   "official_score_claimed": false,
   "phase": 17,
   "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
@@ -2805,7 +2805,7 @@
       "path": "artifacts/reports/doc_claims/doc_claims_report.json",
       "present": true,
       "required": false,
-      "sha256": "7b67c9656503da9bb90d1a0ce869f28d7f123e8491c56a9b2d664de55ed00ded",
+      "sha256": "9deab6027081df387a32a4d1b183f5a340c53c8d391140d4b31083eaf45d6af8",
       "verdict": {
         "checks": [
           {
@@ -2908,7 +2908,7 @@
       "path": "artifacts/reports/release/release_audit.json",
       "present": true,
       "required": false,
-      "sha256": "2e651f4783d83cacc991c94f0ad4422d9ace558047eb4e4cad68b972751747c4",
+      "sha256": "f1aeb329de661cc4fa5c9da7f45bb7434e9523bf7b52921e9f0180725505142b",
       "verdict": {
         "checks": [
           {
@@ -2945,7 +2945,7 @@
       "path": "artifacts/reports/latest/replay_report.json",
       "present": true,
       "required": true,
-      "sha256": "d53b1947944797b66b94dcd2b9cfc808ee4b0954a2aee600d780603f17da0828",
+      "sha256": "4492f5d8242423c1453f43945d27d39020bb99cc566e41590fd12c99c495e2ee",
       "verdict": {
         "all_byte_identical": true,
         "all_hashes_identical": true,
@@ -2962,7 +2962,7 @@
       "path": "artifacts/reports/latest/report_index.json",
       "present": true,
       "required": true,
-      "sha256": "11fccba8f0cb5b6928b7e23cc6d56499ecf01228a611822ce113d217bf594230",
+      "sha256": "51dae82567e209be9f50c9a078f38921773d4fc9158b601113290c6bd7ba311f",
       "verdict": {
         "artifact_count": 20,
         "missing_optional_or_full_mode_artifacts": [],
@@ -2974,7 +2974,7 @@
       "path": "artifacts/reports/release/trajectory_replay.json",
       "present": true,
       "required": false,
-      "sha256": "bad776f77a77d58a415b350365361f4487885bcfa6b12aebb6fe1a3d4801c2b6",
+      "sha256": "64c8b4bf2fa0c46d78accff9d40d2c67b33a4e96327532c2efefdf4a80c7e350",
       "verdict": {
         "failure_count": 0,
         "runs_matched": 80,
@@ -2987,7 +2987,7 @@
       "path": "artifacts/reports/latest/verify_summary.json",
       "present": true,
       "required": true,
-      "sha256": "0aa96e49a132faa377aa5b7e1f330baa193068068b500969ff98c99a389d0834",
+      "sha256": "7b97e4668b29742518adfba29dbb059afc901422c66977fafc0d3308090f87d1",
       "verdict": {
         "gates": [
           {
@@ -3081,5 +3081,5 @@
     }
   },
   "schema_version": "1.0.0",
-  "source_commit": "7ba87b1e79e55aece9719220b664dbfc1b948b4e"
+  "source_commit": "e3516000ea3f0bd3a795da45d68ec5f5ed01bb8c"
 }

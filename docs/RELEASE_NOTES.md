@@ -127,7 +127,7 @@ it is **not** a Docker build.
 | Measurement | Value | Where |
 |---|---|---|
 | Judge Kit gates | **12/12 PASS** | `artifacts/reports/latest/verify_summary.json` |
-| Test suite | **623 tests** (1 optional skip) | unittest discovery over `tests/` |
+| Test suite | **625 tests** (1 optional skip) | unittest discovery over `tests/` |
 | Trajectory replay | **80/80 runs, 567 steps byte-identical** | `make replay-all` |
 | Release audit | **6/6 PASS** | `make release-audit` |
 | Documentation claims | **22 measured facts, 22/22 checks PASS** | `make docs-verify` |
@@ -193,7 +193,7 @@ in `docs/DECISIONS.md`.
 
 | Item | Value |
 |---|---|
-| Tag | `v1.0.3` (annotated) on the merge commit of the Phase 18 PR, cut **after** `make rc-check` PASS and CI green on the merge commit |
+| Tag | `v1.0.3` (annotated) — to be cut on the merge commit of the Phase 18 PR, **after** `make rc-check` PASS and CI green on that merge commit. The tag does not exist yet; `v1.0.2` is still the published artifact |
 | Parent release | `v1.0.2` (`48cfb17`), retained for history |
 | Behaviour | unchanged: no frozen contract, no runtime code, no episode |
 | Frozen contract surface | 30 files, `0747baf0…` (unchanged) |

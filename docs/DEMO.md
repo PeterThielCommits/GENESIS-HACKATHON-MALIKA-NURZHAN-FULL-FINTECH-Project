@@ -126,7 +126,7 @@ Every statement made in either demo resolves to one of these files:
 | Claim | File |
 |---|---|
 | 12/12 gates PASS, exit code 0 | `artifacts/reports/latest/verify_summary.json` |
-| 623 tests, 55 official mirror tests | `unittest` discovery over `tests/` and `tests/official/` (`python3 tools/verify_doc_claims.py --list`); `verify_summary.json` also records the counts that *one* run observed |
+| 625 tests, 55 official mirror tests | `unittest` discovery over `tests/` and `tests/official/` (`python3 tools/verify_doc_claims.py --list`); `verify_summary.json` also records the counts that *one* run observed |
 | 5/5 byte-identical replays | `artifacts/reports/latest/replay_report.json` |
 | 26/26 mutants killed | `artifacts/reports/latest/mutation_test_report.json` |
 | 7/7 metamorphic transforms | `artifacts/reports/latest/metamorphic_report.json` |

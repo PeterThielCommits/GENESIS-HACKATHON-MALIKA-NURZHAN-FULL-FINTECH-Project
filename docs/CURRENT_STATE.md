@@ -9,7 +9,7 @@
 > | `python3 tools/freeze_release.py --verify` | **PASS** — 30 frozen contract files intact, `0747baf0…` (unchanged) |
 > | `python3 tools/evidence_freeze.py --verify` | **PASS** — every tracked release file matches `docs/EVIDENCE/evidence_freeze.json` |
 > | `python3 tools/release_evidence.py --verify` | **PASS** — the release archive is honest, self-consistent and current |
-> | `make verify` (full Judge Kit) | **PASS 12/12** gates, 623 tests, 20 evidence artifacts |
+> | `make verify` (full Judge Kit) | **PASS 12/12** gates, 625 tests, 20 evidence artifacts |
 > | `make docs-verify` | **PASS** — 22 measured facts, 22 checks |
 > | `make replay-all` | **PASS** — 80/80 runs, 567 steps byte-identical |
 > | `make release-audit` | **PASS 6/6** — secrets, file list, size, deps, entrypoint, submission (now also the base image pin) |
@@ -26,15 +26,16 @@
 > `docs/EVIDENCE/container-local-2026-11-22.json`.
 
 - Active branch: `arena/87691cc0-genesis-hackathon-malika-nurzh`, base
-  `f3af314` (`main`, merge of PR #30). The merge commit of the Phase 18 PR is
-  the target of the **`v1.0.3`** tag.
+  `f3af314` (`main`, merge of PR #30). The merge commit of the Phase 18 PR
+  will be the target of the **`v1.0.3`** tag (not yet created).
 - **Phases 0–18 are `DONE`** (see `docs/STATUS.md`). The repository is
   feature-frozen; this session changed the *container surface* and its audits
   only — no runtime behaviour of the benchmark changed.
-- **`v1.0.3` is the recommended submission artifact**: it pins the base image
+- **`v1.0.3` is the intended patch release**: it pins the base image
   by digest, ships a correct build context, machine-checks the Compose profile
-  and adds a local container-equivalent run. `v1.0.2` and `v1.0.1` are
-  retained for history; none of the published tags was moved.
+  and adds a local container-equivalent run. It is cut from the merge commit
+  of the Phase 18 PR. `v1.0.2` and `v1.0.1` are retained for history; none of
+  the published tags was moved.
 
 ## What changed in this session
 
@@ -55,7 +56,7 @@
 
 | Command / condition | Result |
 |---|---|
-| `make verify` (working tree) | **exit 0** — 12/12 gates, 623 tests (1 optional skip), 20 artifacts |
+| `make verify` (working tree) | **exit 0** — 12/12 gates, 625 tests (1 optional skip), 20 artifacts |
 | `make replay-all` | **80/80** runs, **567** steps byte-identical |
 | `make release-audit` | **6/6** PASS |
 | `python3 tools/verify_doc_claims.py` | **22** measured facts, **22/22** checks PASS |
@@ -89,14 +90,17 @@ skip. `official_score_claimed: false` everywhere.
 
 1. Human owner answers `Q-ORG-01`; record acceptance in `docs/DECISIONS.md` or
    scope a separate verifier re-derivation (see `docs/CONTEXT/NEXT_AGENT.md`).
-2. Nothing else is pending for the release: `v1.0.3` is cut, documented and
-   tagged; it is the recommended artifact (same benchmark behaviour as
-   `v1.0.2`, plus the container hardening) and the earlier tags are retained
-   for history.
+2. **The `v1.0.3` tag is not cut yet.** The release is documented and its
+   content is verified; what remains is the mechanical last step: merge the
+   Phase 18 PR, revalidate `main`, and then create the annotated tag on the
+   merge commit and publish the GitHub release. `v1.0.3` is the *intended*
+   patch release (same benchmark behaviour as `v1.0.2`, plus the container
+   hardening); until that tag exists, `v1.0.2` remains the published
+   artifact. The earlier tags are retained for history.
 3. If a future defect is found in the released artifact, fix on a new branch,
    re-run `make evidence-write` in the same commit, and let the fix ride the
-   next patch release (`v1.0.4`); do not move `v1.0.0`, `v1.0.1`, `v1.0.2` or
-   `v1.0.3`.
+   next patch release; do not move `v1.0.0`, `v1.0.1`, `v1.0.2` or (once it
+   exists) `v1.0.3`.
 4. A maintainer **with Docker and a registry** should run `make docker-check`
    once and record the result in `docs/EVIDENCE/`; that retires the remaining
    part of limitation L9 (the image build itself stays CI-authoritative).

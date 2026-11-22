@@ -551,6 +551,18 @@ def audit_submission_format() -> dict[str, Any]:
             for package in ("make", "util-linux"):
                 if package not in required_packages:
                     problems.append(f"the image build record does not declare the {package} package")
+            # TZ 22.4 asks for the *package versions* too. They are recorded,
+            # not pinned (L11), but a recorded version must be a real fact.
+            observed = build_info.get("apt_packages_observed") or {}
+            if not isinstance(observed, dict) or not observed:
+                problems.append("the image build record publishes no observed package versions")
+            else:
+                for package in ("make", "util-linux"):
+                    version = observed.get(package)
+                    if not version or version == "unknown":
+                        problems.append(
+                            f"the image build record publishes no real version for {package}"
+                        )
 
     docs = REPO_ROOT / "docs" / "API_USAGE.md"
     if not docs.is_file():
