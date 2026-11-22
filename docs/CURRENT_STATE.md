@@ -26,16 +26,16 @@
 > `docs/EVIDENCE/container-local-2026-11-22.json`.
 
 - Active branch: `arena/87691cc0-genesis-hackathon-malika-nurzh`, base
-  `f3af314` (`main`, merge of PR #30). The merge commit of the Phase 18 PR
-  will be the target of the **`v1.0.3`** tag (not yet created).
+  `f3af314` (`main`, merge of PR #30). Phase 18 was merged as PR #31
+  (`e71c1b1`), which carries the **`v1.0.3`** tag.
 - **Phases 0–18 are `DONE`** (see `docs/STATUS.md`). The repository is
   feature-frozen; this session changed the *container surface* and its audits
   only — no runtime behaviour of the benchmark changed.
-- **`v1.0.3` is the intended patch release**: it pins the base image
+- **`v1.0.3` is the recommended submission artifact**: it pins the base image
   by digest, ships a correct build context, machine-checks the Compose profile
-  and adds a local container-equivalent run. It is cut from the merge commit
-  of the Phase 18 PR. `v1.0.2` and `v1.0.1` are retained for history; none of
-  the published tags was moved.
+  and adds a local container-equivalent run. The annotated tag is on the merge
+  commit `e71c1b1` of the Phase 18 PR. `v1.0.2` and `v1.0.1` are retained for
+  history; none of the published tags was moved.
 
 ## What changed in this session
 
@@ -90,17 +90,14 @@ skip. `official_score_claimed: false` everywhere.
 
 1. Human owner answers `Q-ORG-01`; record acceptance in `docs/DECISIONS.md` or
    scope a separate verifier re-derivation (see `docs/CONTEXT/NEXT_AGENT.md`).
-2. **The `v1.0.3` tag is not cut yet.** The release is documented and its
-   content is verified; what remains is the mechanical last step: merge the
-   Phase 18 PR, revalidate `main`, and then create the annotated tag on the
-   merge commit and publish the GitHub release. `v1.0.3` is the *intended*
-   patch release (same benchmark behaviour as `v1.0.2`, plus the container
-   hardening); until that tag exists, `v1.0.2` remains the published
-   artifact. The earlier tags are retained for history.
+2. Nothing else is pending for the release: `v1.0.3` is cut, documented and
+   tagged; `v1.0.3` is the recommended artifact (behaviour-identical to
+   `v1.0.2` plus the container hardening) and `v1.0.2` is retained for
+   history.
 3. If a future defect is found in the released artifact, fix on a new branch,
    re-run `make evidence-write` in the same commit, and let the fix ride the
-   next patch release; do not move `v1.0.0`, `v1.0.1`, `v1.0.2` or (once it
-   exists) `v1.0.3`.
+   next patch release (`v1.0.4`); do not move `v1.0.0`, `v1.0.1`, `v1.0.2` or
+   `v1.0.3`.
 4. A maintainer **with Docker and a registry** should run `make docker-check`
    once and record the result in `docs/EVIDENCE/`; that retires the remaining
    part of limitation L9 (the image build itself stays CI-authoritative).

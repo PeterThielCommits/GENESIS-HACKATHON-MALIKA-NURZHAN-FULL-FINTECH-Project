@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "56bd9fe07b942df4970f71ba5549849f6144766921702470252b62c06f6b4c28",
+  "aggregate_sha256": "b24270b9694a0c34ea36556db710bc70890552656db926799618148d075892ab",
   "anchor_note": "aggregate_sha256 identifies the archived tree and is commit-independent; source_commit is the HEAD the working tree was based on when the archive was generated (the archive is written before the commit that carries it).",
   "code_version": "twinledger@1.0.0",
   "files": [
@@ -409,9 +409,9 @@
       "sha256": "dfea179322b43aae7b23ffce24f080ddce9ea56a46802f320b101c321c47aa83"
     },
     {
-      "bytes": 14012,
+      "bytes": 15067,
       "path": "docs/CHANGELOG.md",
-      "sha256": "074c52716f2b95fc0d30ef51fd9f9d153cb1d342ddff18bbf6c3fe20b4901a06"
+      "sha256": "fe2bb772952b3625d2dfdbf7933a55d50e0e7f22b464824caa1949594c83b8e8"
     },
     {
       "bytes": 8340,
@@ -419,9 +419,9 @@
       "sha256": "175b4709b45293d3cb783993bd7725f8574e292614b6137f11ce8d23e487e3b0"
     },
     {
-      "bytes": 8506,
+      "bytes": 8484,
       "path": "docs/CONTEXT/NEXT_AGENT.md",
-      "sha256": "b6cd4d5c0fa578056a3becc63e5d8a94fe4f7f502016a077ffe84c6cb7e95fba"
+      "sha256": "8b432c32011d0ed0aa895c3574235e2505820204b6636a1169fd4f6f3a5b67e5"
     },
     {
       "bytes": 0,
@@ -434,9 +434,9 @@
       "sha256": "eb845da4b600524d4155dc5ccccf000b69bfa7a55aaf8a9500c4422ad74cf4b5"
     },
     {
-      "bytes": 8205,
+      "bytes": 7938,
       "path": "docs/CURRENT_STATE.md",
-      "sha256": "b2d682dab5b209acd653634772da40a871f91574d4b5191199264a906b01466b"
+      "sha256": "9001baf0ac60260066fdd3abf8adc84a5cee34d407ee113d816dab6507c9951a"
     },
     {
       "bytes": 5422,
@@ -481,7 +481,7 @@
     {
       "bytes": 12736,
       "path": "docs/EVIDENCE/phase-17-release-evidence-2026-11-22.json",
-      "sha256": "7c0548e3300b3d172468400ef074c7178a8203ced0baa893241d08adb6fccb5f"
+      "sha256": "9265be9d01855cd20ecfad76f3bfe7bce860f48c98fe79fb4772ddc80615a1e3"
     },
     {
       "bytes": 9728,
@@ -824,9 +824,9 @@
       "sha256": "0e736341f985c2d358375fdee26e100063a8397432c4a25f9d0e49ec4effafa6"
     },
     {
-      "bytes": 32745,
+      "bytes": 33441,
       "path": "docs/RELEASE_NOTES.md",
-      "sha256": "280d07c69e9730df14441f26474c470668eb1b613f8fbfe44a8a23c7bd64bd82"
+      "sha256": "da3faa2b9a8ad20c307e92fa2783ac87cdf82a19011b92076f9c69e5c7db3589"
     },
     {
       "bytes": 1729,
@@ -834,9 +834,9 @@
       "sha256": "5d0a1d0acbfb25f32369b1547dd6ca9f90cb34809e07627081d94c00c8dba7e0"
     },
     {
-      "bytes": 26486,
+      "bytes": 26533,
       "path": "docs/STATUS.md",
-      "sha256": "d59d12249eea797282a5849fa6e28642349e324e16f6f805c4d1a04aa407abe1"
+      "sha256": "d1330cf1b7958092f3cc0caad9e0e612323f10ceacf8fde7b65ba5b6e88b02fd"
     },
     {
       "bytes": 607,
@@ -2795,7 +2795,7 @@
     }
   ],
   "frozen_file_count": 558,
-  "generated_at_utc": "2026-11-22T16:54:59Z",
+  "generated_at_utc": "2026-11-22T17:07:16Z",
   "official_score_claimed": false,
   "phase": 17,
   "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
@@ -2805,7 +2805,7 @@
       "path": "artifacts/reports/doc_claims/doc_claims_report.json",
       "present": true,
       "required": false,
-      "sha256": "9deab6027081df387a32a4d1b183f5a340c53c8d391140d4b31083eaf45d6af8",
+      "sha256": "f8d955ebb65c1c10a2feca44a741c71a5743546786278cd6f82356dd46085a91",
       "verdict": {
         "checks": [
           {
@@ -2908,7 +2908,7 @@
       "path": "artifacts/reports/release/release_audit.json",
       "present": true,
       "required": false,
-      "sha256": "f1aeb329de661cc4fa5c9da7f45bb7434e9523bf7b52921e9f0180725505142b",
+      "sha256": "4d963a436e341802d30e36058a689e0023b99e86e06cad7ee882ae6638e16680",
       "verdict": {
         "checks": [
           {
@@ -2945,7 +2945,7 @@
       "path": "artifacts/reports/latest/replay_report.json",
       "present": true,
       "required": true,
-      "sha256": "4492f5d8242423c1453f43945d27d39020bb99cc566e41590fd12c99c495e2ee",
+      "sha256": "94ea6d7948ed9f51fa2df655e2870d3551aa80b3afa692ac9740981768509d6e",
       "verdict": {
         "all_byte_identical": true,
         "all_hashes_identical": true,
@@ -2962,7 +2962,7 @@
       "path": "artifacts/reports/latest/report_index.json",
       "present": true,
       "required": true,
-      "sha256": "51dae82567e209be9f50c9a078f38921773d4fc9158b601113290c6bd7ba311f",
+      "sha256": "78476cf3208fd5834f1756907374c897948be2d8e5976ef40e7f766ea4f120ab",
       "verdict": {
         "artifact_count": 20,
         "missing_optional_or_full_mode_artifacts": [],
@@ -2974,7 +2974,7 @@
       "path": "artifacts/reports/release/trajectory_replay.json",
       "present": true,
       "required": false,
-      "sha256": "64c8b4bf2fa0c46d78accff9d40d2c67b33a4e96327532c2efefdf4a80c7e350",
+      "sha256": "6f84149d5e3aa2076138b86cd12952234991e176461fc3507787076ef5cec505",
       "verdict": {
         "failure_count": 0,
         "runs_matched": 80,
@@ -2987,7 +2987,7 @@
       "path": "artifacts/reports/latest/verify_summary.json",
       "present": true,
       "required": true,
-      "sha256": "7b97e4668b29742518adfba29dbb059afc901422c66977fafc0d3308090f87d1",
+      "sha256": "2b45c1e0f9eee75ae87849a7fc8f54b7601e74f4ed42276aafce452f464e68bd",
       "verdict": {
         "gates": [
           {
@@ -3081,5 +3081,5 @@
     }
   },
   "schema_version": "1.0.0",
-  "source_commit": "e3516000ea3f0bd3a795da45d68ec5f5ed01bb8c"
+  "source_commit": "a784cf29e3f7ca5b35542c2bfffdef31c4ea85a1"
 }
