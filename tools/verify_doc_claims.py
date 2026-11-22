@@ -190,6 +190,24 @@ def _src() -> tuple[list[str], list[str]]:
 # --------------------------------------------------------------------------- #
 # measured facts — the single source for every published number
 # --------------------------------------------------------------------------- #
+RUBRIC_MAP = REPO_ROOT / "judge" / "rubric_map.json"
+
+
+def defined_gate_count() -> int:
+    """Number of gates the *contract* defines, not the number that just ran.
+
+    `verify_summary.json` lists only the checks of the most recent run, so a
+    `make verify-core` (6 gates) followed by `make docs-verify` published "6
+    gates" and then a full run reported DRIFT. Order-dependent facts are exactly
+    what D-15-01 forbids. The frozen rubric map is the contract: 12 gates.
+    """
+    data = json.loads(RUBRIC_MAP.read_text(encoding="utf-8"))
+    checks = data.get("checks")
+    if not isinstance(checks, list) or not checks:
+        raise ValueError("judge/rubric_map.json defines no checks")
+    return len(checks)
+
+
 def baseline_log_available() -> bool:
     """True when the committed trajectory log is readable.
 
@@ -207,7 +225,7 @@ def collect_facts() -> list[dict[str, str]]:
     """Return ordered (id, label, value, source) facts rendered into the README."""
     summary = _verify_summary()
     checks = summary.get("checks", [])
-    gates_total = len(checks)
+    gates_total = defined_gate_count()
     index = _load("report_index.json")
     channels, transforms = _src()
     facts: list[dict[str, str]] = [
@@ -222,7 +240,7 @@ def collect_facts() -> list[dict[str, str]]:
             "id": "F-GATES",
             "label": "Verification gates defined (RC-001..RC-012)",
             "value": str(gates_total),
-            "source": "verify_summary.json",
+            "source": "judge/rubric_map.json (frozen contract)",
         },
         {
             "id": "F-OFFICIAL-SCORE-CLAIM",
@@ -452,7 +470,7 @@ def prose_assertions() -> list[dict[str, str]]:
     """Counts stated in hand-written prose that must track the measurement."""
     summary = _verify_summary()
     checks = summary.get("checks", [])
-    gates_total = len(checks)
+    gates_total = defined_gate_count()
     channels, transforms = _src()
     return [
         {

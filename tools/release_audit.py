@@ -132,6 +132,27 @@ NOT_SHIPPED_DIRS = {
 NOT_SHIPPED_SUFFIXES = (".pyc", ".pyo")
 
 
+# Paths the project deliberately keeps out of version control but that may exist
+# on disk. Mirrors .gitignore for the cases that matter to a release audit.
+_GENERATED_IGNORED = (
+    re.compile(r"(^|/)episodes/[^/]*/sealed(/|$)"),
+    re.compile(r"(^|/)episodes/[^/]*/[^/]*/sealed(/|$)"),
+    re.compile(r"(^|/)episodes/hidden(/|$)"),
+    re.compile(r"(^|/)artifacts/reports/latest/[^/]*$"),
+    re.compile(r"(^|/)artifacts/reports/(doc_claims|release)(/|$)"),
+    re.compile(r"(^|/)artifacts/trajectories/"),
+    re.compile(r"(^|/)\.env(\.|$)"),
+    re.compile(r"\.(pem|key)$"),
+    re.compile(r"(^|/)__pycache__(/|$)"),
+    re.compile(r"\.py[co]$"),
+)
+
+
+def _is_ignored(rel: str) -> bool:
+    """True when a path is generated/ignored and therefore not shipped evidence."""
+    return any(p.search(rel) for p in _GENERATED_IGNORED)
+
+
 def _walk_fallback() -> list[str]:
     """File list for a tree with no Git metadata (tarball, Docker image).
 
@@ -149,7 +170,16 @@ def _walk_fallback() -> list[str]:
             continue
         if path.suffix in NOT_SHIPPED_SUFFIXES:
             continue
-        out.append(str(rel).replace(os.sep, "/"))
+        url = str(rel).replace(os.sep, "/")
+        # Honour the project's own ignore rules. Sealed truth is *generated* by
+        # `make build-episodes` / `make official-eval` and is gitignored, so it is
+        # not part of the package even though it exists on disk. Without this the
+        # fallback reported 20 false FILELIST violations simply because someone
+        # had run a legitimate build target first (found when `make verify-core`
+        # failed on a tree that had just run `make build-episodes`).
+        if _is_ignored(url):
+            continue
+        out.append(url)
     return out
 
 

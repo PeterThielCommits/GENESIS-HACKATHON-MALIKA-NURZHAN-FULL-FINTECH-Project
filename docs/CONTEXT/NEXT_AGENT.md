@@ -1,4 +1,4 @@
-# Next agent — Phase 17 handoff (after Phase 16 release candidate)
+# Next agent — handoff after the post-release mandatory-target audit
 
 Read `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/PHASE_REPORTS/PHASE-16.md` / `.json`, `docs/RELEASE_NOTES.md`, and decisions `D-15-01`, `D-15-02`, `D-15-03`, `D-16-01` before changing anything.
 
@@ -8,7 +8,7 @@ verified on a clean machine, replayed end to end, audited, and its official
 entrypoint is proven by execution.
 
 ```
-make verify        -> 12/12 PASS, 481 tests, 20 evidence artifacts (docs gate runs inside)
+make verify        -> 12/12 PASS, 490 tests, 20 evidence artifacts (docs gate runs inside)
 make docs-verify   -> 22 measured facts, 11 checks PASS
 make replay-all    -> 80/80 published runs, 567 steps byte-identical
 make release-audit -> 6/6 PASS (secrets, file list, size, deps, entrypoint, submission)
@@ -53,6 +53,24 @@ with an emptied evidence dir, and a `git archive` tarball with **no `.git`**.
 - **Gates must run where the artifact runs.** The Docker image has no `.git`
   (`.dockerignore`), and the container runs `LC_ALL=C` (ASCII stdout). Both were
   real failures; `tools/release_audit.py` and `_say()` handle them.
+
+## Post-release audit (2026-11-22) — read this first
+Tag `v1.0.0` (`8da0af2`) is released, but a post-release audit against the
+Universal Phase Execution Prompt found that **nine TZ §23.2 targets had never
+been executed** by any phase. Running them found four real defects, now fixed on
+this branch (`D-16-02`):
+
+1. **`v1.0.0` contains a release blocker:** `.dockerignore` used
+   `episodes/*/sealed/`, which does not match the real depth-2 layout, so the
+   image built from that tag would include `sealed/truth.json`. Fixed on `main`
+   after this branch merges; `v1.0.0` itself is still affected.
+2. `make verify-core` used to fail after `make build-episodes`.
+3. `make official-eval` used to add a 21st file to the frozen evidence dir.
+4. The published gate count followed the last run, not the frozen rubric map.
+
+**All 19 mandatory targets now pass in one sequence on a dirty tree.** If you
+change anything, re-run the whole list, not just `make verify` — that is exactly
+how these four were missed.
 
 ## Single next action
 **Phase 17 (post-release evidence freeze).** `v1.0.0` is released on commit
