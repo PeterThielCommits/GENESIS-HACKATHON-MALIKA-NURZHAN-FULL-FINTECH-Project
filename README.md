@@ -19,17 +19,18 @@ Working directory inside the container: `/app`. Zero external `pip` packages or
 network access are required.
 
 ```bash
-make verify            # lint + full 12-gate Judge Kit (RC-001..RC-012) + all 317 unit/official/security tests + 21 JSON/CSV/HTML artifacts
+make verify            # lint + full 12-gate Judge Kit (RC-001..RC-012) + 439 tests + 20 evidence artifacts
 make verify-core       # fast critical core & release-blocker gates (RC-001..005, RC-009)
-make test-official     # official Genesis FinTech 2026-11-20 mirror suite (Blocks 1..5: C01..C20, D01..D20, Block 3 #1..20 + M01..M12, P01..P20, Baselines)
+make test-official     # official Genesis FinTech 2026-11-20 mirror suite (Blocks 1..5: C01..C20, D01..D20, Block 3 #1..20 + M01..M12, P01..P20, Baselines) — 55 official mirror tests
 make replay            # fresh-process CLOSED_EVAL trajectory & Merkle receipt replay + paired P01..P20
 make audit-shortcuts   # metadata-only L2 logistic regression audit (AUC <= 0.55) + 10-channel canary fuzzer + C20 non-leakage
-make mutation-test     # 26-mutant matcher/reward kill suite (100% killed) + Official Block 3 M01..M12
+make mutation-test     # 26/26 mutants killed matcher/reward suite + Official Block 3 M01..M12
 make report            # synthesize self-contained offline artifacts/reports/latest/report.html + report_index.json
 make official-eval     # run all 4 baseline policies across D01..D20 -> artifacts/trajectories/trajectories.jsonl + summary
 make docker-check      # build and run inside hardened offline container (--network=none --read-only --cap-drop ALL)
 python3 tools/demo_walkthrough.py        # deterministic 3-minute jury walkthrough (seed=2025)
 python3 tools/freeze_release.py --verify # cryptographic SHA-256 verification of frozen contracts & configs
+python3 tools/verify_doc_claims.py       # re-measure every number published in this README
 ```
 
 Pinned versions and reproduction parameters are locked in
@@ -68,6 +69,14 @@ Every `step(action)` accepts `{"name": "<action>", "args": {...}}`:
 | `get_document` | `doc_id` (raw ID or typed `PREFIX:id`) | Document JSON object (strictly preloaded; zero filesystem access) |
 | `calculator` | `expression` (AST-only exact `Decimal` arithmetic) | Exact decimal string (e.g. `"0.1+0.2"` -> `"0.3"`) |
 | `submit` | `findings` (`{"findings": [...]}` per §05) | `{"accepted": true}` or bounded structural error (never leaks truth) |
+
+> **Adapter vs core tool names.** The adapter above (and the official harness)
+> spells the calculator **`calculator`**. The *core* JSONL protocol
+> (`env/jsonl_server.py`, `contracts/tool_request.schema.json`) spells the same
+> capability **`calc`**, and the two front doors each reject the other's name
+> (`UNKNOWN_ACTION` / `UNKNOWN_TOOL`). This asymmetry is intentional
+> compatibility with the official task statement and is documented in
+> [`docs/POLICY_PROTOCOL.md`](docs/POLICY_PROTOCOL.md).
 
 - **Initial observation:** `{"task": str, "manifest": object, "policy": object, "remaining_steps": 100}`
 - **Subsequent observations:** `{"result": value_or_null, "error": null_or_object, "remaining_steps": int}`
@@ -111,17 +120,74 @@ separate OS child processes (`python3 -m arena.policies.worker`) with sanitized
 environment variables and zero access to `episode_dir`, `sealed/`, or scoring
 modules. The `oracle` policy runs strictly on the judge side (`judge/oracle_policy.py`).
 
-| Policy | Isolation | Mean F1 | Mean Return | Mean Steps | Max Episode Time |
-|---|---|---:|---:|---:|---:|
-| `oracle` | Judge-side reference | `1.0000` | `+0.9920` | `4.0` | `0.004s` |
-| `simple_reconciliation` | OS subprocess worker | `1.0000` | `+0.9853` | `7.3` | `0.065s` |
-| `random` | OS subprocess worker | `0.2500` | `-0.5060` | `12.0` | `0.084s` |
-| `mass_flagging` | OS subprocess worker | `0.0000` | `-1.0000` | `1.0` | `0.079s` |
+The exact table is **generated** from `artifacts/trajectories/trajectories.jsonl` and
+appears in [Measured Facts](#measured-facts-auto-generated) below, with the rest of
+this README's numbers. It is never transcribed by hand.
 
 Full 80-episode trajectory log (zero truth leakage in observations):
-`artifacts/trajectories/trajectories.jsonl`.
+`artifacts/trajectories/trajectories.jsonl`. Reproduce with
+`python3 tools/run_official_eval.py` (or `make official-eval`).
 
 ---
+
+## Verify Every Claim Yourself (Tasks 15.5 & 15.6)
+
+No number in this README is maintained by hand. The block below is rendered from
+measured artifacts by `tools/verify_doc_claims.py --write`; **check mode** (used
+by `make verify` and CI) fails if it disagrees with the artifacts, if a prose
+count goes stale, or if a superseded value reappears anywhere in the docs.
+
+```bash
+make verify                          # regenerates every artifact
+python3 tools/verify_doc_claims.py   # re-measures and diffs this documentation
+```
+
+Current measured state of this release (see the generated block for the full set):
+**12/12 PASS** verification gates, **439 tests**, **5/5 byte-identical replays**,
+**0 canary hits**, `official_score_claimed: false`.
+
+<!-- BEGIN GENERATED:measured-facts -->
+<!-- Generated by `python3 tools/verify_doc_claims.py --write`. Do not edit by hand:
+     `make verify` / CI fails if this block disagrees with the measured artifacts. -->
+
+### Measured Facts (auto-generated)
+
+| Fact | Value | Source artifact |
+|---|---|---|
+| Verification gates defined (RC-001..RC-012) | **12** | `verify_summary.json` |
+| Official organiser score claimed | **false** | `verify_summary.json` |
+| Total tests in the verification suite | **439** | `verify_summary.json → RC-001` |
+| Official mirror tests (Blocks 1–5) | **55** | `verify_summary.json → RC-004` |
+| Evidence artifacts indexed | **20** | `report_index.json` |
+| Required artifacts missing | **0** | `report_index.json` |
+| Byte-identical fresh-process replays | **5/5** | `replay_report.json` |
+| Mutants killed | **26/26** | `mutation_test_report.json` |
+| Metamorphic transforms passed | **7/7** | `metamorphic_report.json` |
+| Prompt-injection twin pairs evaluated | **24** | `robustness_report.json` |
+| Invariant catalog (TZ §12.1) | **INV-01..INV-17** | `invariants_report.json` |
+| Canary leakage hits | **0** | `canary_fuzz_report.json` |
+| Policy-visible canary channels | **10** | `judge/canary_fuzzer.py` |
+| Canary encoding transforms | **9** | `judge/canary_fuzzer.py` |
+| Shortcut macro ROC AUC (limit 0.55) | **0.5389** | `shortcut_audit.json` |
+| Performance budgets (step p99 / RSS / episode disk) | **< 5.0 ms / < 300.0 MB / < 50.0 MB** | `performance_report.json` |
+| Performance & dependency gate | **PASS** | `performance_report.json` |
+| Core stdlib-only | **true** | `dependency_report.json` |
+| Runtime network required | **false** | `dependency_report.json` |
+| Core JSONL protocol tools | **`list_records`, `get_record`, `get_document`, `calc`, `submit`** | `contracts/tool_request.schema.json` |
+| Bounded tool error codes | **11** | `contracts/tool_response.schema.json` |
+| Demo walkthrough seed | **2025** | `tools/demo_walkthrough.py` |
+
+### Measured Baselines — D01..D20, seed 2026 (auto-generated)
+
+| Policy | Isolation | Mean F1 | Mean Return | Mean Steps | Episodes |
+|---|---|---:|---:|---:|---:|
+| `oracle` | Judge-side reference | 1.0000 | +0.9920 | 4.0 | 20 |
+| `simple_reconciliation` | OS subprocess worker | 1.0000 | +0.9853 | 7.3 | 20 |
+| `random` | OS subprocess worker | 0.2500 | -0.5060 | 12.0 | 20 |
+| `mass_flagging` | OS subprocess worker | 0.0000 | -1.0000 | 1.0 | 20 |
+
+Source: `artifacts/trajectories/trajectories.jsonl` (80 episode rows). Reproduce with `make official-eval`.
+<!-- END GENERATED:measured-facts -->
 
 ## Documentation & Traceability
 
@@ -130,4 +196,7 @@ Full 80-episode trajectory log (zero truth leakage in observations):
 - `docs/FAILURE_ANALYSIS.md` — Measured failure analysis, root causes, and re-verification
 - `docs/LIMITATIONS.md` — Honest scenario-linked limitations
 - `docs/INDEPENDENCE.md` — Zero-common-mode verifier independence & import-boundary rules
+- `docs/API_USAGE.md` — Official adapter API, policy client, local workbench, CLI surface (Task 15.3)
+- `docs/POLICY_PROTOCOL.md` — JSONL v1.0 wire contract: envelopes, tool/error enums, budgets, limits (Task 15.3)
+- `docs/DEMO.md` — 3-minute jury demo + technical backup demo (`make demo-backup`, Task 15.4)
 - `tools/demo_server.py` — Optional zero-dependency interactive local workbench (`python3 tools/demo_server.py`)

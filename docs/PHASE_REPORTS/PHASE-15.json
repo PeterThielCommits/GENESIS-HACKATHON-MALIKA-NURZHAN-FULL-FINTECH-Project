@@ -1,34 +1,169 @@
 {
   "phase": 15,
-  "title": "COMPLETE DOCUMENTATION & 3-MINUTE DETERMINISTIC JURY WALKTHROUGH",
+  "title": "DOCUMENTATION & DEMO (re-audit)",
   "outcome": "DONE",
-  "exit_gate_15": "DONE",
-  "exit_gate_note": "EXIT GATE 15 PASS: Reproducible 5-segment jury walkthrough CLI (master_seed=2025) and complete, honest documentation across README, LIMITATIONS, THREAT_MODEL, STATUS, CURRENT_STATE, DECISIONS, and PHASE_REPORTS.",
+  "exit_gate_15": "PASS",
+  "exit_gate_note": "The jury can deploy from the README and verify the key claims mechanically: make verify -> 12/12 PASS (427 tests, 21 artifacts), make docs-verify -> 23 measured facts / 11 checks PASS, make demo-backup -> all four probes green. Every published number is rendered from an artifact and diff-checked, with four independent failure mechanisms proven to fire.",
+  "supersedes": {
+    "branch": "arena/3a99279e-genesis-hackathon-malika-nurzh",
+    "reason": "Prior claim of DONE asserted 'complete, honest documentation' without (a) Task 15.3 deliverables existing at all, (b) any mechanical link from claims to artifacts, and with a factually wrong encoding-transform list plus a stale 317-test count."
+  },
   "date": "2026-11-21",
-  "branch": "arena/3a99279e-genesis-hackathon-malika-nurzh",
-  "base_commit": "da42d26008f948c294920ae8b02a30b08f541732",
-  "master_tz_sha256": "a46cdb63bb4b41aabb95a842406f5a4fff91e218ead1e4f97b22b60d1c748e36",
+  "branch": "arena/41a4694b-genesis-hackathon-malika-nurzh",
+  "base_commit": "ff6e470b4cfea7289d5f041fe358c5e95587ca1e",
   "req_ids": [
     "REQ-DOC-001",
     "REQ-DOC-002",
     "REQ-DOC-003",
-    "REQ-DEMO-001"
+    "REQ-DEMO-001",
+    "REQ-JUDGE-001",
+    "REQ-JUDGE-005"
   ],
   "tasks": {
-    "15.1": "DONE",
-    "15.2": "DONE",
-    "15.3": "DONE"
+    "15.1": "DONE - README/DESIGN (rewritten as-built)/LIMITATIONS/DATA_DICTIONARY present and non-placeholder",
+    "15.2": "DONE - THREAT_MODEL corrected (fake transform list removed), INDEPENDENCE verified",
+    "15.3": "DONE - NEW docs/API_USAGE.md + docs/POLICY_PROTOCOL.md (envelopes, tool enum, 11 error codes, budgets, limits, worked session)",
+    "15.4": "DONE - primary 3-minute demo (make demo, seed 2025) + NEW technical backup demo (make demo-backup, 4 probes), documented in docs/DEMO.md",
+    "15.5": "DONE - generated facts block in README rendered from artifacts + prose assertions + evidence->claim map",
+    "15.6": "DONE - tools/verify_doc_claims.py (4 mechanisms) + 18 tests; authoritative run relocated to judge/verify.py after artifact synthesis; stale-literal denylist; decision-ID referential integrity"
   },
-  "decisions": [
-    "D-14-01"
+  "defects_fixed": [
+    "Task 15.3 had no deliverable: no API_USAGE.md, no policy protocol doc existed",
+    "Undocumented tool-name trap: core protocol accepts 'calc', official adapter accepts 'calculator', each rejects the other",
+    "docs/THREAT_MODEL.md claimed 9 encoding transforms but listed 8 names, 4 of them incorrect identifiers",
+    "README claimed 317 tests (measured 410 -> 427 after this phase's new tests)",
+    "README baseline table durations/steps did not match trajectories.jsonl",
+    "Phantom decision ID D-03-01 cited in DESIGN.md (now blocked by an automated referential-integrity check)",
+    "docs/DESIGN.md described shipped components as 'planned, Phase 9/Phase 6'",
+    "Doc-claims gate initially byte-compared sampled timings, so it failed on the next verify run (self-defeating); stable facts only",
+    "Doc-claims report initially written into the frozen 21-artifact evidence dir, making artifact counts order-dependent; relocated",
+    "One documented demo probe was not runnable (score_episode on checked-in episodes/dev/* has no sealed/truth.json, by design D-01-04)",
+    "Doc-claim tests placed inside RC-001 could not work: they read verify_summary.json, which the same run writes last (chicken-and-egg FileNotFoundError on a clean tree)",
+    "Circular self-reference: asserting the gate pass-ratio made a doc-drift failure persist a failing summary that poisoned every subsequent run (deadlock)",
+    "A doc-claim test hardcoded the value to corrupt, so it silently stopped testing anything once that fact was removed",
+    "Hardened offline container rejected the new report directory: --read-only rootfs with tmpfs only for reports/latest and trajectories caused FileNotFoundError. Fixed in Dockerfile (pre-create) + make docker-check (16 MB tmpfs) and made the checker report-write failure-tolerant",
+    "The container tmpfs over artifacts/trajectories masks the committed trajectories.jsonl, and make verify never regenerates it, so the documentation gate hard-failed in docker-offline. Baseline rows are now an optional fact block, probed and reported explicitly",
+    "The actual docker-only failure was the locale: python:3.11-slim runs with LC_ALL=C, so sys.stdout is ASCII and printing an em dash in test_doc_claims.setUpModule raised UnicodeEncodeError (core passed because its locale is UTF-8). Fixed with a single transliterating output path _say() and ASCII only in test prints; locked by TestLocaleSafety"
   ],
-  "files": [
-    "tools/demo_walkthrough.py",
+  "decisions": [
+    "D-15-01",
+    "D-15-02"
+  ],
+  "files_added": [
+    "docs/API_USAGE.md",
+    "docs/POLICY_PROTOCOL.md",
+    "docs/DEMO.md",
+    "tools/verify_doc_claims.py",
+    "tests/judge/test_doc_claims.py",
+    "docs/PHASE_REPORTS/PHASE-15.md",
+    "docs/PHASE_REPORTS/PHASE-15.json"
+  ],
+  "files_corrected": [
     "README.md",
+    "docs/DESIGN.md",
     "docs/LIMITATIONS.md",
     "docs/THREAT_MODEL.md",
-    "docs/STATUS.md",
-    "docs/CURRENT_STATE.md"
+    "Makefile"
   ],
-  "gate_evidence": "python3 tools/demo_walkthrough.py PASS (5 segments deterministic on seed=2025, zero pre-finalize truth exposure)."
+  "frozen_files_changed": [],
+  "commands": [
+    {
+      "command": "make lint",
+      "exit_code": 0,
+      "result": "CLEAN (REQ-ARC-001..007)"
+    },
+    {
+      "command": "make verify",
+      "exit_code": 0,
+      "result": "12/12 PASS in 61.1s, 21 artifacts, 439 tests"
+    },
+    {
+      "command": "make docs-verify",
+      "exit_code": 0,
+      "result": "23 measured facts, 11 checks PASS"
+    },
+    {
+      "command": "make verify  # clean tree (git ls-files copy, empty evidence dir)",
+      "exit_code": 0,
+      "result": "12/12 PASS in 61.1s, docs gate PASS after artifacts exist"
+    },
+    {
+      "command": "make demo",
+      "exit_code": 0,
+      "result": "5 segments, seed 2025, full_os_sandbox=True"
+    },
+    {
+      "command": "make demo-backup",
+      "exit_code": 0,
+      "result": "PASS - verify + docs-verify + replay 5/5 + freeze 30 files"
+    },
+    {
+      "command": "python3 -m unittest tests.judge.test_doc_claims",
+      "exit_code": 0,
+      "result": "22 tests OK"
+    },
+    {
+      "command": "python3 -m unittest tests.judge.test_doc_claims tests.judge.test_judge_kit",
+      "exit_code": 0,
+      "result": "60 tests OK"
+    },
+    {
+      "command": "python3 tools/freeze_release.py --verify",
+      "exit_code": 0,
+      "result": "30 frozen files intact, 0747baf087b9509a..."
+    },
+    {
+      "command": "make verify (twice consecutively) then make docs-verify",
+      "exit_code": 0,
+      "result": "stable, no drift"
+    },
+    {
+      "command": "make verify  # simulated read-only container layout",
+      "exit_code": 0,
+      "result": "12/12 PASS; doc-claims report degrades gracefully"
+    },
+    {
+      "command": "tools/verify_doc_claims.py with unwritable output path",
+      "exit_code": 0,
+      "result": "PASS verdict preserved, note printed"
+    },
+    {
+      "command": "LC_ALL=C LANG=C python3 -X utf8=0 -m unittest discover -s tests -t .",
+      "exit_code": 0,
+      "result": "439 tests OK under ASCII locale"
+    },
+    {
+      "command": "make verify under LC_ALL=C + empty trajectories + read-only evidence dir",
+      "exit_code": 0,
+      "result": "12/12 PASS (container layout)"
+    }
+  ],
+  "negative_tests": {
+    "corrupted value inside generated block": "DRIFT G-BLOCK, exit 1",
+    "reintroduced '317 tests' prose": "STALE_LITERAL D-STALE, exit 1",
+    "broken prose count 5/5 -> 4/5": "STALE P-REPLAY, exit 1",
+    "cited D-99-99": "PHANTOM_ID R-DECISION-ID, exit 1"
+  },
+  "metrics": {
+    "tests_total": 439,
+    "tests_official": 55,
+    "verify_gates": "12/12",
+    "doc_claim_facts": 22,
+    "doc_claim_checks": 11,
+    "canary_channels": 10,
+    "canary_transforms": 9,
+    "canary_hits": 0,
+    "official_score_claimed": false
+  },
+  "skipped": "1 optional hypothesis-extra test, recorded in optional_checks (critical_skipped=0)",
+  "failed": [],
+  "limitations": [
+    "README contains a generated block; hand edits fail the gate by design (use --write).",
+    "docs/DATA_DICTIONARY.md field list is covered by placeholder/denylist scans but not individually re-derived from schemas.",
+    "The doc-claims gate proves docs match artifacts, not that artifacts measure the right thing (that is RC-001..RC-012).",
+    "Sampled performance numbers stay in performance_report.json and are deliberately not asserted in docs.",
+    "make demo-backup re-runs the full verify (~63s), so it is a reviewer tool rather than a per-commit gate.",
+    "L-H: claimed baseline numbers derive from artifacts/trajectories/trajectories.jsonl, which make verify does not regenerate (produced by make official-eval and committed); regenerating is a manual reviewer step."
+  ],
+  "next_phase": "Phase 16 - release candidate: clean-clone verify on a fresh runner, offline Docker re-run, secrets/file-list/size audit, tag + GitHub release."
 }

@@ -1,7 +1,7 @@
 PYTHON ?= python3
 PYTEST ?= $(PYTHON) -m pytest
 
-.PHONY: help setup lint test test-official test-property build-episodes official-eval verify-core verify replay audit-shortcuts mutation-test report docker-check clean
+.PHONY: help setup lint test test-official test-property build-episodes official-eval verify-core verify replay audit-shortcuts mutation-test report docs-verify demo demo-backup docker-check clean
 
 help: ## Show available commands
 	@echo "TwinLedger — available make targets:"
@@ -15,6 +15,9 @@ help: ## Show available commands
 	@echo "  make verify-core      Critical core + release blockers"
 	@echo "  make verify           Full verification suite (lint + all tests + property + judge kit)"
 	@echo "  make report           Aggregated JSON/HTML report"
+	@echo "  make docs-verify      Re-measure every documented number against its artifact (TZ 15.5/15.6)"
+	@echo "  make demo             3-minute deterministic jury walkthrough (seed=2025, no network)"
+	@echo "  make demo-backup      Technical backup demo: verify + docs-verify + replay + freeze"
 	@echo "  make docker-check     Offline Docker check (--network=none --cpus=2 --memory=4g)"
 	@echo "  make clean            Remove generated temp artifacts (keeps sealed source inputs)"
 
@@ -64,8 +67,32 @@ mutation-test: ## 26-mutant matcher/reward suite + Official Block 3 (#1..20 + M0
 report: ## Synthesize report_index.json + offline self-contained report.html
 	@$(PYTHON) judge/report.py
 
-docker-check: ## Offline Docker verification (--network=none --cpus=2 --memory=4g)
-	@docker build -t twinledger:eval . && docker run --rm --network=none --cpus=2 --memory=4g -e GITHUB_ACTIONS="$${GITHUB_ACTIONS:-}" --security-opt no-new-privileges:true --cap-drop ALL --read-only --tmpfs /tmp:rw,noexec,nosuid,mode=1777,size=256m --tmpfs /app/artifacts/reports/latest:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m --tmpfs /app/artifacts/trajectories:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m twinledger:eval make verify
+docs-verify: ## Re-measure every documented claim against its evidence artifact (TZ 15.5, 15.6)
+	@$(PYTHON) tools/verify_doc_claims.py
+
+demo: ## 3-minute deterministic jury walkthrough (master_seed=2025, offline)
+	@$(PYTHON) tools/demo_walkthrough.py
+
+demo-backup: ## Technical backup demo (TZ 15.4): gates + claims + replay + freeze, fail-closed
+	@echo "== B1/4 full verification =="
+	@$(MAKE) --no-print-directory verify
+	@echo "== B2/4 documentation claims =="
+	@$(MAKE) --no-print-directory docs-verify
+	@echo "== B3/4 replay determinism =="
+	@$(PYTHON) -m harness.replay --verify-suite
+	@echo "== B4/4 frozen contract surface =="
+	@$(PYTHON) tools/freeze_release.py --verify
+	@echo "demo-backup: PASS (all four probes green)"
+
+docker-build: ## Build the offline verification image
+	@docker build -t twinledger:eval .
+
+docker-check-container: ## Run the offline verification container (image must exist)
+	@docker run --rm --network=none --cpus=2 --memory=4g -e GITHUB_ACTIONS="$${GITHUB_ACTIONS:-}" --security-opt no-new-privileges:true --cap-drop ALL --read-only --tmpfs /tmp:rw,noexec,nosuid,mode=1777,size=256m --tmpfs /app/artifacts/reports/latest:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m --tmpfs /app/artifacts/reports/doc_claims:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=16m --tmpfs /app/artifacts/trajectories:rw,noexec,nosuid,uid=10001,gid=10001,mode=0775,size=64m twinledger:eval make verify
+
+docker-check: ## Offline Docker verification: build image, then run it hardened
+	@$(MAKE) --no-print-directory docker-build
+	@$(MAKE) --no-print-directory docker-check-container
 
 clean: ## Remove generated temp artifacts only (never sealed source inputs)
 	rm -rf artifacts/reports/latest/*.json artifacts/reports/latest/*.txt artifacts/reports/latest/*.csv artifacts/reports/latest/*.html artifacts/reports/latest/*.md
