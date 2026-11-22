@@ -193,9 +193,12 @@ in `docs/DECISIONS.md`.
 
 | Item | Value |
 |---|---|
-| Tag | `v1.0.3` (annotated) — to be cut on the merge commit of the Phase 18 PR, **after** `make rc-check` PASS and CI green on that merge commit. The tag does not exist yet; `v1.0.2` is still the published artifact |
-| Parent release | `v1.0.2` (`48cfb17`), retained for history |
+| Tag | `v1.0.3` (annotated) — tag object `eb8355c742d32406f7ac4c8fbf2aa417209ca16a`, commit `e71c1b1` (the merge commit of PR #31), cut **after** CI green on that merge commit and after the full reconstruct sequence passed on a fresh clone of it |
+| Parent release | `v1.0.2` (`48cfb17`), retained for history; no published tag was moved |
 | Behaviour | unchanged: no frozen contract, no runtime code, no episode |
+| Release-surface archive | `docs/EVIDENCE/evidence_freeze.json` (every tracked file at the release commit, + the gate verdicts) — 558 files, `56bd9fe0…` |
+| CI on the tagged commit | `core` **pass**, `base-image` **pass**, `docker-offline` **pass** (runs `45045754469`, `45046483222`, `45046812684`) |
+| Tag-tree verification | the full reconstruct sequence (`freeze_release --verify` → `make verify` → `make docs-verify` → `make replay-all` → `make release-audit` → `evidence_freeze --verify --require-reports` → `release_evidence --verify --strict` → `unittest`) exits **0** on a fresh `git clone --branch v1.0.3` |
 | Frozen contract surface | 30 files, `0747baf0…` (unchanged) |
 | Container | base image pinned by digest; effective build context computed and asserted; Compose profile machine-checked |
 | `official_score_claimed` | `false` (TZ §23.6) |

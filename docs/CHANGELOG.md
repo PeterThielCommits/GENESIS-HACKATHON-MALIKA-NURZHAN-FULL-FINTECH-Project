@@ -1,6 +1,6 @@
 # TwinLedger — Changelog
 
-## Unreleased — Phase 18: container hardening, pinned base image, real local container-equivalent run
+## 1.0.3 — Phase 18: container hardening, pinned base image, real local container-equivalent run (2026-11-22)
 
 - **The base image is pinned by digest (TZ §22.4, `BUG-TL-0011`).** The Dockerfile
   declares `ARG BASE_IMAGE="python:3.11-slim-bookworm@sha256:a36c24f9..."` (the
@@ -47,6 +47,21 @@
 - **Contract freeze unchanged:** 30 files, aggregate `0747baf0…`. The base image
   pin is a *release* fact, not a benchmark-contract change, so the frozen surface
   was deliberately left untouched (the build record lives in `docs/EVIDENCE/`).
+- **The observed Debian package versions are published (`BUG-TL-0014`).** The
+  CI-built image reports `make 4.3-4.1` and `util-linux 2.38.1-5+deb12u3`;
+  `docs/EVIDENCE/docker-build-info.json` now records them under
+  `apt_packages_observed`. The drift comparison read a key the record never
+  had, so it could never fire; it now compares against the observed versions
+  and splits the outcome by what is actually pinned — a changed base image,
+  digest or Python patch version is a hard failure, a changed package version
+  is reported as drift.
+- **Released:** annotated tag **`v1.0.3`** (object `eb8355c…`) on merge commit
+  `e71c1b1` (PR #31); CI green on the merge commit (`core`, `base-image`,
+  `docker-offline` — runs `45045754469`, `45046483222`, `45046812684`) and on
+  the PR head; the full reconstruct sequence exits 0 on a fresh
+  `git clone --branch v1.0.3`. GitHub release `v1.0.3` published
+  2026-11-22T17:05:07Z. `official_score_claimed: false` (TZ §23.6). Tags
+  `v1.0.0`, `v1.0.1` and `v1.0.2` are retained, unchanged.
 
 ## 1.0.2 — Phase 17 deep execution: reconstructable release archive (2026-11-22)
 
