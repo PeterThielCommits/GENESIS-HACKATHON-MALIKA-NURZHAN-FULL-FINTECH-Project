@@ -1,7 +1,7 @@
 {
   "artifact": "independent-rederivation",
-  "generated_at": "2026-11-22T12:35:44Z",
-  "git_sha": "3b83864ef7ade7dcddfe40a84c3b7b688ff992e1",
+  "generated_at": "2026-11-22T12:50:47Z",
+  "git_sha": "369a3d78c22aee0401007f95d4d3e9593ff1b79f",
   "honesty_note": "Both implementations were authored in a single AI-agent-assisted session (Q-ORG-01). Agreement is technical zero-common-mode re-derivation evidence; it does NOT constitute organisational independence and does not close Q-ORG-01, which stays OPEN.",
   "independent_verifier_version": "independent-1.0.0",
   "method": "Second, from-scratch specification-only implementation in independent_verifier/ (money/time via Fraction+zoneinfo, discovery algorithms written from spec/verifier_algorithm.md, no imports of gen/verifier/scoring/seal/nlp/harness). On-disk committed episodes are compared signature-wise against their committed verifier_report.json; official D01..D20 are rebuilt via the public recipe matrix and cross-checked against sealed truth with scoring.crosscheck.",

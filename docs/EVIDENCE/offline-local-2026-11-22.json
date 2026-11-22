@@ -27,8 +27,8 @@
   },
   "container_runtime_available_locally": false,
   "container_runtime_probe": "docker/podman/buildah/nerdctl/ctr/runc/containerd: none found on PATH (command -v), 2026-11-22",
-  "generated_at": "2026-11-22T12:41:07Z",
-  "git_sha": "3b83864ef7ade7dcddfe40a84c3b7b688ff992e1",
+  "generated_at": "2026-11-22T12:51:55Z",
+  "git_sha": "369a3d78c22aee0401007f95d4d3e9593ff1b79f",
   "local_method": "tools/offline_local_check.py: user+net+mount namespace (unshare -rmn); repo bind-mounted READ-ONLY; artifacts/ overlaid with tmpfs; network route refused if reachable; unittest discover suite executed with PYTHONDONTWRITEBYTECODE=1",
   "local_result": {
     "exit_code": 0,
@@ -36,10 +36,10 @@
     "network_route_present": false,
     "skipped": 26,
     "source_tree_writable": false,
-    "tests_run": 540
+    "tests_run": 548
   },
   "purpose": "Supporting LOCAL evidence for the Docker offline gate (TZ \u00a722.4). The image build itself remains CI-authoritative.",
-  "scope_statement": "This artifact does NOT prove a Docker image builds on this host (no container runtime available). It proves (a) the full 540-test suite passes with zero network access and a read-only source tree, (b) the Dockerfile/.dockerignore/Makefile hardening flags match the intended configuration, (c) the CI docker-offline job passed on main (run 45021422570) and on the v1.0.1 tag commit. A maintainer with Docker should run `make docker-check` locally once and record the result to close this gap fully.",
+  "scope_statement": "This artifact does NOT prove a Docker image builds on this host (no container runtime available). It proves (a) the full 548-test suite passes with zero network access and a read-only source tree, (b) the Dockerfile/.dockerignore/Makefile hardening flags match the intended configuration, (c) the CI docker-offline job passed on main (run 45021422570) and on the v1.0.1 tag commit. A maintainer with Docker should run `make docker-check` locally once and record the result to close this gap fully.",
   "static_audit_pass": true,
   "static_dockerfile_dockerignore_audit": [
     {
