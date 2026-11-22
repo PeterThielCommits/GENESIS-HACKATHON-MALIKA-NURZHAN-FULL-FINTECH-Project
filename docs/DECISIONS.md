@@ -274,6 +274,28 @@ Decision: the gate is only accepted when the documented command runs in a tree b
 
 Consequence for future phases: any "VERIFIED" claim about the judge path must name the clean-tree reproduction, not a dirty run.
 
+## D-15-01 (2026-11-21) — Documentation claims are generated and machine-checked, never hand-maintained
+
+Phase 15 re-audit. TZ §24 Task 15.6 ("validate no unsupported claims or fake metrics") cannot be met by careful editing: the README had drifted to a 317-test claim against 410 measured, and `docs/THREAT_MODEL.md` published a 9-item "encoding transform" list containing 8 names, four of which were not real identifiers.
+
+Decision: every quantitative claim published to the jury is derived from an artifact.
+- `README.md` carries a delimited block (`<!-- BEGIN GENERATED:measured-facts -->`) rendered by `tools/verify_doc_claims.py` from `artifacts/reports/latest/*.json`, `report_index.json` and `artifacts/trajectories/trajectories.jsonl`. Check mode compares it byte-for-byte; only `--write` may change it.
+- Counts appearing in prose are asserted separately; a stale sentence fails the gate.
+- A stale-literal denylist rejects values previously proven wrong (`317 tests`, `Replay Suite: 0/0`, `15 invariants`, …) anywhere in 10 jury-facing docs.
+- Cited decision IDs must exist in this file (referential integrity) — added after this phase accidentally cited a non-existent `D-03-01`.
+- `tests/judge/test_doc_claims.py` (18 tests) proves the checker's mechanisms inside RC-001, but the **authoritative** claim check runs in `judge/verify.py::_run_doc_claims()` *after* artifact synthesis. Inside RC-001 no artifact exists yet, so a check placed there is a chicken-and-egg failure on clean checkouts (it crashed with `FileNotFoundError` until this was found by a clean-tree run). The tests therefore skip explicitly in that bootstrap position, and the skip reason is classified as positional/optional, never as a critical skip that can be hidden.
+- No asserted value may be produced by the run performing the check. Asserting the gate pass-ratio ("12/12 PASS") in the byte-compared block was self-poisoning: one run failing due to doc drift persisted a failing summary, which changed the next run's expected wording — an unrecoverable deadlock. Only outcome-independent facts are asserted; the verdict lives in the exit code and `verify_summary.json`.
+
+Two self-inflicted design bugs were found and fixed under this rule, and are the reason for the stable-only policy: (a) sampled timings (p99 latency, peak RSS, max episode duration) must never enter a byte-compared block, because they change every run and made the gate fail on the next `verify`; only budgets, verdicts, counts and contract enums are asserted. (b) The doc-claims report is written to `artifacts/reports/doc_claims/`, **not** `artifacts/reports/latest/`, because the latter is the frozen 21-artifact Judge Kit evidence set and a conditional extra file would make artifact counts depend on target execution order.
+
+New targets: `make docs-verify`, `make demo`, `make demo-backup` (TZ 15.4 technical backup demo).
+
+## D-15-02 (2026-11-21) — Two tool vocabularies are intentional and documented, not unified
+
+The core JSONL protocol (`env/jsonl_server.py`, `contracts/tool_request.schema.json`) exposes the calculator as **`calc`**; the official adapter (`judge_adapter.py`, `adapter/official_env.py`) exposes the same implementation as **`calculator`**, matching the official task statement. Each front door rejects the other's name (`UNKNOWN_TOOL` / `UNKNOWN_ACTION`).
+
+Decision: keep both and document the asymmetry rather than renaming either surface. Renaming the protocol would break the frozen `tool_request` schema; renaming the adapter would break the official harness contract. Both spellings are verified empirically, printed in the README adapter section and `docs/POLICY_PROTOCOL.md` §3, and pinned by the `C-PROTOCOL-TOOLS` claim check which reads the enum from the frozen schema, so the documentation cannot drift from the contract. No frozen file was modified.
+
 ## D-17-01 (2026-11-21) — Post-release cryptographic contract & config freeze manifest
 
 `tools/freeze_release.py` locks SHA-256 digests over all 30 frozen contract schemas (`contracts/*.schema.json`, `contracts/version.json`), operational configs (`configs/*`), provisional rubricator (`judge/rubric_map.json`), official check spec (`spec/official_fintech_checks_2026-11-20.md`), and Master TZ v3.0.0 (`docs/reference/TwinLedger_v3_Master_TZ_AI_Agents.txt`) in `configs/release_freeze.json`.

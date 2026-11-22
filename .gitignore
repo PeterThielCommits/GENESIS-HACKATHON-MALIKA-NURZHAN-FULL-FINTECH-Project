@@ -16,6 +16,9 @@ artifacts/reports/latest/*.txt
 artifacts/reports/latest/*.csv
 artifacts/reports/latest/*.html
 artifacts/reports/latest/*.md
+# Phase 15 documentation-claim report (generated; not part of the frozen
+# 21-artifact Judge Kit evidence set — see D-15-01)
+artifacts/reports/doc_claims/
 # Sealed episode data: never commit without explicit Phase 0 decision (TZ 5)
 episodes/*/sealed/
 episodes/*/*/sealed/

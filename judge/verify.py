@@ -86,9 +86,19 @@ REQUIRED_FULL_ARTIFACTS: tuple[str, ...] = (
     "report_index.json",
 )
 
-# Skip reasons that name an optional extra (TZ §20.2 / §22.2). Any other
+# Skip reasons that name an optional extra (TZ §20.2 / §22.2), or a deliberate
+# bootstrap/positional skip whose authoritative check runs elsewhere. Any other
 # skipped test is critical: the suite cannot claim PASS for that check.
-_OPTIONAL_SKIP_RE = re.compile(r"hypothesis|extra not installed|optional", re.IGNORECASE)
+#
+# "evidence artifacts not generated yet" comes from tests/judge/test_doc_claims.py:
+# inside RC-001 no artifact exists yet by construction, so those tests can only
+# prove the checker's mechanisms. judge/verify.py runs the authoritative
+# documentation gate AFTER all artifacts are written (/ _run_doc_claims), so this
+# positional skip does not weaken the gate — it moves it to the only correct place.
+_OPTIONAL_SKIP_RE = re.compile(
+    r"hypothesis|extra not installed|optional|evidence artifacts not generated yet",
+    re.IGNORECASE,
+)
 _SKIP_LINE_RE = re.compile(r"\.\.\.\s*skipped\s+'([^']*)'")
 
 
@@ -163,6 +173,25 @@ def load_rubric_map(path: Path = RUBRIC_MAP_PATH) -> tuple[dict[str, Any] | None
 def check_artifact_completeness(report_dir: Path = REPORT_DIR) -> list[str]:
     """Return the required full-mode artifacts missing from ``report_dir``."""
     return [name for name in REQUIRED_FULL_ARTIFACTS if not (report_dir / name).is_file()]
+
+
+def _run_doc_claims() -> tuple[int | None, str]:
+    """Run the documentation-claim gate (Phase 15) and return (rc, short detail).
+
+    ``None`` as return code means the checker is absent or crashed, which makes
+    the suite incomplete rather than passing.
+    """
+    script = REPO_ROOT / "tools" / "verify_doc_claims.py"
+    if not script.is_file():
+        return (None, "tools/verify_doc_claims.py not found")
+    try:
+        code, output, _dur, _opt, _crit = _run_cmd([sys.executable, str(script)])
+    except Exception as exc:  # pragma: no cover - defensive
+        return (None, f"checker crashed: {exc}")
+    lines = [ln.strip() for ln in output.strip().splitlines() if ln.strip()]
+    summary = lines[0] if lines else "no output"
+    detail = " | ".join(ln for ln in lines if "[" in ln)[:300] or summary[:300]
+    return (code, detail)
 
 
 def _run_cmd(cmd: list[str]) -> tuple[int, str, float, int, int]:
@@ -396,6 +425,20 @@ def main(argv: list[str] | None = None) -> int:
             print("verify: artifact contract errors (TZ §23.5):")
             for err in artifact_schema_errors[:20]:
                 print(f"  - {err}")
+
+        # TZ §24 Task 15.5/15.6 (REQ-DOC-001..003): documentation must match the
+        # evidence that now exists. This is the authoritative position — the
+        # doc-claim tests inside RC-001 can only bootstrap-report SKIPPED, because
+        # at that moment no artifact has been produced yet.
+        doc_claims_rc, doc_claims_out = _run_doc_claims()
+        if doc_claims_rc == 0:
+            print("verify: documentation claims PASS (docs match measured artifacts)")
+        elif doc_claims_rc is None:
+            incomplete = True
+            print(f"verify: documentation claim check unavailable: {doc_claims_out}")
+        else:
+            failed_req += 1
+            print(f"verify: documentation claims FAILED (exit {doc_claims_rc}): {doc_claims_out}")
         summary = _write_summary()  # phase B: final status, artifacts and errors
 
     print(f"verify: {summary['status']} ({total_dur}s) — artifacts/reports/latest/verify_summary.json")

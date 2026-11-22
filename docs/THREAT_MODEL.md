@@ -17,5 +17,5 @@
 
 ## 3. Red-Team & Fuzzing Verification Evidence
 - **Live Malicious Policy Probe (`tests/security/test_phase09_isolation.py`):** Even when handed the exact host path to `sealed/truth.json`, `malicious_probe_v1` observes `cwd_empty=True`, `cwd_writable=False`, `env_leaks=0`, `sealed_found=False`, `net_blk=True`, `umnt_blk=True`, `trav_blk=True`, `calc_blk=True`.
-- **10-Channel Canary & API Fuzzer (`judge/canary_fuzzer.py`):** 0 hits across 10 policy-visible channels and 9 encoding transforms (`exact`, `casefold`, `hex`, `base64`, `urlsafe_b64`, `url_percent`, `NFC`, `NFKC`).
+- **10-Channel Canary & API Fuzzer (`judge/canary_fuzzer.py`):** 0 canary hits across 10 policy-visible channels and 9 encoding transforms. The channel and transform lists are read directly from source and asserted against this page by `tools/verify_doc_claims.py` (`C-CANARY-CHANNELS`, `C-ENCODING-TRANSFORMS`); measured hit counts live in `canary_fuzz_report.json`.
 - **22-Attack Red-Team Catalog (`arena/attacks/catalog.py`):** `AT-01..AT-22` all defended (`reward_strategy_report.json`).
