@@ -23,8 +23,8 @@
     "16.4": "DONE - NEW tools/replay_all_trajectories.py: 80/80 runs and 567 steps byte-identical (all published trajectories, policy-independent)",
     "16.5": "DONE - NEW tools/release_audit.py: SECRETS 0/494, FILELIST 0/494 forbidden, SIZE 5449805 bytes < 50MB, DEPS 0 external of 109 modules",
     "16.6": "DONE - official entrypoint verified from cwd=/ (3 exports, reset 2-tuple, step 5-tuple, 5/5 tool names accepted); submission format verified (non-root offline image, single documented command, documented vocabulary)",
-    "16.7": "PENDING AUTHORITY - tag v1.0.0 on the merge commit (see docs/RELEASE_NOTES.md)",
-    "16.8": "PENDING AUTHORITY - GitHub release with report and limitations"
+    "16.7": "DONE - annotated tag v1.0.0 on merge commit 8da0af2, pushed to origin",
+    "16.8": "DONE - GitHub release published from docs/RELEASE_NOTES.md (not a draft, not a prerelease)"
   },
   "defects_fixed": [
     "docker-offline red for 4 commits: judge/report.py counted .gitkeep as evidence, so the published artifact count was 21 in a checkout and 20 in the image (D-15-03). Found by turning CI failure output into readable annotations after job logs proved unreachable",
@@ -127,6 +127,11 @@
       "command": "make docker-check  # CI docker-offline",
       "exit_code": 0,
       "result": "PASS (GitHub Actions, run 44989316798 and successors)"
+    },
+    {
+      "command": "make rc-check  # merged main 8da0af2, empty evidence dir",
+      "exit_code": 0,
+      "result": "PASS - verify 12/12 (70.1s), replay-all 80/80, release-audit 6/6"
     }
   ],
   "metrics": {
@@ -145,5 +150,13 @@
     "official_score_claimed": false
   },
   "release_blockers": [],
-  "next_phase": "17 - post-release evidence freeze (archive code/config hashes, verify and replay reports, rubric map and decisions, final tag, final status and limitations; ensure the repo alone reconstructs the context)"
+  "next_phase": "17 - post-release evidence freeze (archive code/config hashes, verify and replay reports, rubric map and decisions, final tag, final status and limitations; ensure the repo alone reconstructs the context)",
+  "release": {
+    "tag": "v1.0.0",
+    "tag_object": "3b1e6be4e953d1f8ed1a548dcd1cfbeed524f1aa",
+    "commit": "8da0af277594557ba76b618018ac36c6cfdf1d93",
+    "pr": 21,
+    "release_url": "https://github.com/PeterThielCommits/GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project/releases/tag/v1.0.0",
+    "verified_on_merge_commit": "make rc-check PASS from clean-clone conditions (verify 12/12, replay-all 80/80, release-audit 6/6)"
+  }
 }

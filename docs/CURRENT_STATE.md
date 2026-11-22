@@ -23,8 +23,13 @@
 - Five real defects fixed (none frozen): `.gitkeep` counted as evidence made the artifact count depend on the machine (**D-15-03**); C-locale `UnicodeEncodeError` inside the container; clean-clone tests gating on gitignored outputs (the `D-15-01` trap, one directory over); RC-001 reading a gitignored report; an audit that errored on `.git`-less trees — which is exactly what the Docker image is (**D-16-01**).
 - Measured: `make verify` **12/12 PASS** (71.6 s, 20 artifacts, **481 tests**, `critical_skipped=0`), `make docs-verify` PASS (22 facts, 11 checks), lint CLEAN, freeze **30 files** intact (`0747baf0…`), `official_score_claimed: false`.
 
+## Released: v1.0.0
+Tag **`v1.0.0`** (annotated, object `3b1e6be`) → commit **`8da0af2`** (merge of PR #21).
+GitHub release: https://github.com/PeterThielCommits/GENESIS-HACKATHON-MALIKA-NURZHAN-FULL-FINTECH-Project/releases/tag/v1.0.0 (notes: `docs/RELEASE_NOTES.md`).
+The tag points at a commit that was itself verified: `make rc-check` PASS on `8da0af2` with an emptied evidence directory.
+
 ## Next actions
-1. **16.7 / 16.8 (release authority):** after PR #21 merges, tag the merge commit (`v1.0.0`) and publish the GitHub release using `docs/RELEASE_NOTES.md`; record the tag and commit hash in `docs/STATUS.md` and `docs/PHASE_REPORTS/PHASE-16.json`.
+1. ~~16.7 / 16.8~~ **DONE** — tag `v1.0.0` on `8da0af2`, release published, recorded here and in `docs/PHASE_REPORTS/PHASE-16.json`.
 2. Phase 17 (post-release evidence freeze): archive code/config hashes, the verify and replay reports, the rubric map and decisions; final tag; final status and limitations; confirm the repository alone reconstructs the context.
 3. Review this phase's diff — especially `tools/release_audit.py`, `tools/replay_all_trajectories.py` and `judge/report.py` (`_is_artifact`).
 4. Re-run `make rc-check && python3 tools/freeze_release.py --verify` for the reviewed commit.

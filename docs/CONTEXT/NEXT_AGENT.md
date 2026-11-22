@@ -55,15 +55,15 @@ with an emptied evidence dir, and a `git archive` tarball with **no `.git`**.
   real failures; `tools/release_audit.py` and `_say()` handle them.
 
 ## Single next action
-**16.7 / 16.8 are release-authority steps** and happen only after PR #21 merges:
-tag the merge commit (`v1.0.0`), push the tag, and publish the GitHub release
-from `docs/RELEASE_NOTES.md`, recording tag + commit hash in `docs/STATUS.md`
-and `docs/PHASE_REPORTS/PHASE-16.json`.
+**Phase 17 (post-release evidence freeze).** `v1.0.0` is released on commit
+`8da0af2`; nothing is pending from Phase 16.
 
-Then Phase 17 (post-release evidence freeze): archive code and config hashes,
-the verify and replay reports, the final rubric map and decisions; create the
-final tag; write final status and known limitations; and prove the repository
-alone reconstructs the context without any oral explanation.
+Phase 17 must make the release reconstructable from the repository alone:
+archive the code and config hashes, the verify and replay reports, the final
+rubric map and the decisions; create the final tag; write final status and known
+limitations; and prove that a reader with only the repo can rebuild the context
+without any oral explanation.
 
-Release/tag authority stays outside this handoff.
-
+Do not move the `v1.0.0` tag, and do not re-run `make official-eval` casually:
+it rewrites the committed `artifacts/trajectories/trajectories.jsonl`, which the
+documented baseline numbers are measured from.
