@@ -102,7 +102,15 @@ _OPTIONAL_SKIP_RE = re.compile(
     # produces its own outputs). The authoritative TZ 16.4 check is
     # `make replay-all`, which reads the log where it exists.
     r"hypothesis|extra not installed|optional|"
-    r"evidence artifacts not generated yet|trajectories not generated yet",
+    r"evidence artifacts not generated yet|trajectories not generated yet|"
+    # "verify_summary.json is from a --core run" comes from
+    # tests/judge/test_doc_claims.py::TestCheckerEndToEnd. A --core run writes a
+    # six-gate summary into the same directory the twelve-gate full run uses, so
+    # the documentation gate inside RC-001 legitimately cannot evaluate itself
+    # there. This is a positional skip, not a weakened check: `make verify` reruns
+    # the same test against a full summary, and judge/verify.py runs the
+    # authoritative documentation check after every artifact exists.
+    r"verify_summary\.json is from a --core run",
     re.IGNORECASE,
 )
 _SKIP_LINE_RE = re.compile(r"\.\.\.\s*skipped\s+'([^']*)'")
@@ -181,6 +189,44 @@ def check_artifact_completeness(report_dir: Path = REPORT_DIR) -> list[str]:
     return [name for name in REQUIRED_FULL_ARTIFACTS if not (report_dir / name).is_file()]
 
 
+def _say(message: str, stream: Any = None) -> None:
+    """Print without depending on the host locale's encoding.
+
+    The hardened offline container can run with an ASCII stdout. This file printed
+    a literal em dash and a section sign, so under ``LC_ALL=C`` the run finished
+    every gate and *then* died with ``UnicodeEncodeError`` while reporting success
+    -- the worst possible failure mode: correct verdict, non-zero exit, traceback.
+
+    `tools/verify_doc_claims.py` already solved this for the documentation gate
+    (its ``_say``); the same discipline now applies to the gate runner itself.
+
+    Two layers, because there are two sources of non-ASCII text:
+
+    1. literals in this file -- transliterated below, so the output stays
+       readable rather than turning into ``?``;
+    2. *interpolated* text (a failing test's message, a subprocess traceback, a
+       non-ASCII path) -- unconstrained, hence the encode-with-replacement
+       fallback. Without layer 2 a single em dash inside a gate's output would
+       still take down the whole run.
+
+    Failing softly is correct here: the verdict is the exit code and the JSON
+    artifacts, and neither depends on console encoding.
+    """
+    transliterated = (
+        message.replace("\u2014", "-")
+        .replace("\u2013", "-")
+        .replace("\u2192", "->")
+        .replace("\u00a7", "S")
+        .replace("\u2264", "<=")
+        .replace("\u2265", ">=")
+    )
+    target = sys.stdout if stream is None else stream
+    try:
+        print(transliterated, file=target)
+    except UnicodeEncodeError:  # pragma: no cover - depends on host locale
+        print(transliterated.encode("ascii", "replace").decode("ascii"), file=target)
+
+
 def _run_doc_claims() -> tuple[int | None, str]:
     """Run the documentation-claim gate (Phase 15) and return (rc, short detail).
 
@@ -239,7 +285,7 @@ def main(argv: list[str] | None = None) -> int:
 
     rubric_data, rubric_err = load_rubric_map()
     if rubric_data is None:
-        print(f"verify: configuration error: {rubric_err}", file=sys.stderr)
+        _say(f"verify: configuration error: {rubric_err}", stream=sys.stderr)
         return 2
     rubric_by_id = {c["check_id"]: c for c in rubric_data.get("checks", []) if isinstance(c, dict) and "check_id" in c}
 
@@ -304,12 +350,12 @@ def main(argv: list[str] | None = None) -> int:
                 "artifact": artifact_rel,
             }
         )
-        print(f"[{status}] {check_id} ({req_id}) ({dur:.2f}s) -> {artifact_rel}")
+        _say(f"[{status}] {check_id} ({req_id}) ({dur:.2f}s) -> {artifact_rel}")
         if code != 0:
             tail_flat = " | ".join(line.strip() for line in output.strip().splitlines()[-8:] if line.strip())
-            print(f"  detail ({check_id}): {tail_flat[-600:]}")
+            _say(f"  detail ({check_id}): {tail_flat[-600:]}")
             if os.environ.get("GITHUB_ACTIONS") == "true":
-                print(f"::error title={check_id} ({req_id}) {status}::{tail_flat[-500:]}")
+                _say(f"::error title={check_id} ({req_id}) {status}::{tail_flat[-500:]}")
 
     total_dur = round(time.monotonic() - suite_start, 3)
     _write_rubric_matrix_csv(results, rubric_by_id)
@@ -334,7 +380,7 @@ def main(argv: list[str] | None = None) -> int:
         # here may set ``incomplete``.
         _pre_missing = [m for m in check_artifact_completeness() if m not in REPORT_PRODUCTS]
         if _pre_missing:
-            print(
+            _say(
                 "verify: artifacts pending synthesis before report step: "
                 + ", ".join(_pre_missing)
             )
@@ -428,9 +474,9 @@ def main(argv: list[str] | None = None) -> int:
                 artifact_schema_errors.extend(schemas_mod.validate_report_index(index_doc))
         if artifact_schema_errors:
             config_err = True
-            print("verify: artifact contract errors (TZ §23.5):")
+            _say("verify: artifact contract errors (TZ S23.5):")
             for err in artifact_schema_errors[:20]:
-                print(f"  - {err}")
+                _say(f"  - {err}")
 
         # TZ §24 Task 15.5/15.6 (REQ-DOC-001..003): documentation must match the
         # evidence that now exists. This is the authoritative position — the
@@ -438,16 +484,16 @@ def main(argv: list[str] | None = None) -> int:
         # at that moment no artifact has been produced yet.
         doc_claims_rc, doc_claims_out = _run_doc_claims()
         if doc_claims_rc == 0:
-            print("verify: documentation claims PASS (docs match measured artifacts)")
+            _say("verify: documentation claims PASS (docs match measured artifacts)")
         elif doc_claims_rc is None:
             incomplete = True
-            print(f"verify: documentation claim check unavailable: {doc_claims_out}")
+            _say(f"verify: documentation claim check unavailable: {doc_claims_out}")
         else:
             failed_req += 1
-            print(f"verify: documentation claims FAILED (exit {doc_claims_rc}): {doc_claims_out}")
+            _say(f"verify: documentation claims FAILED (exit {doc_claims_rc}): {doc_claims_out}")
         summary = _write_summary()  # phase B: final status, artifacts and errors
 
-    print(f"verify: {summary['status']} ({total_dur}s) — artifacts/reports/latest/verify_summary.json")
+    _say(f"verify: {summary['status']} ({total_dur}s) - artifacts/reports/latest/verify_summary.json")
     if failed_req == 0 and not incomplete and report_rc == 0:
         return 0
     if release_blocked:

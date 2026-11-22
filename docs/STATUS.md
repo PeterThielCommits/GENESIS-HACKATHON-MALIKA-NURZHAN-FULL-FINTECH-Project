@@ -36,7 +36,7 @@ EXIT GATE 13 PASS: 26/26 instrumented mutants killed, 7/7 metamorphic transforms
 
 ## Phase 14 re-audit (2026-11-21)
 EXIT GATE 14 PASS **on a clean checkout**: `make verify` against a tree built from `git ls-files` (empty `artifacts/reports/latest/`) → exit 0, 12/12 gates in ~62 s, 21 complete artifacts; 410 tests (1 optional Hypothesis skip), 38 Judge Kit tests, lint CLEAN, freeze `0747baf0…` intact.
-Three blocking defects fixed, all in non-frozen files: (1) `judge/report.py` f-string `x or {{}}` parsed as a set literal → `TypeError: unhashable type: 'dict'` on every clean clone; (2) `judge/verify.py` invoked `report.py` before writing `verify_summary.json` → exit 5 on a clean clone; (3) the pre-report completeness check permanently forced exit 5. Also fixed: `Replay Suite 0/0` mis-rendering (real 5/5), missing TZ §23.5 metadata envelope on `replay_report.json` and `reward_property_matrix.json`, invariant catalog 15→17, and unguarded metric access in `judge/performance_and_deps.py`.
+Three blocking defects fixed, all in non-frozen files: (1) `judge/report.py` f-string `x or {{}}` parsed as a set literal → `TypeError: unhashable type: 'dict'` on every clean clone; (2) `judge/verify.py` invoked `report.py` before writing `verify_summary.json` → exit 5 on a clean clone; (3) the pre-report completeness check permanently forced exit 5. Also fixed: `Replay Suite 0/0` mis-rendering (real 5/5), missing TZ §23.5 metadata envelope on `replay_report.json` and on the reward-property matrix report, invariant catalog 15→17, and unguarded metric access in `judge/performance_and_deps.py`.
 New: `judge/schemas.py` (stdlib validators incl. §23.5 envelope, exit 2 on violation), `tests/judge/` (38 tests), `docs/PHASE_REPORTS/TEMPLATE.md`. Decisions `D-14-02`, `D-14-03`.
 Merged as PR **#18** (`baa5b67` → merge commit `99df116`, 2026-11-21T23:43:03Z); CI `core` + `docker-offline` PASS; post-merge `make verify` on `main` PASS 12/12 (50.1 s, 21 artifacts), freeze intact. Merged tree byte-identical to the verified head. See `docs/PHASE_REPORTS/PHASE-14.md` / `.json`. This row is not release authorization.
 
@@ -67,3 +67,61 @@ Audited against the Universal Phase Execution Prompt and TZ §23.2. Honest findi
 - Determinism across the sweep: `trajectories.jsonl` rewritten by `official-eval` differs in **`duration_s` only** across all 80 rows; `replay-all` still PASS 80/80.
 - `CONTRIBUTING.md` created (was missing). Decision `D-16-02`. Report: `docs/AGENT_REPORTS/2026-11-22/arena-universal-prompt-audit.md`.
 - These fixes are **post-release hardening** and are not in tag `v1.0.0`; cutting `v1.0.1` is a release-authority decision.
+
+## Phase 15 structural audit (2026-11-22)
+EXIT GATE 15 re-established on a stricter reading. The numeric claim gate was sound
+but measured one axis; auditing the literal gate text ("the jury can deploy from the
+README and verify the key claims") found **19 defects in which every number was
+correct and the prose around it described something that does not exist**.
+- **Added 6 structural detectors** to `tools/verify_doc_claims.py`, each proven to
+  fail by injected fault: `C-PATHS` (17 docs vs the filesystem), `C-DATADICT`
+  (field lists vs a real episode, both directions), `C-DEMO` (published demo table
+  vs `demo_walkthrough.py::SEGMENTS`), `C-WORKBENCH-API` (routes vs dispatchers),
+  `C-COMMANDS` (scripts/modules/targets vs the tree), `C-REWARD` (provenance vs
+  `official_scorer`'s live constants). `tests/judge/test_doc_claims.py` 25 → 51.
+- **Serious find, disclosed not fixed:** `docs/INDEPENDENCE.md` claimed a "different
+  human owner" built the verifier. This repository was produced by AI agents in one
+  session; `.github/CODEOWNERS` named four handles that do not exist. The technical
+  zero-common-mode separation *is* proven and tested; the organisational half is
+  now explicitly marked **unevidenced** and raised as `Q-ORG-01`/`Q-ORG-02` (OPEN).
+- **Phantom workbench route implemented:** `GET /api/episode/<split>/<id>/overview`
+  was documented since Phase 15 and returned **404**. Now serves public metadata,
+  manifest validity and table counts; still 404s on unknown episodes and `../`.
+- `docs/CONTEXT/ARCHITECTURE_SNAPSHOT.md` was a plan: it named 7 modules that never
+  existed. Rewritten as-built. `docs/DATA_DICTIONARY.md` documented 2 fields that do
+  not exist and omitted 6 that do (including the four distractor-exclusion fields).
+  `docs/DEMO.md` described "five segments" for a six-segment program with a clock up
+  to 5 s out of step. Three docs called the reward "provisional" after `D-18-01`
+  made it official. `python3.11 -m make verify` does not run.
+- **Two order-dependency bugs fixed** (`D-15-06`, third occurrence of this class):
+  test counts were read from whichever run wrote `verify_summary.json` last, so
+  `make verify-core && make docs-verify` failed on a correct tree; and two doc-claim
+  tests re-litigated the whole gate inside RC-001. Counts now come from `unittest`
+  discovery; the locale test asserts the locale contract only. Proven in three
+  sequences: `verify-core`→`docs-verify`, `report`→`docs-verify`, `docs-verify`×2.
+- Measured: `make verify` **12/12 PASS** (49.8 s, 20 artifacts, **528 tests**,
+  `critical_skipped=0`) **from an empty evidence directory**; docs gate **22 facts,
+  17/17 checks**; lint CLEAN; freeze **30 files intact** (`0747baf0…`);
+  `official_score_claimed: false`. No frozen file changed.
+- Decisions `D-15-04`, `D-15-05`, `D-15-06`. Report `docs/PHASE_REPORTS/PHASE-15-STRUCTURAL-AUDIT.md`.
+
+
+## Phase 15 follow-up hardening (2026-11-22, D-15-07)
+
+Supersedes the earlier audit's test/check totals, not its historical sweep.
+- Fixed `judge/verify.py` crashing on ASCII-only console output after completing
+  its gates; all main-console writes use a locale-safe helper. Regression tests
+  also cover arbitrary Unicode diagnostics and explicit narrow streams.
+- Added seventh detector `C-COUNTS`: README's stale 522 and DEMO's stale 490 were
+  not covered by the old literal denylist. Recognised prose totals now derive
+  from discovery; `--write` repairs numeric spans without changing formatting.
+- Latest clean `make verify`: **12/12 PASS**, **540 tests**, 20 artifacts,
+  47.416 s; RC-001 has 19 optional/bootstrap skips, summary 20 optional skips,
+  **zero critical skips**, no missing artifacts or schema errors.
+- Empty evidence + trajectories under `LC_ALL=C PYTHONIOENCODING=ascii`:
+  **12/12 PASS**, 45.443 s, zero non-ASCII bytes; 26 summary optional skips,
+  **zero critical skips**. Populated-evidence suite: 540 tests OK, one optional skip.
+- `make docs-verify`: **22 facts / 18 checks PASS**. Lint CLEAN. Freeze still
+  **30 files intact**, `0747baf0…`. No scoring, tag, or frozen-contract changes.
+- Count recognition is intentionally bounded (see D-15-07); organisational
+  independence remains unevidenced. Q-ORG-01/02, Q-REL-01, Q-DOC-01 remain OPEN.

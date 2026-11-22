@@ -19,7 +19,7 @@ Working directory inside the container: `/app`. Zero external `pip` packages or
 network access are required.
 
 ```bash
-make verify            # lint + full 12-gate Judge Kit (RC-001..RC-012) + 502 tests + 20 evidence artifacts
+make verify            # lint + full 12-gate Judge Kit (RC-001..RC-012) + the whole test suite + 20 evidence artifacts
 make verify-core       # fast critical core & release-blocker gates (RC-001..005, RC-009)
 make test-official     # official Genesis FinTech 2026-11-20 mirror suite (Blocks 1..5: C01..C20, D01..D20, Block 3 #1..20 + M01..M12, P01..P20, Baselines) — 55 official mirror tests
 make replay            # fresh-process CLOSED_EVAL trajectory & Merkle receipt replay + paired P01..P20
@@ -146,7 +146,7 @@ python3 tools/verify_doc_claims.py   # re-measures and diffs this documentation
 ```
 
 Current measured state of this release (see the generated block for the full set):
-**12/12 PASS** verification gates, **502 tests**, **5/5 byte-identical replays**,
+**12/12 PASS** verification gates, the full **540-test** suite, **5/5 byte-identical replays**,
 **0 canary hits**, `official_score_claimed: false`.
 
 <!-- BEGIN GENERATED:measured-facts -->
@@ -159,8 +159,8 @@ Current measured state of this release (see the generated block for the full set
 |---|---|---|
 | Verification gates defined (RC-001..RC-012) | **12** | `judge/rubric_map.json (frozen contract)` |
 | Official organiser score claimed | **false** | `verify_summary.json` |
-| Total tests in the verification suite | **502** | `verify_summary.json → RC-001` |
-| Official mirror tests (Blocks 1–5) | **55** | `verify_summary.json → RC-004` |
+| Total tests in the verification suite | **540** | `unittest discovery over tests/ (state-independent)` |
+| Official mirror tests (Blocks 1–5) | **55** | `unittest discovery over tests/official/ (state-independent)` |
 | Evidence artifacts indexed | **20** | `report_index.json` |
 | Required artifacts missing | **0** | `report_index.json` |
 | Byte-identical fresh-process replays | **5/5** | `replay_report.json` |
@@ -202,4 +202,11 @@ Source: `artifacts/trajectories/trajectories.jsonl` (80 episode rows). Reproduce
 - `docs/API_USAGE.md` — Official adapter API, policy client, local workbench, CLI surface (Task 15.3)
 - `docs/POLICY_PROTOCOL.md` — JSONL v1.0 wire contract: envelopes, tool/error enums, budgets, limits (Task 15.3)
 - `docs/DEMO.md` — 3-minute jury demo + technical backup demo (`make demo-backup`, Task 15.4)
+- `docs/DESIGN.md` — as-built design: layering, frozen contracts, truth lifecycle, process boundaries
+- `docs/DATA_DICTIONARY.md` — every public episode file and field, checked against a real episode
+- `docs/THREAT_MODEL.md` — assets, trust boundaries, and the controls enforced at each one
+- `docs/STATUS.md` · `docs/CURRENT_STATE.md` · `docs/DECISIONS.md` — phase status, live state, and the append-only decision log
+- `docs/QUESTIONS.md` — protocol questions (resolved) plus the open process questions from the 2026-11-22 audit
+- `docs/RUBRIC_TRACEABILITY.md` · `docs/OFFICIAL_COMPLIANCE_MATRIX.md` — requirement-to-evidence mapping
+- `docs/RELEASE_NOTES.md` · `docs/CHANGELOG.md` — what shipped and when
 - `tools/demo_server.py` — Optional zero-dependency interactive local workbench (`python3 tools/demo_server.py`)

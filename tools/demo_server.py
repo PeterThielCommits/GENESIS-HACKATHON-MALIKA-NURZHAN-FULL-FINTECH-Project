@@ -703,6 +703,52 @@ class DemoHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/episodes":
             self._send_json({"episodes": _list_episodes()})
             return
+
+        # GET /api/episode/<split>/<id>/overview
+        # Published in docs/API_USAGE.md since Phase 15 but never implemented:
+        # following the documentation returned 404. The route reports only
+        # *public* facts (metadata, manifest validity, row counts) — never truth,
+        # never sealed data — so it is safe to serve without the sealed files the
+        # /verify route needs.
+        parts = [p for p in parsed.path.split("/") if p]
+        if len(parts) == 5 and parts[0] == "api" and parts[1] == "episode" and parts[4] == "overview":
+            ep_dir = _resolve_episode_dir(parts[2], parts[3])
+            if ep_dir is None:
+                self._send_json({"error": "episode not found"}, status=404)
+                return
+            public_dir = ep_dir / "public"
+            table_counts: dict[str, int] = {}
+            for path in sorted(public_dir.glob("*.jsonl")):
+                table_counts[path.stem] = sum(
+                    1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
+                )
+            for path in sorted(public_dir.glob("*.json")):
+                try:
+                    loaded = json.loads(path.read_text(encoding="utf-8"))
+                except json.JSONDecodeError:
+                    table_counts[path.stem] = 0
+                    continue
+                table_counts[path.stem] = len(loaded) if isinstance(loaded, list) else 1
+            manifest_errors = verify_episode_manifest(ep_dir)
+            company: dict[str, Any] = {}
+            company_path = public_dir / "company.json"
+            if company_path.is_file():
+                company = json.loads(company_path.read_text(encoding="utf-8"))
+            self._send_json(
+                {
+                    "split": parts[2],
+                    "episode_id": parts[3],
+                    "manifest_present": (ep_dir / "manifest.json").is_file(),
+                    "manifest_valid": len(manifest_errors) == 0,
+                    "manifest_errors": manifest_errors,
+                    "company": {
+                        key: company.get(key)
+                        for key in ("company_id", "legal_name", "jurisdiction_code", "functional_currency", "timezone", "company_size")
+                    },
+                    "table_counts": table_counts,
+                }
+            )
+            return
         self._send_json({"error": "not found"}, status=404)
 
     def do_POST(self) -> None:
